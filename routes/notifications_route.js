@@ -27,6 +27,8 @@ router.post('/registerPushNotification', jsonParser, async (req, res) => {
         const userId = decodedToken.user.id;
         const token = String(req.body.push_token);
 
+        console.log("USER ID: ", userId);
+
         const existingToken = await firebase_service.getToken(userId);
 
         console.log("EXISTING TOKEN: ", existingToken);
