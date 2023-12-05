@@ -1,0 +1,28 @@
+{
+  "name": "server_youmind",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cron": "^3.1.6",
+    "dotenv": "^16.3.1",
+    "expo-server-sdk": "^3.7.0",
+    "express": "^4.18.2",
+    "express-validator": "^7.0.1",
+    "firebase": "^10.5.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.0",
+    "socket.io": "^4.7.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
