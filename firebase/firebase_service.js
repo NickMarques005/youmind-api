@@ -19,8 +19,6 @@ const fireserver = initializeApp(firebaseConfig);
 const db = getDatabase();
 const dbRef = ref(db);
 
-console.log(db);
-
 const saveToken = async (userId, token) => {
     console.log(userId);
     const values = (await get(child(dbRef, `userTokens/${userId}`))).val() ?? {};

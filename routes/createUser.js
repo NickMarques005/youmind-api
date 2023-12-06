@@ -9,7 +9,6 @@ const jwt = require('jsonwebtoken');
 
 //Chave principal para assinar os tokens JWT.
 const jwt_mainKey = require('../config').jwt_key;
-console.log("KEY ALEATORIA PRINCIPAL: ", jwt_mainKey);
 
 //Rota de Método POST para criação do Usuário
 

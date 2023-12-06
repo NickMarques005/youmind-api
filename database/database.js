@@ -3,7 +3,7 @@
 //Middleware Mongoose
 const mongoose = require('mongoose');
 
-//Database WaterLeak URI:
+//Database YouMind URI:
 const dbURI = process.env.MONGO_URI;
 
 //Database MongoDB App Connection 
