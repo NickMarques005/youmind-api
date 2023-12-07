@@ -1,10 +1,47 @@
 //---changeStreams.js---//
 
 const treatment = require('../models/treatment');
+const message = require('../models/message');
+const { Expo } = require('expo-server-sdk');
+const firebase_service = require('../firebase/firebase_service');
+const users = require('../models/users');
+
+const expo = new Expo;
+
+
+const findSender = async (senderIdId) => {
+    const patient_model = users.PatientUser;
+    const doctor_model = users.DoctorUser;
+
+    const patientUser = await patient_model.findById(senderIdId);
+    if(patientUser)
+    {
+        const patientMessage = {
+            name: patientUser.name,
+            type: patientUser.type
+        }
+
+        return patientMessage;
+    }
+
+    const doctorUser = await doctor_model.findById(senderIdId);
+    if(doctorUser)
+    {
+        const doctorMessage = {
+            name: doctorUser.name,
+            type: doctorUser.type
+        }
+
+        return doctorMessage
+    }
+
+    return null;
+}
 
 const initializeChangeStream = async (io) => {
 
     const treatmentChangeStream = treatment.watch();
+    const messageChangeStream = message.watch();
 
     treatmentChangeStream.on('change', async (change) => {
         console.log("Treatment Change Stream Event: ", change);
@@ -25,10 +62,75 @@ const initializeChangeStream = async (io) => {
                 const treatmentId = change.documentKey._id.toString();
                 console.log(treatmentId);
 
-                io.to(treatmentId).emit(treatmentId, { data: treatmentId});
+                io.to(treatmentId).emit(treatmentId, { data: treatmentId });
             }
         }
     });
+
+    messageChangeStream.on('change', async (change) => {
+        console.log("Message Change Stream Event: ", change);
+
+        if (change.ns.coll == 'message_data') {
+            if (change.operationType === 'insert') {
+                const updatedMessage = change.fullDocument;
+                const senderId = updatedMessage.sender;
+                const conversation = updatedMessage.conversationId;
+
+                const associatedTreatment = await treatment.findOne({
+                    $or: [{ patientId: senderId }, { doctorId: senderId }],
+                    _id: conversation
+                });
+
+                console.log("ASSOCIATED TREATMENT", associatedTreatment);
+
+                if (associatedTreatment) {
+                    const otherUserId = associatedTreatment.patientId === senderId ? associatedTreatment.doctorId : associatedTreatment.patientId;
+
+                    if(otherUserId !== senderId) {
+                        console.log("Send to: ", otherUserId);
+
+
+                        const senderMessage = await findSender(senderId);
+
+                        if(!senderMessage)
+                        {
+                            console.log("senderId not found");
+                            return;
+                        }
+
+                        const { token } = await firebase_service.getToken(otherUserId);
+
+                        if (!token) {
+                            return;
+                        }
+
+                        console.log("PUSH NOTIFICATION MESSAGE! ", token);
+
+                        expo.sendPushNotificationsAsync([
+                            {
+                                to: token,
+                                title: senderMessage.type === 'doctor' ? `Dr. ${senderMessage.name}` : `${senderMessage.name}`,
+                                body: `${updatedMessage.content}`,
+                                badge: 1,
+                                data: {
+                                    notify_type: 'chat',
+                                    notify_function: 'message_alert',
+                                    senderId: {
+                                        name: senderMessage.name,
+                                        id: senderId
+                                    }
+                                },
+                            }
+                        ]);
+                    }
+
+                }
+
+            }
+        }
+
+
+    })
 }
 
 module.exports = { initializeChangeStream };
