@@ -101,7 +101,8 @@ router.post('/notifyTreatmentSolicitation', async (req, res) => {
                         },
                         sender: {
                             email: doctor_user.email
-                        }
+                        },
+                        show_modal: true,
                     },
                     
                 }
@@ -150,7 +151,8 @@ router.post('/notifyTreatmentSolicitation', async (req, res) => {
                         },
                         sender: {
                             email: patient_user.email
-                        }
+                        },
+                        show_modal: true,
                     }
                 }
             ]);

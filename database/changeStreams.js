@@ -14,10 +14,10 @@ const findSender = async (senderIdId) => {
     const doctor_model = users.DoctorUser;
 
     const patientUser = await patient_model.findById(senderIdId);
-    if(patientUser)
-    {
+    if (patientUser) {
         const patientMessage = {
             name: patientUser.name,
+            email: patientUser.email,
             type: patientUser.type
         }
 
@@ -25,10 +25,10 @@ const findSender = async (senderIdId) => {
     }
 
     const doctorUser = await doctor_model.findById(senderIdId);
-    if(doctorUser)
-    {
+    if (doctorUser) {
         const doctorMessage = {
             name: doctorUser.name,
+            email: doctorUser.email,
             type: doctorUser.type
         }
 
@@ -86,14 +86,13 @@ const initializeChangeStream = async (io) => {
                 if (associatedTreatment) {
                     const otherUserId = associatedTreatment.patientId === senderId ? associatedTreatment.doctorId : associatedTreatment.patientId;
 
-                    if(otherUserId !== senderId) {
+                    if (otherUserId !== senderId) {
                         console.log("Send to: ", otherUserId);
 
 
                         const senderMessage = await findSender(senderId);
 
-                        if(!senderMessage)
-                        {
+                        if (!senderMessage) {
                             console.log("senderId not found");
                             return;
                         }
@@ -115,17 +114,22 @@ const initializeChangeStream = async (io) => {
                                 data: {
                                     notify_type: 'chat',
                                     notify_function: 'message_alert',
-                                    senderId: {
+                                    sender_params: {
                                         name: senderMessage.name,
+                                        email: senderMessage.email,
                                         id: senderId
+                                    },
+                                    show_modal: false,
+                                    redirect_params: {
+                                        screen: 'treatmentChat',
+                                        menu_option: 'treatmentScreen'
                                     }
+
                                 },
                             }
                         ]);
                     }
-
                 }
-
             }
         }
 

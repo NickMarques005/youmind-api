@@ -16,16 +16,17 @@ const PORT = process.env.PORT || 3000;
 const database = require('./database/database');
 
 initializeSocket(server);
+
 //Firebase server:
 const firebaseServer = require('./firebase/firebase_service');
-
-//Executando funcionalidades do banco de dados: 
-database();
-app.use(express.json());
 
 //***************//
 //Banco de dados://
 //***************//
+
+//Executando funcionalidades do banco de dados: 
+database();
+app.use(express.json());
 
 
 //**********//
