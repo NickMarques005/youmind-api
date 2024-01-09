@@ -4,7 +4,13 @@ const jwt = require('jsonwebtoken');
 const jwt_mainKey = require('../config').jwt_key;
 
 exports.createNotification = async (notificationData) => {
+    const authToken = req.headers.authorization?.split(' ')[1];
+    if (!authToken) {
+        return res.status(401).json({ errors: ["Usuário não autorizado"] });
+    }
+
     try {
+
 
     }
     catch (err) {
@@ -14,6 +20,11 @@ exports.createNotification = async (notificationData) => {
 };
 
 exports.getNotifications = async () => {
+    const authToken = req.headers.authorization?.split(' ')[1];
+    if (!authToken) {
+        return res.status(401).json({ errors: ["Usuário não autorizado"] });
+    }
+
     try {
 
     }
@@ -24,6 +35,11 @@ exports.getNotifications = async () => {
 };
 
 exports.deleteNotification = async () => {
+    const authToken = req.headers.authorization?.split(' ')[1];
+    if (!authToken) {
+        return res.status(401).json({ errors: ["Usuário não autorizado"] });
+    }
+
     try {
 
     }
@@ -34,6 +50,11 @@ exports.deleteNotification = async () => {
 };
 
 exports.updateNotification = async () => {
+    const authToken = req.headers.authorization?.split(' ')[1];
+    if (!authToken) {
+        return res.status(401).json({ errors: ["Usuário não autorizado"] });
+    }
+
     try {
 
     }
