@@ -1,5 +1,6 @@
 //---changeStreams.js---//
 
+const notificationService = require('../functions/notificationService');
 const treatment = require('../models/treatment');
 const message = require('../models/message');
 const { Expo } = require('expo-server-sdk');
@@ -105,29 +106,27 @@ const initializeChangeStream = async (io) => {
 
                         console.log("PUSH NOTIFICATION MESSAGE! ", token);
 
-                        expo.sendPushNotificationsAsync([
-                            {
-                                to: token,
-                                title: senderMessage.type === 'doctor' ? `Dr. ${senderMessage.name}` : `${senderMessage.name}`,
-                                body: `${updatedMessage.content}`,
-                                badge: 1,
-                                data: {
-                                    notify_type: 'chat',
-                                    notify_function: 'message_alert',
-                                    sender_params: {
-                                        name: senderMessage.name,
-                                        email: senderMessage.email,
-                                        id: senderId
-                                    },
-                                    show_modal: false,
-                                    redirect_params: {
-                                        screen: 'treatmentChat',
-                                        menu_option: 'treatmentScreen'
-                                    }
-
+                        const notificationData = {
+                            title: senderMessage.type === 'doctor' ? `Dr. ${senderMessage.name}` : `${senderMessage.name}`,
+                            body: `${updatedMessage.content}`,
+                            data: {
+                                notify_type: 'chat',
+                                notify_function: 'message_alert',
+                                sender_params: {
+                                    name: senderMessage.name,
+                                    email: senderMessage.email,
+                                    id: senderId
                                 },
-                            }
-                        ]);
+                                show_modal: false,
+                                redirect_params: {
+                                    screen: 'treatmentChat',
+                                    menu_option: 'treatmentScreen'
+                                }
+                            },
+                        };
+
+                        await notificationService.sendPushNotificationAndSave(notificationData, token);
+
                     }
                 }
             }

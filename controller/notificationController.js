@@ -3,14 +3,14 @@ const users = require('../models/users');
 const jwt = require('jsonwebtoken');
 const jwt_mainKey = require('../config').jwt_key;
 
-exports.createNotification = async (notificationData) => {
-    const authToken = req.headers.authorization?.split(' ')[1];
-    if (!authToken) {
-        return res.status(401).json({ errors: ["Usuário não autorizado"] });
+exports.createNotification = async (notificationData, token) => {
+    if (!token) {
+        console.log("Houve um erro! Token não fornecido");
+        return console.log("Token não encontrado");
     }
 
     try {
-        const decodedToken = jwt.verify(authToken, jwt_mainKey);
+        const decodedToken = jwt.verify(token, jwt_mainKey);
         const userId = decodedToken.user.id;
 
         const newNotification = new Notification({
@@ -23,19 +23,19 @@ exports.createNotification = async (notificationData) => {
         const savedNotification = await newNotification.save();
 
         if (!savedNotification) {
-            return res.status(400).json({ success: false, errors: ["Houve um erro ao salvar a notificação!"] });
+            return console.log("Houve um erro ao salvar a notificação!");
         }
 
-        return res.status(201).json({ success: true, notification: savedNotification });
-
+        console.log("Notificação criada com sucesso");
+        return;
     }
     catch (err) {
         console.error("Erro ao criar notificação: ", err);
-        return res.status(500).json({ success: false, errors: ['Erro interno do servidor.'] });
+        return console.log({ success: false, errors: ['Erro interno do servidor.'] });
     }
 };
 
-exports.getNotifications = async () => {
+exports.getNotifications = async (req, res) => {
     const authToken = req.headers.authorization?.split(' ')[1];
     if (!authToken) {
         return res.status(401).json({ errors: ["Usuário não autorizado"] });
@@ -54,7 +54,7 @@ exports.getNotifications = async () => {
     }
 };
 
-exports.deleteNotification = async () => {
+exports.deleteNotification = async (req, res) => {
     const authToken = req.headers.authorization?.split(' ')[1];
     if (!authToken) {
         return res.status(401).json({ errors: ["Usuário não autorizado"] });
@@ -83,7 +83,7 @@ exports.deleteNotification = async () => {
     }
 };
 
-exports.updateNotification = async () => {
+exports.updateNotification = async (req, res) => {
     const authToken = req.headers.authorization?.split(' ')[1];
     if (!authToken) {
         return res.status(401).json({ errors: ["Usuário não autorizado"] });
@@ -104,15 +104,38 @@ exports.updateNotification = async () => {
             { new: true }
         );
 
-        if(!updatedNotification)
-        {
+        if (!updatedNotification) {
             return res.status(404).json({ success: false, errors: ["Notificação não encontrada"] });
         }
 
-        return res.status(200).json({ success: true, notification: updatedNotification, message: "Mensagem atualizada com sucesso!"});
+        return res.status(200).json({ success: true, notification: updatedNotification, message: "Mensagem atualizada com sucesso!" });
     }
     catch (err) {
         console.error("Erro ao criar notificação: ", err);
         return res.status(500).json({ success: false, errors: ['Erro interno do servidor.'] });
     }
+};
+
+exports.sendPushNotification = async (notificationData, token) => {
+    const { Expo } = require('expo-server-sdk');
+    const expo = new Expo();
+
+    const pushNotification = {
+        to: token,
+        title: notificationData.title,
+        body: notificationData.body,
+        badge: 1,
+        data: notificationData.data
+    };
+
+    try {
+        const send_notification = await expo.sendPushNotificationsAsync([pushNotification]);
+        console.log("NOTIFICAÇÃO ENVIADA: ", send_notification);
+    }
+    catch (err)
+    {
+        console.error("Erro ao enviar Push Notification: ", err);
+    }
+
+
 }

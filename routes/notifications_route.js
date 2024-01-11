@@ -4,6 +4,8 @@ const express = require('express');
 const bodyparser = require('body-parser');
 const router = express.Router();
 const firebase_service = require('../firebase/firebase_service');
+const notificationController = require('../controller/notificationController');
+
 const jwt = require('jsonwebtoken');
 const jwt_mainKey = require('../config').jwt_key;
 const users = require('../models/users');
@@ -164,5 +166,11 @@ router.post('/notifyTreatmentSolicitation', async (req, res) => {
         return res.status(500).json({ success: false, errors: ["Houve um erro no servidor"] });
     }
 });
+
+router.get('getNotifications', notificationController.getNotifications);
+
+router.delete('/deleteNotification', notificationController.deleteNotification);
+
+router.put('/updateNotification', notificationController.updateNotification);
 
 module.exports = router;
