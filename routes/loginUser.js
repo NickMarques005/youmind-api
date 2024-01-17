@@ -9,7 +9,6 @@ const jwt = require('jsonwebtoken');
 
 //Chave principal para assinar os tokens JWT.
 const jwt_mainKey = require('../config').jwt_key;
-console.log("KEY ALEATORIA PRINCIPAL: ", jwt_mainKey);
 
 router.post('/loginUser', body('email', 'E-mail incorreto').isEmail(),
     body('password', 'Senha incorreta').isLength({ min: 8 }),
@@ -39,7 +38,7 @@ router.post('/loginUser', body('email', 'E-mail incorreto').isEmail(),
                 const password_compare = await bcrypt.compare(password, patient_data.password)
 
                 if (!password_compare) {
-                    return res.status(400).json({ success: false, message: 'Senha incorreta' });
+                    return res.status(400).json({ success: false, message: 'Usuário ou senha incorreta' });
                 }
 
                 const data_authentication = {
@@ -64,7 +63,7 @@ router.post('/loginUser', body('email', 'E-mail incorreto').isEmail(),
                 const password_compare = await bcrypt.compare(password, doctor_data.password)
 
                 if (!password_compare) {
-                    return res.status(400).json({ success: false, message: 'Senha incorreta' });
+                    return res.status(400).json({ success: false, message: 'Usuário ou senha incorreta' });
                 }
 
                 const data_authentication = {

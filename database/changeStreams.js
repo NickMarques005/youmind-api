@@ -131,8 +131,6 @@ const initializeChangeStream = async (io) => {
                 }
             }
         }
-
-
     })
 }
 

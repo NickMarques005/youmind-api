@@ -1,5 +1,6 @@
 //----notifications_route.js----//
 
+const notificationServive = require('../functions/notificationService');
 const express = require('express');
 const bodyparser = require('body-parser');
 const router = express.Router();
@@ -88,29 +89,26 @@ router.post('/notifyTreatmentSolicitation', async (req, res) => {
 
             console.log("SEND PUSH NOTIFICATION!!!", token);
 
-            expo.sendPushNotificationsAsync([
-                {
-                    to: token,
-                    title: `Solicitação para tratamento`,
-                    body: `O especialista ${doctor_user.name} enviou uma solicitação para inicializar tratamento. Deseja aceitar a solicitação?`,
-                    badge: 1,
-                    data: {
-                        notify_type: 'treatment',
-                        notify_function: 'solicitation',
-                        buttons: {
-                            button_accept: "Aceitar",
-                            button_decline: "Recusar"
-                        },
-                        sender: {
-                            email: doctor_user.email
-                        },
-                        show_modal: true,
+            const notificationData = {
+                title: `Solicitação para tratamento`,
+                body: `O especialista ${doctor_user.name} enviou uma solicitação para inicializar tratamento. Deseja aceitar a solicitação?`,
+                data: {
+                    notify_type: 'treatment',
+                    notify_function: 'solicitation',
+                    buttons: {
+                        button_accept: "Aceitar",
+                        button_decline: "Recusar"
                     },
-                    
-                }
-            ]);
+                    sender: {
+                        email: doctor_user.email
+                    },
+                    show_modal: true,
+                },
+            };
 
-            return res.status(200).json({success: true, message: `Solicitação enviada para ${patient_user.name}`});
+            await notificationServive.sendPushNotificationAndSave(notificationData, token);
+
+            return res.status(200).json({ success: true, message: `Solicitação enviada para ${patient_user.name}` });
         }
         else {
             console.log("DOCTOR: ", destinatary_user_email);
@@ -138,27 +136,27 @@ router.post('/notifyTreatmentSolicitation', async (req, res) => {
 
             console.log("SEND PUSH NOTIFICATION!!!", token);
 
-            expo.sendPushNotificationsAsync([
-                {
-                    to: token,
-                    title: `Solicitação para tratamento`,
-                    body: `O paciente ${patient_user.name} enviou uma solicitação para inicializar tratamento. Deseja aceitar a solicitação?`,
-                    badge: 1,
-                    data: {
-                        notify_type: 'treatment',
-                        notify_function: 'solicitation',
-                        buttons: {
-                            button_accept: "Aceitar",
-                            button_decline: "Recusar"
-                        },
-                        sender: {
-                            email: patient_user.email
-                        },
-                        show_modal: true,
-                    }
+            const notificationData = {
+                title: `Solicitação para tratamento`,
+                body: `O paciente ${patient_user.name} enviou uma solicitação para inicializar tratamento. Deseja aceitar a solicitação?`,
+                data: {
+                    notify_type: 'treatment',
+                    notify_function: 'solicitation',
+                    buttons: {
+                        button_accept: "Aceitar",
+                        button_decline: "Recusar"
+                    },
+                    sender: {
+                        email: patient_user.email
+                    },
+                    show_modal: true,
                 }
-            ]);
-            return res.status(200).json({success: true, message: `Solicitação enviada para ${doctor_user.name}`});
+            };
+
+            await notificationServive.sendPushNotificationAndSave(notificationData, token);
+            
+
+            return res.status(200).json({ success: true, message: `Solicitação enviada para ${doctor_user.name}` });
         }
     }
     catch (err) {
