@@ -3,15 +3,13 @@ const users = require('../models/users');
 const jwt = require('jsonwebtoken');
 const jwt_mainKey = require('../config').jwt_key;
 
-exports.createNotification = async (notificationData, token) => {
-    if (!token) {
-        console.log("Houve um erro! Token não fornecido");
-        return console.log("Token não encontrado");
+exports.createNotification = async (notificationData, userId) => {
+    if (!userId) {
+        console.log("Houve um erro! Usuário não fornecido");
+        return console.log("Usuário não encontrado");
     }
 
     try {
-        const decodedToken = jwt.verify(token, jwt_mainKey);
-        const userId = decodedToken.user.id;
 
         const newNotification = new Notification({
             user: userId,

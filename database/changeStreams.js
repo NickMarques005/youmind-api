@@ -125,7 +125,7 @@ const initializeChangeStream = async (io) => {
                             },
                         };
 
-                        await notificationService.sendPushNotificationAndSave(notificationData, token);
+                        await notificationService.sendPushNotificationAndSave(notificationData, token, otherUserId);
 
                     }
                 }
