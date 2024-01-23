@@ -1,9 +1,31 @@
-const notification = require('../models/notification');
+const notificationModel = require('../models/notification');
 const users = require('../models/users');
 const jwt = require('jsonwebtoken');
 const jwt_mainKey = require('../config').jwt_key;
 
+exports.sendNotification = async (notification, pushToken) => {
+    const { Expo } = require('expo-server-sdk');
+    const expo = new Expo();
+    console.log("Notification Data: ", notification, " // pushToken: ", pushToken);
+    try {
+        const notificationToSend = {
+            to: pushToken,
+            title: notification.title,
+            body: notification.body,
+            data: notification.data
+        }
+
+        expo.sendPushNotificationsAsync([notificationToSend]);
+
+        return console.log("Notificação enviada!!!");
+    }
+    catch (err) {
+        return console.error("Houve um erro ao enviar a notificação ao usuário: ", err);
+    }
+}
+
 exports.createNotification = async (notificationData, userId) => {
+    console.log("NOTIFICATION CREATION IN DB....");
     if (!userId) {
         console.log("Houve um erro! Usuário não fornecido");
         return console.log("Usuário não encontrado");
@@ -11,7 +33,7 @@ exports.createNotification = async (notificationData, userId) => {
 
     try {
 
-        const newNotification = new Notification({
+        const newNotification = new notificationModel({
             user: userId,
             title: notificationData.title,
             body: notificationData.body,
@@ -24,12 +46,11 @@ exports.createNotification = async (notificationData, userId) => {
             return console.log("Houve um erro ao salvar a notificação!");
         }
 
-        console.log("Notificação criada com sucesso");
-        return;
+        
+        return console.log("Notificação criada com sucesso");
     }
     catch (err) {
-        console.error("Erro ao criar notificação: ", err);
-        return console.log({ success: false, errors: ['Erro interno do servidor.'] });
+        return console.error("Erro ao criar notificação: ", err);
     }
 };
 
@@ -114,26 +135,3 @@ exports.updateNotification = async (req, res) => {
     }
 };
 
-exports.sendPushNotification = async (notificationData, token) => {
-    const { Expo } = require('expo-server-sdk');
-    const expo = new Expo();
-
-    const pushNotification = {
-        to: token,
-        title: notificationData.title,
-        body: notificationData.body,
-        badge: 1,
-        data: notificationData.data
-    };
-
-    try {
-        const send_notification = await expo.sendPushNotificationsAsync([pushNotification]);
-        console.log("NOTIFICAÇÃO ENVIADA: ", send_notification);
-    }
-    catch (err)
-    {
-        console.error("Erro ao enviar Push Notification: ", err);
-    }
-
-
-}
