@@ -64,11 +64,13 @@ exports.getNotifications = async (req, res) => {
         const decodedToken = jwt.verify(authToken, jwt_mainKey);
         const userId = decodedToken.user.id;
 
-        const notifications = await Notification.find({ user: userId }).sort({ createdAt: -1 });
-        return res.status(200).json({ success: true, notifications });
+        console.log("Usuário que busca as notificações: ", userId);
+
+        const notifications = await notificationModel.find({ user: userId }).sort({ createdAt: -1 });
+        return res.status(200).json({ success: true, data: notifications });
     }
     catch (err) {
-        console.error("Erro ao criar notificação: ", err);
+        console.error("Erro ao buscar notificações: ", err);
         return res.status(500).json({ success: false, errors: ['Erro interno do servidor.'] });
     }
 };
@@ -97,7 +99,7 @@ exports.deleteNotification = async (req, res) => {
 
     }
     catch (err) {
-        console.error("Erro ao criar notificação: ", err);
+        console.error("Erro ao deletar notificação: ", err);
         return res.status(500).json({ success: false, errors: ['Erro interno do servidor.'] });
     }
 };
@@ -127,7 +129,7 @@ exports.updateNotification = async (req, res) => {
             return res.status(404).json({ success: false, errors: ["Notificação não encontrada"] });
         }
 
-        return res.status(200).json({ success: true, notification: updatedNotification, message: "Mensagem atualizada com sucesso!" });
+        return res.status(200).json({ success: true, data: updatedNotification, message: "Mensagem atualizada com sucesso!" });
     }
     catch (err) {
         console.error("Erro ao criar notificação: ", err);

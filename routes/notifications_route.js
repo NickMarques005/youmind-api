@@ -165,7 +165,7 @@ router.post('/notifyTreatmentSolicitation', async (req, res) => {
     }
 });
 
-router.get('getNotifications', notificationController.getNotifications);
+router.get('/getNotifications', notificationController.getNotifications);
 
 router.delete('/deleteNotification', notificationController.deleteNotification);
 
