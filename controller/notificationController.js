@@ -86,7 +86,7 @@ exports.deleteNotification = async (req, res) => {
         const userId = decodedToken.user.id;
 
         const notificationId = req.body.notificationId;
-        const deletedNotification = await Notification.findOneAndDelete({
+        const deletedNotification = await notificationModel.findOneAndDelete({
             _id: notificationId,
             user: userId,
         });
@@ -117,7 +117,7 @@ exports.updateNotification = async (req, res) => {
         const notificationId = req.body.notificationId;
         const updatedData = req.body.notificationUpdate;
 
-        const updatedNotification = await Notification.findOneAndUpdate({
+        const updatedNotification = await notificationModel.findOneAndUpdate({
             _id: notificationId,
             user: userId,
         },
