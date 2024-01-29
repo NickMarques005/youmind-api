@@ -3,19 +3,20 @@ const users = require('../models/users');
 const jwt = require('jsonwebtoken');
 const jwt_mainKey = require('../config').jwt_key;
 
-exports.sendNotification = async (notification, pushToken) => {
+exports.sendNotification = async (notification, _id , pushToken) => {
     const { Expo } = require('expo-server-sdk');
     const expo = new Expo();
-    console.log("Notification Data: ", notification, " // pushToken: ", pushToken);
+    console.log("Notification Data: ", notification, " // pushToken: ", pushToken, " // message Id: ", _id);
     try {
         const notificationToSend = {
             to: pushToken,
             title: notification.title,
             body: notification.body,
-            data: notification.data
+            data: {...notification.data, _id}
         }
 
-        expo.sendPushNotificationsAsync([notificationToSend]);
+        let receipts = await expo.sendPushNotificationsAsync([notificationToSend]);
+        console.log(receipts);
 
         return console.log("Notificação enviada!!!");
     }
@@ -46,8 +47,9 @@ exports.createNotification = async (notificationData, userId) => {
             return console.log("Houve um erro ao salvar a notificação!");
         }
 
+        console.log("Notificação criada com sucesso")
         
-        return console.log("Notificação criada com sucesso");
+        return savedNotification._id;
     }
     catch (err) {
         return console.error("Erro ao criar notificação: ", err);
