@@ -245,7 +245,19 @@ exports.deleteTreatment = async (req, res) => {
             await patient_model.findByIdAndUpdate(patientId, { is_treatment_running: false });
         }
 
-        return res.status(200).json({ success: true, message: 'Tratamento excluído com sucesso!' });
+        let remainingTreatments = [];
+
+        if(decodedToken.user.type === 'patient')
+        {
+            remainingTreatments = await treatment.find({ patientId: userId });
+        }
+        else{
+            remainingTreatments = await treatment.find({doctorId: userId});
+        }
+
+        console.log("Remaining Treatments: ", remainingTreatments);
+
+        return res.status(200).json({ success: true, message: 'Tratamento excluído com sucesso!', data: remainingTreatments });
     }
     catch (err) {
         console.error('Erro ao excluir o tratamento:', err);
