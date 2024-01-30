@@ -67,21 +67,23 @@ router.post('/notifyTreatmentSolicitation', async (req, res) => {
 
         if (destinatary_user_type == "patient") {
             console.log("PATIENT: ", destinatary_user_email);
-            const patient_user = await patient_model.findOne({
+            const destinatary_user = await patient_model.findOne({
                 email: destinatary_user_email
             }, { _id: 1, name: 1 });
 
-            const doctor_user = await doctor_model.findOne({
+            const sender_user = await doctor_model.findOne({
                 _id: userId
             }, { name: 1, email: 1 });
 
-            if (!doctor_user || !patient_user) {
+            if (!sender_user || !destinatary_user) {
                 return res.status(400).json({ success: false, errors: ["Paciente não encontrado"] });
             }
 
-            console.log("ID: ", patient_user._id);
+            console.log("ID: ", destinatary_user._id);
 
-            const { token } = await firebase_service.getToken(patient_user._id);
+            const destinatary_id = destinatary_user._id;
+
+            const { token } = await firebase_service.getToken(destinatary_id);
 
             if (!token) {
                 return res.status(400).json({ success: false, errors: ["Usuário destinatário não possui registro para notificação"] });
@@ -91,7 +93,7 @@ router.post('/notifyTreatmentSolicitation', async (req, res) => {
 
             const notificationData = {
                 title: `Solicitação para tratamento`,
-                body: `O especialista ${doctor_user.name} enviou uma solicitação para inicializar tratamento. Deseja aceitar a solicitação?`,
+                body: `O especialista ${sender_user.name} enviou uma solicitação para inicializar tratamento. Deseja aceitar a solicitação?`,
                 data: {
                     notify_type: 'treatment',
                     notify_function: 'solicitation',
@@ -100,35 +102,35 @@ router.post('/notifyTreatmentSolicitation', async (req, res) => {
                         button_decline: "Recusar"
                     },
                     sender: {
-                        email: doctor_user.email
+                        email: sender_user.email
                     },
                     show_modal: true,
                 },
             };
 
-            await notificationServive.sendPushNotificationAndSave(notificationData, token);
+            await notificationServive.sendPushNotificationAndSave(notificationData, token, destinatary_id);
 
-            return res.status(200).json({ success: true, message: `Solicitação enviada para ${patient_user.name}` });
+            return res.status(200).json({ success: true, message: `Solicitação enviada para ${destinatary_user.name}` });
         }
         else {
             console.log("DOCTOR: ", destinatary_user_email);
 
-            const doctor_user = await doctor_model.findOne({
+            const destinatary_user = await doctor_model.findOne({
                 email: destinatary_user_email
             }, { _id: 1, name: 1 });
 
-            const patient_user = await patient_model.findOne({
+            const sender_user = await patient_model.findOne({
                 _id: userId
             }, { name: 1, email: 1 });
 
-            if (!doctor_user || !patient_user) {
+            if (!destinatary_user || !sender_user) {
                 return res.status(400).json({ success: false, errors: ["Paciente não encontrado"] });
             }
 
-            console.log("ID: ", doctor_user._id);
-            console.log("USER ID: ", patient_user._id);
+            console.log("ID: ", destinatary_user._id);
+            console.log("USER ID: ", sender_user._id);
 
-            const { token } = await firebase_service.getToken(doctor_user._id);
+            const { token } = await firebase_service.getToken(destinatary_user._id);
 
             if (!token) {
                 return res.status(400).json({ success: false, errors: ["Usuário destinatário não possui registro para notificação"] });
@@ -138,7 +140,7 @@ router.post('/notifyTreatmentSolicitation', async (req, res) => {
 
             const notificationData = {
                 title: `Solicitação para tratamento`,
-                body: `O paciente ${patient_user.name} enviou uma solicitação para inicializar tratamento. Deseja aceitar a solicitação?`,
+                body: `O paciente ${sender_user.name} enviou uma solicitação para inicializar tratamento. Deseja aceitar a solicitação?`,
                 data: {
                     notify_type: 'treatment',
                     notify_function: 'solicitation',
@@ -147,16 +149,16 @@ router.post('/notifyTreatmentSolicitation', async (req, res) => {
                         button_decline: "Recusar"
                     },
                     sender: {
-                        email: patient_user.email
+                        email: sender_user.email
                     },
                     show_modal: true,
                 }
             };
 
-            await notificationServive.sendPushNotificationAndSave(notificationData, token);
+            await notificationServive.sendPushNotificationAndSave(notificationData, token, destinatary_user._id);
             
 
-            return res.status(200).json({ success: true, message: `Solicitação enviada para ${doctor_user.name}` });
+            return res.status(200).json({ success: true, message: `Solicitação enviada para ${destinatary_user.name}` });
         }
     }
     catch (err) {
