@@ -1,6 +1,6 @@
 //---changeStreams.js---//
 
-const notificationService = require('../functions/notificationService');
+const notificationService = require('../services/notificationService');
 const treatment = require('../models/treatment');
 const message = require('../models/message');
 const { Expo } = require('expo-server-sdk');

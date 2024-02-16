@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
 
-const patientUserSchema = new Schema({
+const userStandardFields = {
     name: {
         type: String,
         required: true
@@ -25,6 +25,10 @@ const patientUserSchema = new Schema({
         type: String,
         required: true
     },
+}
+
+const patientUserSchema = new Schema({
+    ...userStandardFields,
     is_treatment_running: {
         type: Boolean,
         default: false
@@ -32,39 +36,20 @@ const patientUserSchema = new Schema({
 });
 
 const doctorUserSchema = new Schema({
-    name: {
-        type: String,
-        required: true
-    },
-    email: {
-        type: String,
-        required: true
-    },
-    password: {
-        type: String,
-        required: true
-    },
-    phone: {
-        type: Number,
-        required: true
-    },
+    ...userStandardFields,
     doctor_crm: {
-        type: String,
-        required: true
-    },
-    type: {
         type: String,
         required: true
     },
     total_treatments: [
         {
-            type: String,
+            type: Array,
             default: []
         }
     ]
 });
 
-const PatientUser = mongoose.model('patient_user', patientUserSchema, 'patient_forms_data' );
+const PatientUser = mongoose.model('patient_user', patientUserSchema, 'patient_forms_data');
 const DoctorUser = mongoose.model('doctor_user', doctorUserSchema, 'doctor_forms_data');
 
 module.exports = { PatientUser, DoctorUser };

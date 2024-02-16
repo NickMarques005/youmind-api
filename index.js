@@ -42,17 +42,13 @@ app.use('/api', require('./routes/notifications_route'));
 
 //--> CRIAÇÃO DE USUÁRIO E AUTENTICAÇÃO:
 
-app.use('/api', require('./routes/createUser'));
+app.use('/api', require('./routes/authenticate_routes'));
 
-app.use('/api', require('./routes/loginUser'));
-
-app.use('/api', require('./routes/userData'));
-
-app.use('/api', require('./routes/filterUsers'));
+app.use('/api', require('./routes/user_routes'));
 
 //--> TRATAMENTO 
 
-app.use('/api', require('./routes/treatment_route'));
+app.use('/api', require('./routes/treatment_routes'));
 
 //--> CONVERSAS E MENSAGENS 
 

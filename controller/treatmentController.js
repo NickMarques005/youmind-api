@@ -5,7 +5,9 @@ const jwt_mainKey = require('../config').jwt_key;
 
 exports.initializeTreatment = async (req, res) => {
     try {
-        const { email_1, email_2 } = req.body;
+        const { email_1, email_2, userId } = req.body;
+
+        console.log("\n---Usuário autorizado...---\nid: ", userId);
 
         const patient_model = users.PatientUser;
         const doctor_model = users.DoctorUser;
@@ -90,20 +92,12 @@ exports.initializeTreatment = async (req, res) => {
 }
 
 exports.getTreatment = async (req, res) => {
-    const authToken = req.headers.authorization?.split(' ')[1];
-    if (!authToken) {
-        return res.status(401).json({ errors: ["Usuário não autorizado"] });
-    }
-
-    const { type } = req.body;
 
     try {
-        const decodedToken = jwt.verify(authToken, jwt_mainKey);
-        if (!decodedToken) {
-            return res.status(401).json({ errors: ["Usuário não autenticado"] })
-        }
 
-        const userId = decodedToken.user.id;
+        const { type, userId } = req.body;
+
+        console.log("\n---Usuário autorizado...---\nid: ", userId);
 
         const patient_model = users.PatientUser;
         const doctor_model = users.DoctorUser;
@@ -187,20 +181,19 @@ exports.getTreatment = async (req, res) => {
 }
 
 exports.deleteTreatment = async (req, res) => {
-    const authToken = req.headers.authorization?.split(' ')[1];
-    if (!authToken) {
-        return res.status(401).json({ errors: ["Usuário não autorizado"] });
-    }
+    
 
     try {
-        const decodedToken = jwt.verify(authToken, jwt_mainKey);
-        if (!decodedToken) {
-            return res.status(401).json({ errors: ["Usuário não autenticado"] });
+        
+        const { treatmentId, userId } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({ success: false, errors: ['Usuário não autenticado'] });
         }
-
-        const userId = decodedToken.user.id;
-        const { treatmentId } = req.body;
-
+        
+        console.log("\n---Usuário autorizado...---\nid: ", userId);
+        
+        
         if (!treatmentId) {
             return res.status(400).json({ success: false, errors: ['Tratamento não especificado'] });
         }
@@ -247,12 +240,11 @@ exports.deleteTreatment = async (req, res) => {
 
         let remainingTreatments = [];
 
-        if(decodedToken.user.type === 'patient')
-        {
+        if (decodedToken.user.type === 'patient') {
             remainingTreatments = await treatment.find({ patientId: userId });
         }
-        else{
-            remainingTreatments = await treatment.find({doctorId: userId});
+        else {
+            remainingTreatments = await treatment.find({ doctorId: userId });
         }
 
         console.log("Remaining Treatments: ", remainingTreatments);

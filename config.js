@@ -1,10 +1,12 @@
 //---config.js---//
 const dotenv = require('dotenv').config();
 
-const main_key = process.env.JWT_MAIN_KEY;
+const jwt_key = process.env.JWT_MAIN_KEY;
+const refresh_key = process.env.JWT_REFRESH_KEY;
 
-console.log("MAIN KEY: ", main_key);
+console.log("---KEYS:--- \nMAIN:", jwt_key, '\nREFRESH: ', refresh_key);
 
 module.exports = {
-    jwt_key: main_key
+    jwt_key,
+    refresh_key
 };

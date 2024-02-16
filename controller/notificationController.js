@@ -1,9 +1,155 @@
 const notificationModel = require('../models/notification');
 const users = require('../models/users');
-const jwt = require('jsonwebtoken');
-const jwt_mainKey = require('../config').jwt_key;
+const firebase_service = require('../firebase/firebase_service');
+const notificationService = require('../services/notificationService');
 
-exports.sendNotification = async (notification, _id , pushToken) => {
+exports.registerPushNotification = async (req, res) => {
+    console.log("Register PushNotification!");
+
+    try {
+        const { push_token, userId } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({ success: false, errors: ['Usuário não autenticado'] });
+        }
+
+        const token = String(push_token);
+
+        console.log("USER ID: ", userId);
+
+        const existingToken = await firebase_service.getToken(userId);
+
+        console.log("EXISTING TOKEN: ", existingToken);
+
+        if (Object.keys(existingToken).length !== 0) {
+            return res.status(200).json({ success: true, message: "Token já está registrado" })
+        }
+
+        await firebase_service.saveToken(userId, token);
+
+        return res.status(200).json({ success: true, message: "Token registrado com sucesso" });
+    }
+    catch (err) {
+        console.error("Algo deu errado em registrar push Notification: ", err);
+        return res.status(500).json({ success: false });
+    }
+}
+
+exports.notifyTreatmentSolicitation = async (req, res) => {
+    try {
+
+        const { destinatary_user_email, destinatary_user_type, userId } = req.body;
+        
+        if (!userId) {
+            return res.status(401).json({ success: false, errors: ['Usuário não autenticado'] });
+        }
+
+        const patient_model = users.PatientUser;
+        const doctor_model = users.DoctorUser;
+
+        if (destinatary_user_type == "patient") {
+            console.log("PATIENT: ", destinatary_user_email);
+            const destinatary_user = await patient_model.findOne({
+                email: destinatary_user_email
+            }, { _id: 1, name: 1 });
+
+            const sender_user = await doctor_model.findOne({
+                _id: userId
+            }, { name: 1, email: 1 });
+
+            if (!sender_user || !destinatary_user) {
+                return res.status(400).json({ success: false, errors: ["Paciente não encontrado"] });
+            }
+
+            console.log("ID: ", destinatary_user._id);
+
+            const destinatary_id = destinatary_user._id;
+
+            const { token } = await firebase_service.getToken(destinatary_id);
+
+            if (!token) {
+                return res.status(400).json({ success: false, errors: ["Usuário destinatário não possui registro para notificação"] });
+            }
+
+            console.log("SEND PUSH NOTIFICATION!!!", token);
+
+            const notificationData = {
+                title: `Solicitação para tratamento`,
+                body: `O especialista ${sender_user.name} enviou uma solicitação para inicializar tratamento. Deseja aceitar a solicitação?`,
+                data: {
+                    notify_type: 'treatment',
+                    notify_function: 'solicitation',
+                    buttons: {
+                        button_accept: "Aceitar",
+                        button_decline: "Recusar"
+                    },
+                    sender_params: {
+                        email: sender_user.email
+                    },
+                    show_modal: true,
+                },
+            };
+
+            await notificationService.sendPushNotificationAndSave(notificationData, token, destinatary_id);
+
+            return res.status(200).json({ success: true, message: `Solicitação enviada para ${destinatary_user.name}` });
+        }
+        else {
+            console.log("DOCTOR: ", destinatary_user_email);
+
+            const destinatary_user = await doctor_model.findOne({
+                email: destinatary_user_email
+            }, { _id: 1, name: 1 });
+
+            const sender_user = await patient_model.findOne({
+                _id: userId
+            }, { name: 1, email: 1 });
+
+            if (!destinatary_user || !sender_user) {
+                return res.status(400).json({ success: false, errors: ["Paciente não encontrado"] });
+            }
+
+            console.log("ID: ", destinatary_user._id);
+            console.log("USER ID: ", sender_user._id);
+
+            const { token } = await firebase_service.getToken(destinatary_user._id);
+
+            if (!token) {
+                return res.status(400).json({ success: false, errors: ["Usuário destinatário não possui registro para notificação"] });
+            }
+
+            console.log("SEND PUSH NOTIFICATION!!!", token);
+
+            const notificationData = {
+                title: `Solicitação para tratamento`,
+                body: `O paciente ${sender_user.name} enviou uma solicitação para inicializar tratamento. Deseja aceitar a solicitação?`,
+                data: {
+                    notify_type: 'treatment',
+                    notify_function: 'solicitation',
+                    buttons: {
+                        button_accept: "Aceitar",
+                        button_decline: "Recusar"
+                    },
+                    sender_params: {
+                        email: sender_user.email
+                    },
+                    show_modal: true,
+                }
+            };
+
+            await notificationService.sendPushNotificationAndSave(notificationData, token, destinatary_user._id);
+
+
+            return res.status(200).json({ success: true, message: `Solicitação enviada para ${destinatary_user.name}` });
+        }
+    }
+    catch (err) {
+        console.error("Algo deu errado em registrar push Notification: ", err);
+        return res.status(500).json({ success: false, errors: ["Houve um erro no servidor"] });
+    }
+}
+
+exports.sendNotification = async (notification, _id, pushToken) => {
     const { Expo } = require('expo-server-sdk');
     const expo = new Expo();
     console.log("Notification Data: ", notification, " // pushToken: ", pushToken, " // message Id: ", _id);
@@ -12,7 +158,7 @@ exports.sendNotification = async (notification, _id , pushToken) => {
             to: pushToken,
             title: notification.title,
             body: notification.body,
-            data: {...notification.data, _id}
+            data: { ...notification.data, _id }
         }
 
         let receipts = await expo.sendPushNotificationsAsync([notificationToSend]);
@@ -48,7 +194,7 @@ exports.createNotification = async (notificationData, userId) => {
         }
 
         console.log("Notificação criada com sucesso")
-        
+
         return savedNotification._id;
     }
     catch (err) {
@@ -57,14 +203,13 @@ exports.createNotification = async (notificationData, userId) => {
 };
 
 exports.getNotifications = async (req, res) => {
-    const authToken = req.headers.authorization?.split(' ')[1];
-    if (!authToken) {
-        return res.status(401).json({ errors: ["Usuário não autorizado"] });
-    }
 
     try {
-        const decodedToken = jwt.verify(authToken, jwt_mainKey);
-        const userId = decodedToken.user.id;
+        const { userId } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({ success: false, errors: ['Usuário não autenticado'] });
+        }
 
         console.log("Usuário que busca as notificações: ", userId);
 
@@ -78,14 +223,13 @@ exports.getNotifications = async (req, res) => {
 };
 
 exports.deleteNotification = async (req, res) => {
-    const authToken = req.headers.authorization?.split(' ')[1];
-    if (!authToken) {
-        return res.status(401).json({ errors: ["Usuário não autorizado"] });
-    }
 
     try {
-        const decodedToken = jwt.verify(authToken, jwt_mainKey);
-        const userId = decodedToken.user.id;
+        const { userId } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({ success: false, errors: ['Usuário não autenticado'] });
+        }
 
         const notificationId = req.body.notificationId;
         const deletedNotification = await notificationModel.findOneAndDelete({
@@ -107,14 +251,13 @@ exports.deleteNotification = async (req, res) => {
 };
 
 exports.updateNotification = async (req, res) => {
-    const authToken = req.headers.authorization?.split(' ')[1];
-    if (!authToken) {
-        return res.status(401).json({ errors: ["Usuário não autorizado"] });
-    }
 
     try {
-        const decodedToken = jwt.verify(authToken, jwt_mainKey);
-        const userId = decodedToken.user.id;
+        const { userId } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({ success: false, errors: ['Usuário não autenticado'] });
+        }
 
         const notificationId = req.body.notificationId;
         const updatedData = req.body.notificationUpdate;
