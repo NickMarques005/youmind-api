@@ -55,6 +55,8 @@ exports.registerUser = async (req, res) => {
 exports.authenticateUser = async (req, res) => {
     const { email, password, type } = req.body;
 
+
+
     try {
         let userData;
 
@@ -79,18 +81,24 @@ exports.authenticateUser = async (req, res) => {
             return res.status(400).json({ success: false, message: "Senha incorreta" });
         }
 
+        const accessTokenExpiresIn = '30s'; 
+        const refreshTokenExpiresIn = '30d';
+
         const dataAuthentication = {
             user: {
                 id: userData.id,
             }
         };
 
-        const accessToken = jwt.sign(dataAuthentication, jwt_mainKey, { expiresIn: '30s' });
-        const refreshToken = jwt.sign(dataAuthentication, jwt_refreshKey, { expiresIn: '1800s' })
+        const accessToken = jwt.sign(dataAuthentication, jwt_mainKey, { expiresIn: accessTokenExpiresIn });
+        const refreshToken = jwt.sign(dataAuthentication, jwt_refreshKey, { expiresIn: refreshTokenExpiresIn });
+
+        const accessTokenExp = new Date(new Date().getTime() + 30*1000);
+        const refreshTokenExp = new Date(new Date().getTime() + 30*24*60*60*1000);
 
         const tokens = {
-            accessToken,
-            refreshToken
+            accessToken: {token: accessToken, exp: accessTokenExp},
+            refreshToken: {token: refreshToken, exp: refreshTokenExp}
         }
 
         return res.status(200).json({ success: true, message: "Login efetuado com sucesso", data: tokens });
@@ -115,6 +123,8 @@ exports.refreshToken = async (req, res, next) => {
         }
         else {
             const jwtKey = config_environment.jwt_key;
+            const accessTokenExpiresIn = '30s';
+            
             const userId = decode.user.id;
             const data_authentication = {
                 user: {
@@ -122,10 +132,11 @@ exports.refreshToken = async (req, res, next) => {
                 }
             }
             const newToken = jwt.sign(data_authentication, jwtKey, { expiresIn: '30s' });
+            const newTokenExp = new Date(new Date().getTime() + 30*1000);
 
             const tokens = {
-                accessToken: newToken,
-                refreshToken: refreshToken
+                accessToken: { token: newToken, exp: newTokenExp},
+                refreshToken: { token: refreshToken }
             }
 
             res.status(200).json({
@@ -140,7 +151,7 @@ exports.refreshToken = async (req, res, next) => {
 exports.logoutUser = async (req, res) => {
 
     try {
-        
+
         const { type, userId } = req.body;
 
         if (!userId) {

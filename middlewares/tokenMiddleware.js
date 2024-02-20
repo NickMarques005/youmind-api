@@ -15,7 +15,8 @@ const verifyToken = (req, res, next) => {
 
     try{
         const decoded = jwt.verify(token, jwt_mainKey);
-        req.userId = decoded.user.id;
+        req.body.userId = decoded.user.id;
+        console.log("MiddleWare Verify Token: ", decoded.user.id);
         next();
     }
     catch(err)
