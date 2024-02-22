@@ -75,7 +75,7 @@ exports.getConversationTreatment = async (req, res) => {
         return res.status(200).json({ success: true, data: treatmentId })
 
     }
-    catch {
+    catch(err) {
         console.error("Algo deu errado em pegar conversa: ", err);
         return res.status(500).json({ success: false, errors: ["Houve um erro no servidor"] });
     }
