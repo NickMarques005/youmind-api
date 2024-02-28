@@ -131,7 +131,7 @@ exports.refreshToken = async (req, res, next) => {
                     id: userId
                 }
             }
-            const newToken = jwt.sign(data_authentication, jwtKey, { expiresIn: '30s' });
+            const newToken = jwt.sign(data_authentication, jwtKey, { expiresIn: accessTokenExpiresIn });
             const newTokenExp = new Date(new Date().getTime() + 30*1000);
 
             const tokens = {
@@ -153,6 +153,8 @@ exports.logoutUser = async (req, res) => {
     try {
 
         const { type, userId } = req.body;
+
+        console.log("LOGOUT USER...");
 
         if (!userId) {
             return res.status(401).json({ success: false, errors: ['Usuário não autenticado'] });

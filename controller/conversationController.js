@@ -17,8 +17,8 @@ exports.getConversationTreatment = async (req, res) => {
             return res.status(400).json({ success: false, errors: ["Emails inválidos. Tente novamente"] });
         }
 
-        const patient_model = users.PatientUser;
-        const doctor_model = users.DoctorUser;
+        const patient_model = PatientUser;
+        const doctor_model = DoctorUser;
 
         let user_patient;
         let user_doctor;
