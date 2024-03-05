@@ -6,6 +6,7 @@ const { initializeSocket } = require('./socket/socket');
 const { Server } = require('socket.io');
 const dotenv = require('dotenv').config();
 
+
 const bodyparser = require('body-parser');
 const app = express();
 const http = require('http');
@@ -19,6 +20,7 @@ initializeSocket(server);
 
 //Firebase server:
 const firebaseServer = require('./firebase/firebase_service');
+const { sendEmail, emailInit } = require('./services/mailService');
 
 //***************//
 //Banco de dados://
@@ -27,7 +29,6 @@ const firebaseServer = require('./firebase/firebase_service');
 //Executando funcionalidades do banco de dados: 
 database();
 app.use(express.json());
-
 
 //**********//
 //  Rotas:  //

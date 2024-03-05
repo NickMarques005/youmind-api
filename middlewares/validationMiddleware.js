@@ -2,7 +2,7 @@ const { body, validationResult } = require('express-validator');
 
 const validateCreateUser = [
     body('email').isEmail(),
-    body('name').isLength({ min: 3 }),
+    body('name').isLength({ min: 3, max: 25 }),
     body('password').isLength({ min: 8 }),
     body('type').not().isEmpty(),
     body('phone').not().isEmpty(),
