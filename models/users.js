@@ -25,6 +25,16 @@ const userStandardFields = {
         type: String,
         required: true
     },
+    verified: {
+        type:Boolean,
+        default: false,
+        required: true
+    },
+    avatar: {
+        type: String,
+        default: '',
+        required: true
+    }
 }
 
 const patientUserSchema = new Schema({

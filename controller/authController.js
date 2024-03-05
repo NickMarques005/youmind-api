@@ -3,8 +3,10 @@
 const express = require('express');
 const config_environment = require('../config');
 const users = require('../models/users');
+const verification_token = require('../models/verification_token');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { generateOTP } = require('../utils/mail');
 
 //Chaves para assinar os tokens JWT.
 const jwt_mainKey = config_environment.jwt_key;
@@ -20,10 +22,13 @@ exports.registerUser = async (req, res) => {
         let userModel;
         switch (type) {
             case 'patient':
+                userModel = users.PatientUser;
                 break;
             case 'doctor':
+                userModel = users.DoctorUser;
                 break;
             default:
+                console.log("Algo deu errado em criar usuário! Schema não especificado");
                 break;
         }
 
@@ -36,13 +41,24 @@ exports.registerUser = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Registro CRM inválido' });
         }
 
-        await userModel.create({
+        const OTP = generateOTP();
+
+
+        const newUser = new userModel({
             name,
             email,
             password: hashedPassword,
             phone,
             ...(type === 'doctor' && { doctor_crm })
+        })
+
+        const verificationToken = new verification_token({
+            owner: newUser._id,
+            token: OTP
         });
+
+        await verificationToken.save();
+        await newUser.save();
 
         res.json({ success: true, message: 'Sua conta foi criada com sucesso!' });
     }
@@ -195,3 +211,7 @@ exports.logoutUser = async (req, res) => {
         return res.status(500).json({ success: false, errors: ['Erro interno do servidor.'] });
     }
 };
+
+exports.verifyEmail = async () => {
+
+}
