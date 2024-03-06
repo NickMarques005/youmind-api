@@ -20,7 +20,6 @@ initializeSocket(server);
 
 //Firebase server:
 const firebaseServer = require('./firebase/firebase_service');
-const { sendEmail, emailInit } = require('./services/mailService');
 
 //***************//
 //Banco de dados://
