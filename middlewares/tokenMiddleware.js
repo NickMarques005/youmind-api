@@ -1,4 +1,4 @@
-//---verifyToken.js---//
+//---tokenMiddleware.js---//
 
 const jwt = require('jsonwebtoken');
 const jwt_mainKey = require('../config').jwt_key;

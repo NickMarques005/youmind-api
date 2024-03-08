@@ -1,3 +1,5 @@
+//---validationMiddleware.js---//
+
 const { body, validationResult } = require('express-validator');
 
 const validateCreateUser = [
@@ -10,7 +12,8 @@ const validateCreateUser = [
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() })
+            const extractedErrors = errors.array().map(err => err.msg);
+            return res.status(400).json({ success: false, errors: extractedErrors })
         }
         next();
     }
@@ -18,11 +21,12 @@ const validateCreateUser = [
 
 const validateLoginUser = [
     body('email', 'Email incorreto').isEmail(),
-    body('password', 'Senha incorreta').isLength({ min: 8 }),
+    body('password', 'A senha está incorreta! Ela deve ter no mínimo 8 caracteres.').isLength({ min: 8 }),
     (req, res, next) => {
-        const errors = validateResult(req);
+        const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() })
+            const extractedErrors = errors.array().map(err => err.msg);
+            return res.status(400).json({ success: false, errors: extractedErrors })
         }
         next();
     }

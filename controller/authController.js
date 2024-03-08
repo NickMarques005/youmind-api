@@ -7,6 +7,7 @@ const verification_token = require('../models/verification_token');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { generateOTP } = require('../utils/mail');
+const { sendMailService } = require('../services/mailService');
 
 //Chaves para assinar os tokens JWT.
 const jwt_mainKey = config_environment.jwt_key;
@@ -34,21 +35,23 @@ exports.registerUser = async (req, res) => {
 
         const registered = await userModel.findOne({ email });
         if (registered) {
-            return res.status(400).json({ success: false, message: 'O usuário já está registrado' });
+            return res.status(400).json({ success: false, errors: ['O usuário já está registrado'] });
         }
 
         if (type === 'doctor' && !doctor_crm) {
-            return res.status(400).json({ success: false, message: 'Registro CRM inválido' });
+            return res.status(400).json({ success: false, errors: ['Registro CRM inválido'] });
         }
 
         const OTP = generateOTP();
 
+        console.log("OTP CRIADO: ", OTP);
 
         const newUser = new userModel({
             name,
             email,
             password: hashedPassword,
             phone,
+            type,
             ...(type === 'doctor' && { doctor_crm })
         })
 
@@ -57,23 +60,27 @@ exports.registerUser = async (req, res) => {
             token: OTP
         });
 
-        await verificationToken.save();
         await newUser.save();
+        await verificationToken.save();
+
+        sendMailService('sendVerificationEmail', {
+            userData: { email: email, name: name },
+            OTP: OTP
+        }
+        );
 
         res.json({ success: true, message: 'Sua conta foi criada com sucesso!' });
     }
     catch (err) {
         console.error(`Erro ao criar usuário: ${err}`);
-        res.status(500).json({ success: false, message: 'Houve um erro no servidor ao criar usuário' });
+        res.status(500).json({ success: false, errors: ['Erro interno do servidor'] });
     }
 }
 
 exports.authenticateUser = async (req, res) => {
     const { email, password, type } = req.body;
-
-
-
     try {
+        console.log("Login de usuário!\n");
         let userData;
 
         switch (type) {
@@ -84,20 +91,20 @@ exports.authenticateUser = async (req, res) => {
                 userData = await users.DoctorUser.findOne({ email });
                 break;
             default:
-                return res.status(400).json({ success: false, message: "Tipo de usuário inválido" });
+                return res.status(400).json({ success: false, errors: ["Tipo de usuário não especificado"] });
         }
 
         if (!userData) {
-            return res.status(400).json({ success: false, message: `${type.charAt(0).toUpperCase() + type.slice(1)} não encontrado.` })
+            return res.status(400).json({ success: false, errors: [`Usuário não cadastrado`] });
         }
 
         const passwordCompare = await bcrypt.compare(password, userData.password);
 
         if (!passwordCompare) {
-            return res.status(400).json({ success: false, message: "Senha incorreta" });
+            return res.status(400).json({ success: false, errors: ["Senha incorreta"] });
         }
 
-        const accessTokenExpiresIn = '30s'; 
+        const accessTokenExpiresIn = '30s';
         const refreshTokenExpiresIn = '30d';
 
         const dataAuthentication = {
@@ -109,12 +116,12 @@ exports.authenticateUser = async (req, res) => {
         const accessToken = jwt.sign(dataAuthentication, jwt_mainKey, { expiresIn: accessTokenExpiresIn });
         const refreshToken = jwt.sign(dataAuthentication, jwt_refreshKey, { expiresIn: refreshTokenExpiresIn });
 
-        const accessTokenExp = new Date(new Date().getTime() + 30*1000);
-        const refreshTokenExp = new Date(new Date().getTime() + 30*24*60*60*1000);
+        const accessTokenExp = new Date(new Date().getTime() + 30 * 1000);
+        const refreshTokenExp = new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000);
 
         const tokens = {
-            accessToken: {token: accessToken, exp: accessTokenExp},
-            refreshToken: {token: refreshToken, exp: refreshTokenExp}
+            accessToken: { token: accessToken, exp: accessTokenExp },
+            refreshToken: { token: refreshToken, exp: refreshTokenExp }
         }
 
         return res.status(200).json({ success: true, message: "Login efetuado com sucesso", data: tokens });
@@ -122,7 +129,7 @@ exports.authenticateUser = async (req, res) => {
     }
     catch (err) {
         console.error("Erro ao autenticar o usuário: ", err);
-        return res.status(500).json({ success: false, message: "Houve um erro no servidor" });
+        return res.status(500).json({ success: false, errors: ["Erro interno do servidor"] });
     }
 }
 
@@ -140,7 +147,7 @@ exports.refreshToken = async (req, res, next) => {
         else {
             const jwtKey = config_environment.jwt_key;
             const accessTokenExpiresIn = '30s';
-            
+
             const userId = decode.user.id;
             const data_authentication = {
                 user: {
@@ -148,10 +155,10 @@ exports.refreshToken = async (req, res, next) => {
                 }
             }
             const newToken = jwt.sign(data_authentication, jwtKey, { expiresIn: accessTokenExpiresIn });
-            const newTokenExp = new Date(new Date().getTime() + 30*1000);
+            const newTokenExp = new Date(new Date().getTime() + 30 * 1000);
 
             const tokens = {
-                accessToken: { token: newToken, exp: newTokenExp},
+                accessToken: { token: newToken, exp: newTokenExp },
                 refreshToken: { token: refreshToken }
             }
 
