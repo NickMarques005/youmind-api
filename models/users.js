@@ -11,7 +11,8 @@ const userStandardFields = {
     },
     email: {
         type: String,
-        required: true
+        required: true,
+        unique: true,
     },
     password: {
         type: String,
@@ -28,12 +29,11 @@ const userStandardFields = {
     verified: {
         type:Boolean,
         default: false,
-        required: true
+        required: false
     },
     avatar: {
         type: String,
         default: '',
-        required: true
     }
 }
 

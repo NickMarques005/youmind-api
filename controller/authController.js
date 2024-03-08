@@ -69,7 +69,7 @@ exports.registerUser = async (req, res) => {
         }
         );
 
-        res.json({ success: true, message: 'Sua conta foi criada com sucesso!' });
+        res.status(200).json({ success: true, message: 'Sua conta foi criada com sucesso!' });
     }
     catch (err) {
         console.error(`Erro ao criar usuário: ${err}`);

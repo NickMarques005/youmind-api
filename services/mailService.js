@@ -1,61 +1,73 @@
-const nodemailer = require('nodemailer');
-const { SettingOAuthClient } = require('../utils/oauth');
+//---mailService.js---//
 
-const createTransporterEmail = async () => {
+const { sendMail } = require('../utils/mail');
+const emailTemplates = require('../utils/mailTemplates');
 
-    const ClientParams = {
-        clientId: process.env.MAIL_CLIENT_ID,
-        clientSecret: process.env.MAIL_CLIENT_SECRET,
-        uri: process.env.MAIL_URI,
-        refreshToken: process.env.MAIL_REFRESH_TOKEN
+const sendMultipleMails = ({ emails, subject, htmlTemplate }) => {
+
+    const total_emails = Array.isArray(emails) ? emails.join(',') : emails
+
+    const options = {
+        from: process.env.MAIL_EMAIL,
+        to: total_emails,
+        subject: subject,
+        html: htmlTemplate
     }
+}
 
-    const OAuthAccessToken = await SettingOAuthClient(ClientParams);
+const sendIndividualMail = async ({ email, subject, htmlTemplate }) => {
+    const options = {
+        from: process.env.MAIL_EMAIL,
+        to: email,
+        subject: subject,
+        html: htmlTemplate
+    };
 
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            type: "OAuth2",
-            user:process.env.MAIL_EMAIL,
-            accessToken: OAuthAccessToken,
-            clientId: process.env.MAIL_CLIENT_ID,
-            clientSecret: process.env.MAIL_CLIENT_SECRET,
-            refreshToken: process.env.REFRESH_TOKEN
+    await sendMail(options);
+}
+
+const mailServices = {
+    sendVerificationEmail: async ({ userData, OTP }) => {
+        const email = userData.email;
+        const name = userData.name;
+        const { subject, html } = emailTemplates.verifyAccount({ name, OTP });
+        await sendIndividualMail({ email, name, subject, htmlTemplate: html });
+    },
+    welcomeEmail: async (userData) => {
+        const email = userData.email;
+        const name = userData.name;
+        const { subject, html } = emailTemplates.welcomeUser({ name });
+        await sendIndividualMail({ email, name, subject, htmlTemplate: html });
+    },
+    resetPasswordEmail: async ({ userData, OTP }) => {
+        const email = userData.email;
+        const name = userData.name;
+        const { subject, html } = emailTemplates.resetPassword({ name, OTP });
+        await sendIndividualMail({ email, name, subject, htmlTemplate: html });
+    },
+    passwordUpdatedEmail: async (userData) => {
+        const email = userData.email;
+        const name = userData.name;
+        const { subject, html } = emailTemplates.passwordUpdated({ name });
+        await sendIndividualMail({ email, name, subject, htmlTemplate: html });
+    },
+    updateAppEmail: async (userData) => {
+        for (let i = 0; i < userData.emails.length; i++) {
+            const email = userData.emails[i];
+            const name = userData.names[i];
+            const { subject, html } = emailTemplates.passwordUpdated({ name });
+            await sendIndividualMail({ email, name, subject, htmlTemplate: html });
         }
-    });
-
-    return transporter;
-};
-
-const mailTemplate = async (emails, message) => {
-
-    const mailTemplate = {
-        from: {
-            name: 'YouMind',
-            address: process.env.MAIL_EMAIL
-        },
-        to: emails,
-        subject: 'HELLO WORLD',
-        html: message,
-    }
-
-    return mailTemplate
-}
-
-const sendMail = async (emails, message) => {
-
-    try {
-        let transporter = await createTransporterEmail();
-        const mailOptions = await mailTemplate(emails, message);
-
-        let info = await transporter.sendMail(mailOptions);
-
-        console.log('Mensagem enviada: ', info.messageId, '\nMessage: ', info.response);
-        console.log(info.accepted ? info.accepted : info.rejected);
-    }
-    catch (err) {
-        console.log("Erro ao enviar E-MAIL: ", err);
     }
 }
 
-module.exports = { sendMail };
+const sendMailService = async (type, options) => {
+    if (mailServices[type]) {
+        await mailServices[type](options);
+    }
+    else {
+        throw new Error('Tipo de serviço de e-mail não definido');
+    }
+}
+
+module.exports = { sendMailService };
