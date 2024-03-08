@@ -1,17 +1,30 @@
 const nodemailer = require('nodemailer');
-const emailjs = require('@emailjs/nodejs');
+const { SettingOAuthClient } = require('../utils/oauth');
 
-const transportEmail = () => {
-    return nodemailer.createTransport({
+const createTransporterEmail = async () => {
+
+    const ClientParams = {
+        clientId: process.env.MAIL_CLIENT_ID,
+        clientSecret: process.env.MAIL_CLIENT_SECRET,
+        uri: process.env.MAIL_URI,
+        refreshToken: process.env.MAIL_REFRESH_TOKEN
+    }
+
+    const OAuthAccessToken = await SettingOAuthClient(ClientParams);
+
+    const transporter = nodemailer.createTransport({
         service: 'gmail',
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
         auth: {
-            user: process.env.MAIL_EMAIL,
-            pass: process.env.MAIL_PASSWORD,
+            type: "OAuth2",
+            user:process.env.MAIL_EMAIL,
+            accessToken: OAuthAccessToken,
+            clientId: process.env.MAIL_CLIENT_ID,
+            clientSecret: process.env.MAIL_CLIENT_SECRET,
+            refreshToken: process.env.REFRESH_TOKEN
         }
-    })
+    });
+
+    return transporter;
 };
 
 const mailTemplate = async (emails, message) => {
@@ -23,34 +36,26 @@ const mailTemplate = async (emails, message) => {
         },
         to: emails,
         subject: 'HELLO WORLD',
-        html: messagStructure,
+        html: message,
     }
 
     return mailTemplate
 }
 
-exports.sendMail = async (emails, message) => {
+const sendMail = async (emails, message) => {
 
     try {
-        const transporter = transportEmail();
-        const mailOptions = mailTemplate(emails, message);
+        let transporter = await createTransporterEmail();
+        const mailOptions = await mailTemplate(emails, message);
 
-        await transporter.sendMail(mailOptions);
+        let info = await transporter.sendMail(mailOptions);
 
-        console.log('Message sent: ', info.messageId, '\nMessage: ', info.response);
+        console.log('Mensagem enviada: ', info.messageId, '\nMessage: ', info.response);
         console.log(info.accepted ? info.accepted : info.rejected);
     }
     catch (err) {
-        console.log("Erro ao enviar email: ", err);
+        console.log("Erro ao enviar E-MAIL: ", err);
     }
 }
 
-const emailExample = ['nicolas.marques005@gmail.com']
-
-const messageStructure = `<p>Hello Nicolas,</p>
-        <p>You got a new message from YouMind:</p>
-        <p style="padding: 12px; border-left: 4px solid #d0d0d0; font-style: italic;">How are you doing today? ;)</p>
-        <p>Best wishes,<br>YouMind team</p>`
-
-//Send Mail Example:
-sendMail(emailExample, messageStructure);
+module.exports = { sendMail };
