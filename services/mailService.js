@@ -39,10 +39,10 @@ const mailServices = {
         const { subject, html } = emailTemplates.welcomeUser({ name });
         await sendIndividualMail({ email, name, subject, htmlTemplate: html });
     },
-    resetPasswordEmail: async ({ userData, OTP }) => {
+    resetPasswordEmail: async ({ userData, resetLink }) => {
         const email = userData.email;
         const name = userData.name;
-        const { subject, html } = emailTemplates.resetPassword({ name, OTP });
+        const { subject, html } = emailTemplates.resetPassword({ name, resetLink });
         await sendIndividualMail({ email, name, subject, htmlTemplate: html });
     },
     passwordUpdatedEmail: async ({userData}) => {
