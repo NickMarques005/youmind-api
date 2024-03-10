@@ -33,7 +33,7 @@ const mailServices = {
         const { subject, html } = emailTemplates.verifyAccount({ name, OTP });
         await sendIndividualMail({ email, name, subject, htmlTemplate: html });
     },
-    welcomeEmail: async (userData) => {
+    welcomeEmail: async ({userData}) => {
         const email = userData.email;
         const name = userData.name;
         const { subject, html } = emailTemplates.welcomeUser({ name });
@@ -45,13 +45,13 @@ const mailServices = {
         const { subject, html } = emailTemplates.resetPassword({ name, OTP });
         await sendIndividualMail({ email, name, subject, htmlTemplate: html });
     },
-    passwordUpdatedEmail: async (userData) => {
+    passwordUpdatedEmail: async ({userData}) => {
         const email = userData.email;
         const name = userData.name;
         const { subject, html } = emailTemplates.passwordUpdated({ name });
         await sendIndividualMail({ email, name, subject, htmlTemplate: html });
     },
-    updateAppEmail: async (userData) => {
+    updateAppEmail: async ({userData}) => {
         for (let i = 0; i < userData.emails.length; i++) {
             const email = userData.emails[i];
             const name = userData.names[i];

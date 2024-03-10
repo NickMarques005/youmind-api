@@ -8,6 +8,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { generateOTP } = require('../utils/mail');
 const { sendMailService } = require('../services/mailService');
+const { isValidObjectId } = require('mongoose');
 
 //Chaves para assinar os tokens JWT.
 const jwt_mainKey = config_environment.jwt_key;
@@ -219,6 +220,51 @@ exports.logoutUser = async (req, res) => {
     }
 };
 
-exports.verifyEmail = async () => {
+exports.verifyEmail = async (req, res) => {
+    const { userId, otp, type } = req.body;
 
+    if (!userId || !otp.trim()) {
+        return res.status(401).json({ success: false, errors: ['Requisição inválida: Usuário ou OTP não especificado'] });
+    }
+
+    if (!isValidObjectId(userId)) {
+        return res.status(401).json({ success: false, errors: ['Usuário inválido'] });
+    }
+
+    let user;
+
+    switch (type) {
+        case 'patient':
+            user = await users.PatientUser.findOne({ _id: userId });
+            break;
+        case 'doctor':
+            user = await users.DoctorUser.findOne({ _id: userId });
+            break;
+        default:
+            return res.status(400).json({ success: false, errors: ["Tipo de usuário não especificado"] });
+    }
+
+    if (!user) {
+        return res.status(400).json({ success: false, errors: [`Usuário não cadastrado`] });
+    }
+
+    if(user.verified) return res.status(400).json({success: false, errors: ['Essa conta já foi verificada! Por favor faça seu login ;)']})
+
+    const tokenOtp = await verification_token.findOne({ owner: user._id});
+    if(!tokenOtp) return res.status(400).json({success: false, errors: ['Token do código OTP não encontrado']});
+
+    const isMatched = await tokenOtp.compareToken(otp);
+    if(!isMatched) return res.status(401).json({success: false, errors: ['Por favor, entre com um token válido!']})
+
+    user.verified = true;
+
+    await verification_token.findByIdAndDelete(tokenOtp._id);
+    await user.save();
+
+    sendMailService('welcomeEmail', {
+        userData: { email: user.email, name: user.name }
+    }
+    );
+
+    res.status(200).json({ success: true, message: 'Sua conta foi verificada com sucesso!' });
 }

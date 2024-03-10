@@ -11,6 +11,8 @@ router.post('/createUser',
     authController.registerUser
 )
 
+router.post('/verifyEmail', authController.verifyEmail);
+
 router.post('/loginUser', 
     validateMiddleware.validateLoginUser,
     authController.authenticateUser
