@@ -1,7 +1,6 @@
 //---authController.js---//
 
 const config_environment = require("../config");
-const users = require("../models/users");
 const verification_token = require("../models/verification_token");
 const reset_token = require('../models/reset_token');
 const bcrypt = require("bcryptjs");
@@ -12,31 +11,13 @@ const { isValidObjectId } = require("mongoose");
 
 const crypto = require('crypto');
 const { createRandomBytes } = require("../utils/security");
+const { getUserModel } = require("../utils/model");
 
 
 //Chaves para assinar os tokens JWT.
 const jwt_mainKey = config_environment.jwt_key;
 const jwt_refreshKey = config_environment.refresh_key;
 
-
-const getUserModel = (type, res) => {
-    switch (type) {
-        case "patient":
-            return users.PatientUser;
-        case "doctor":
-            return users.DoctorUser;
-        default:
-            console.log(
-                "Algo deu errado em criar usuário! Schema não especificado"
-            );
-            return res
-                .status(400)
-                .json({
-                    success: false,
-                    errors: ["Tipo de usuário não especificado"],
-                });
-    }
-}
 
 exports.registerUser = async (req, res) => {
     const { name, email, password, type, phone, doctor_crm } = req.body;
@@ -102,7 +83,7 @@ exports.registerUser = async (req, res) => {
             .status(500)
             .json({ success: false, errors: ["Erro interno do servidor"] });
     }
-};
+}
 
 exports.authenticateUser = async (req, res) => {
     const { email, password, type } = req.body;
@@ -172,7 +153,7 @@ exports.authenticateUser = async (req, res) => {
             .status(500)
             .json({ success: false, errors: ["Erro interno do servidor"] });
     }
-};
+}
 
 exports.refreshToken = async (req, res, next) => {
     const refreshToken = req.body.refreshToken;
@@ -210,7 +191,7 @@ exports.refreshToken = async (req, res, next) => {
             });
         }
     });
-};
+}
 
 exports.logoutUser = async (req, res) => {
     try {
@@ -267,7 +248,7 @@ exports.logoutUser = async (req, res) => {
             .status(500)
             .json({ success: false, errors: ["Erro interno do servidor."] });
     }
-};
+}
 
 exports.verifyEmail = async (req, res) => {
     const { userId, otp, type } = req.body;
@@ -339,7 +320,7 @@ exports.verifyEmail = async (req, res) => {
     res
         .status(200)
         .json({ success: true, message: "Sua conta foi verificada com sucesso!" });
-};
+}
 
 exports.forgotPassword = async (req, res) => {
     const { email, type } = req.body;
@@ -374,12 +355,48 @@ exports.forgotPassword = async (req, res) => {
     const resetToken = new reset_token({ owner: user._id, token: newTokenForResetPass})
     await resetToken.save();
 
-    console.log(`URL para resetar senha: ${process.env.RESETPASS_URL}/reset-password?token=${newTokenForResetPass}&id=${user._id}`);
+    console.log(`URL para resetar senha: ${process.env.RESETPASS_URL}/reset-password?token=${newTokenForResetPass}&id=${user._id}&type=${user.type}`);
 
     sendMailService("resetPasswordEmail", {
         userData: { email: user.email, name: user.name },
-        resetLink: `${process.env.RESETPASS_URL}/reset-password?token=${newTokenForResetPass}&id=${user._id}`,
+        resetLink: `${process.env.RESETPASS_URL}/reset-password?token=${newTokenForResetPass}&id=${user._id}&type=${user.type}`,
     });
 
     return res.status(200).json({success: true, message: 'O link para resetar sua senha foi enviado para seu e-mail.'});
+}
+
+exports.resetPass = async (req, res) => {
+    const { password, type } = req.body;
+
+    let userModel;
+
+    try {
+        userModel = getUserModel(type, res);
+    } catch (err) {
+        console.log(err.message);
+        return res.status(400).json({ success: false, errors: [err.message] });
+    }
+
+    const user = userModel.findById(req.user._id);
+    if(!user) return res.status(400).json({ success: false, errors: ['Usuário não encontrado']});
+
+    const passMatched = await user.comparePassword(password);
+
+    if(passMatched)return res.status(401).json({ success: false, errors: ['A nova senha não pode ser igual a senha anterior!']});
+
+    if(password.trim().length < 8 || password.trim().length > 20)
+    {
+        return res.status(400).json({ success: false, errors: ['Senha inválida. Deve ser entre 8 à 25 caracteres!']});
+    }
+
+    user.password = password.trim();
+
+    await user.save();
+    await reset_token.findOneAndDelete({ owner: user._id});
+    
+    sendMailService("passwordUpdatedEmail", {
+        userData: { email: user.email, name: user.name }
+    });
+
+    return res.status(200).json({success: true, message: 'Sua senha foi alterada com sucesso!'});
 }
