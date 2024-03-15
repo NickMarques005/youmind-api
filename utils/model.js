@@ -1,20 +1,22 @@
 const users = require('../models/users');
 
 exports.getUserModel = (type, res) => {
+
+    let model;
+
     switch (type) {
         case "patient":
-            return users.PatientUser;
+            model = users.PatientUser;
+            break;
         case "doctor":
-            return users.DoctorUser;
+            model = users.DoctorUser;
+            break;
         default:
             console.log(
                 "Algo deu errado em criar usuário! Schema não especificado"
             );
-            return res
-                .status(400)
-                .json({
-                    success: false,
-                    errors: ["Tipo de usuário não especificado"],
-                });
+            break;
     }
+
+    return model;
 }

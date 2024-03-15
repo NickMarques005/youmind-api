@@ -23,6 +23,7 @@ exports.isResetTokenValid = async (req, res, next) => {
 
     console.log("Usuário validado para trocar senha!!");
     req.user = user;
+    req.type = type;
 
     next();
 }

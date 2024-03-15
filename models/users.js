@@ -1,7 +1,7 @@
 //---users.js---//
 
 const mongoose = require('mongoose');
-
+const bcrypt = require('bcryptjs');
 const { Schema } = mongoose;
 
 const userStandardFields = {
@@ -58,6 +58,17 @@ const doctorUserSchema = new Schema({
         }
     ]
 });
+
+patientUserSchema.methods.comparePassword = async function(pass) {
+    const result = await bcrypt.compareSync(pass, this.password);
+    return result;
+};
+
+doctorUserSchema.methods.comparePassword = async function(pass) {
+    const result = await bcrypt.compareSync(pass, this.password);
+    return result;
+};
+
 
 const PatientUser = mongoose.model('patient_user', patientUserSchema, 'patient_forms_data');
 const DoctorUser = mongoose.model('doctor_user', doctorUserSchema, 'doctor_forms_data');

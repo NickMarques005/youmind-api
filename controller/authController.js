@@ -35,6 +35,15 @@ exports.registerUser = async (req, res) => {
             return res.status(400).json({ success: false, errors: [err.message] });
         }
 
+        if (!userModel) {
+            return res
+                .status(400)
+                .json({
+                    success: false,
+                    errors: ["Tipo de usuário não especificado"],
+                });
+        }
+
         const registered = await userModel.findOne({ email });
         if (registered) {
             return res
@@ -96,6 +105,15 @@ exports.authenticateUser = async (req, res) => {
         } catch (err) {
             console.log(err.message);
             return res.status(400).json({ success: false, errors: [err.message] });
+        }
+
+        if (!userModel) {
+            return res
+                .status(400)
+                .json({
+                    success: false,
+                    errors: ["Tipo de usuário não especificado"],
+                });
         }
 
         const userData = await userModel.findOne({ email });
@@ -227,6 +245,15 @@ exports.logoutUser = async (req, res) => {
             return res.status(400).json({ success: false, errors: [err.message] });
         }
 
+        if (!userModel) {
+            return res
+                .status(400)
+                .json({
+                    success: false,
+                    errors: ["Tipo de usuário não especificado"],
+                });
+        }
+
         const user = await userModel.findById(userId);
 
         if (!user) {
@@ -275,6 +302,15 @@ exports.verifyEmail = async (req, res) => {
     } catch (err) {
         console.log(err.message);
         return res.status(400).json({ success: false, errors: [err.message] });
+    }
+
+    if (!userModel) {
+        return res
+            .status(400)
+            .json({
+                success: false,
+                errors: ["Tipo de usuário não especificado"],
+            });
     }
 
     const user = await userModel.findById(userId);
@@ -352,7 +388,7 @@ exports.forgotPassword = async (req, res) => {
 
     const newTokenForResetPass = await createRandomBytes();
 
-    const resetToken = new reset_token({ owner: user._id, token: newTokenForResetPass})
+    const resetToken = new reset_token({ owner: user._id, token: newTokenForResetPass })
     await resetToken.save();
 
     console.log(`URL para resetar senha: ${process.env.RESETPASS_URL}/reset-password?token=${newTokenForResetPass}&id=${user._id}&type=${user.type}`);
@@ -362,13 +398,14 @@ exports.forgotPassword = async (req, res) => {
         resetLink: `${process.env.RESETPASS_URL}/reset-password?token=${newTokenForResetPass}&id=${user._id}&type=${user.type}`,
     });
 
-    return res.status(200).json({success: true, message: 'O link para resetar sua senha foi enviado para seu e-mail.'});
+    return res.status(200).json({ success: true, message: 'O link para resetar sua senha foi enviado para seu e-mail.' });
 }
 
 exports.resetPass = async (req, res) => {
-    const { password, type } = req.body;
-
+    const { password } = req.body;
+    const type = req.type;
     let userModel;
+
 
     try {
         userModel = getUserModel(type, res);
@@ -377,26 +414,34 @@ exports.resetPass = async (req, res) => {
         return res.status(400).json({ success: false, errors: [err.message] });
     }
 
-    const user = userModel.findById(req.user._id);
-    if(!user) return res.status(400).json({ success: false, errors: ['Usuário não encontrado']});
+    if (!userModel) {
+        return res
+            .status(400)
+            .json({
+                success: false,
+                errors: ["Tipo de usuário não especificado"],
+            });
+    }
+
+    const user = await userModel.findById(req.user._id);
+    if (!user) return res.status(400).json({ success: false, errors: ['Usuário não encontrado'] });
 
     const passMatched = await user.comparePassword(password);
 
-    if(passMatched)return res.status(401).json({ success: false, errors: ['A nova senha não pode ser igual a senha anterior!']});
+    if (passMatched) return res.status(401).json({ success: false, errors: ['A nova senha não pode ser igual a senha anterior!'] });
 
-    if(password.trim().length < 8 || password.trim().length > 20)
-    {
-        return res.status(400).json({ success: false, errors: ['Senha inválida. Deve ser entre 8 à 25 caracteres!']});
+    if (password.trim().length < 8 || password.trim().length > 20) {
+        return res.status(400).json({ success: false, errors: ['Senha inválida. Deve ser entre 8 à 25 caracteres!'] });
     }
 
     user.password = password.trim();
 
     await user.save();
-    await reset_token.findOneAndDelete({ owner: user._id});
-    
+    await reset_token.findOneAndDelete({ owner: user._id });
+
     sendMailService("passwordUpdatedEmail", {
         userData: { email: user.email, name: user.name }
     });
 
-    return res.status(200).json({success: true, message: 'Sua senha foi alterada com sucesso!'});
+    return res.status(200).json({ success: true, message: 'Sua senha foi alterada com sucesso!' });
 }
