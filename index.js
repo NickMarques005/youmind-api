@@ -10,11 +10,13 @@ const { google } = require('googleapis');
 const OAuth2 = google.auth.OAuth2;
 
 const bodyparser = require('body-parser');
+const cors = require('cors');
 const app = express();
 const http = require('http');
 const server = http.createServer(app);
 
 const PORT = process.env.PORT || 3000;
+
 
 const database = require('./database/database');
 
@@ -29,7 +31,10 @@ const firebaseServer = require('./firebase/firebase_service');
 
 //Executando funcionalidades do banco de dados: 
 database();
+
+app.use(cors());
 app.use(express.json());
+
 
 //**********//
 //  Rotas:  //

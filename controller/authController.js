@@ -12,12 +12,11 @@ const { isValidObjectId } = require("mongoose");
 const crypto = require('crypto');
 const { createRandomBytes } = require("../utils/security");
 const { getUserModel } = require("../utils/model");
-
+const { formatDateRelative } = require("../utils/formatDate");
 
 //Chaves para assinar os tokens JWT.
 const jwt_mainKey = config_environment.jwt_key;
 const jwt_refreshKey = config_environment.refresh_key;
-
 
 exports.registerUser = async (req, res) => {
     const { name, email, password, type, phone, doctor_crm } = req.body;
@@ -343,7 +342,7 @@ exports.verifyEmail = async (req, res) => {
                 success: false,
                 errors: ["Por favor, entre com um token válido!"],
             });
-
+    
     user.verified = true;
 
     await verification_token.findByIdAndDelete(tokenOtp._id);
@@ -384,7 +383,7 @@ exports.forgotPassword = async (req, res) => {
     if (token)
         return res
             .status(400)
-            .json({ success: false, errors: [`Seu token já foi ativado para resetar sua senha há ${token.createdAt}. Só depois de uma hora você poderá requisitar novamente.`] });
+            .json({ success: false, errors: [`Seu token já foi ativado para resetar sua senha ${formatDateRelative(token.createdAt)}. Só depois de uma hora você poderá requisitar novamente.`] });
 
     const newTokenForResetPass = await createRandomBytes();
 
@@ -399,6 +398,10 @@ exports.forgotPassword = async (req, res) => {
     });
 
     return res.status(200).json({ success: true, message: 'O link para resetar sua senha foi enviado para seu e-mail.' });
+}
+
+exports.confirmRequest = async (req, res) => {
+    res.status(200).json({ success: true });
 }
 
 exports.resetPass = async (req, res) => {
@@ -434,7 +437,10 @@ exports.resetPass = async (req, res) => {
         return res.status(400).json({ success: false, errors: ['Senha inválida. Deve ser entre 8 à 25 caracteres!'] });
     }
 
-    user.password = password.trim();
+    const salt = await bcrypt.genSalt(10);
+    const newPassword = await bcrypt.hash(password, salt);
+
+    user.password = newPassword.trim();
 
     await user.save();
     await reset_token.findOneAndDelete({ owner: user._id });
