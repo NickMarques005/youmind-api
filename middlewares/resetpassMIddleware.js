@@ -11,6 +11,15 @@ exports.isResetTokenValid = async (req, res, next) => {
 
     let userModel = getUserModel(type, res);
 
+    if (!userModel) {
+        return res
+            .status(400)
+            .json({
+                success: false,
+                errors: ["Tipo de usuário não especificado"],
+            });
+    }
+
     const user = await userModel.findById(id);
     if (!user) return res.status(400).json({ success: false, errors: [`Usuário não encontrado`] });
 

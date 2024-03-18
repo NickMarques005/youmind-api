@@ -15,6 +15,7 @@ exports.getUserModel = (type, res) => {
             console.log(
                 "Algo deu errado em criar usuário! Schema não especificado"
             );
+            model = undefined;
             break;
     }
 

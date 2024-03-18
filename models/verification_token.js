@@ -15,7 +15,7 @@ const verificationTokenSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         expires: 3600,
-        default: Date.now()
+        default: Date.now
     }
 });
 
@@ -35,4 +35,4 @@ verificationTokenSchema.methods.compareToken = async function(token) {
     return result;
 };
 
-module.exports = mongoose.model("verification_token", verificationTokenSchema);
+module.exports = mongoose.model("verification_token", verificationTokenSchema, 'verification_tokens');

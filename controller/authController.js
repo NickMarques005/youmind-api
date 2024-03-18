@@ -405,6 +405,7 @@ exports.confirmRequest = async (req, res) => {
 }
 
 exports.resetPass = async (req, res) => {
+    console.log("Reset Pass Request");
     const { password } = req.body;
     const type = req.type;
     let userModel;

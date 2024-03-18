@@ -15,7 +15,7 @@ const resetTokenSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         expires: 3600,
-        default: Date.now()
+        default: Date.now
     }
 });
 
@@ -35,4 +35,4 @@ resetTokenSchema.methods.compareToken = async function(token) {
     return result;
 };
 
-module.exports = mongoose.model("reset_token", resetTokenSchema);
+module.exports = mongoose.model("reset_token", resetTokenSchema, 'reset_tokens');
