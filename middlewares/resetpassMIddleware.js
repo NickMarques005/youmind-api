@@ -4,6 +4,7 @@ const { getUserModel } = require("../utils/model");
 
 exports.isResetTokenValid = async (req, res, next) => {
     const { token, id, type } = req.query;
+    console.log("Middleware Reset Token Validation!");
     if (!token || !id || !type) return res.status(401).json({ success: false, errors: ['Requisição inválida'] });
 
 

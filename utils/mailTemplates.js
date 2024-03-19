@@ -84,10 +84,10 @@ const templates = {
                 <div style="padding: 20px;">
                     <div style="font-family: Arial, sans-serif; color: #333;">
                         <h1 style="color: #673AB7;">Sua senha foi alterada!</h1>
-                        <p>Olá, ${getFirstName(name)},</p>
+                        <p>Olá, ${getFirstName(name)}!</p>
                         <p>Sua senha foi alterada com sucesso. Se você não realizou esta alteração, por favor entre em contato conosco imediatamente.</p>
                         <p>É importante manter a segurança da sua conta para proteger suas informações pessoais. Recomendamos que você não compartilhe sua senha com ninguém e que a altere regularmente.</p>
-                        <p>Se precisar de ajuda, nossa equipe está sempre disponível para assisti-lo.</p>
+                        <p>Se precisar de ajuda, nossa equipe está sempre disponível para auxiliá-lo.</p>
                         <p>Atenciosamente,</p>
                         <p>Equipe YouMind</p>
                     </div>
