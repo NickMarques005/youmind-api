@@ -3,12 +3,12 @@
 const { body, validationResult } = require('express-validator');
 
 const validateCreateUser = [
-    body('email').isEmail(),
-    body('name').isLength({ min: 3, max: 25 }),
-    body('password').isLength({ min: 8 }),
-    body('type').not().isEmpty(),
-    body('phone').not().isEmpty(),
-    body('doctor_crm').if(body('type').equals('doctor')).not().isEmpty(),
+    body('email', 'Email incorreto').isEmail(),
+    body('name', "O nome precisa ter entre 3 à 25 caracteres!").isLength({ min: 3, max: 25 }),
+    body('password', "Senha Incorreta. Sua senha necessita de no mínimo 8 caracteres!").isLength({ min: 8 }),
+    body('type', "Tipo de usuário não especificado").not().isEmpty(),
+    body('phone', "Número de telefone não especificado!").not().isEmpty(),
+    body('doctor_crm', "CRM inválido").if(body('type').equals('doctor')).not().isEmpty(),
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {

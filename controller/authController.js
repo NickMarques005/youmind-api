@@ -82,9 +82,14 @@ exports.registerUser = async (req, res) => {
             OTP: OTP,
         });
 
+        const registerData = {
+            _id: newUser._id,
+            type: newUser.type
+        }
+
         res
             .status(200)
-            .json({ success: true, message: "Sua conta foi criada com sucesso!" });
+            .json({ success: true, data: registerData, message: "Sua conta foi criada com sucesso!" });
     } catch (err) {
         console.error(`Erro ao criar usuário: ${err}`);
         res
