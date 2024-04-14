@@ -33,37 +33,15 @@ const firebaseServer = require('./firebase/firebase_service');
 database();
 
 app.use(cors());
+
 app.use(express.json());
 
+//***********//
+//  Router:  //
+//***********//
 
-//**********//
-//  Rotas:  //
-//**********//
 
-
-// NOTIFICAÇÕES:
-
-app.use('/api', require('./routes/notifications_route'));
-
-//Rotas para FRONTEND: 
-
-//--> CRIAÇÃO DE USUÁRIO E AUTENTICAÇÃO:
-
-app.use('/api', require('./routes/authenticate_routes'));
-
-app.use('/api', require('./routes/user_routes'));
-
-//--> TRATAMENTO 
-
-app.use('/api', require('./routes/treatment_routes'));
-
-//--> CONVERSAS E MENSAGENS 
-
-app.use('/api', require("./routes/conversation_routes"));
-
-//--> ANOTAÇÕES
-
-app.use('/api', require('./routes/notepad_routes'));
+app.use('/api', require('./routes/main_router'));
 
 app.get('/', (req, res) => {
     res.send("You Mind Server!");

@@ -1,4 +1,3 @@
-//---formatDate.js---//
 
 const formatDateRelative = (date) => {
     const dateNow = new Date();

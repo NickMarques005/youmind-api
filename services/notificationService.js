@@ -1,6 +1,6 @@
 //---notificationService.js---//
 
-const notificationController = require('../controller/notificationController');
+const notificationController = require('../controller/notification/notificationController');
 
 const sendPushNotificationAndSave = async (notificationData, pushToken, userId) => {
     try {

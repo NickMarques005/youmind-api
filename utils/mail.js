@@ -1,5 +1,3 @@
-//---mail.js---//
-
 const nodemailer = require('nodemailer');
 const { SettingOAuthClient } = require('../utils/oauth');
 

@@ -1,6 +1,3 @@
-
-//---mailTemplates.js---//
-
 const getFirstName = (fullName) => {
     return fullName.split(' ')[0];
 }

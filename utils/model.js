@@ -1,15 +1,15 @@
-const users = require('../models/users');
+const { PatientUser, DoctorUser } = require('../models/users');
 
-exports.getUserModel = (type, res) => {
+exports.getUserModel = (type) => {
 
     let model;
 
     switch (type) {
         case "patient":
-            model = users.PatientUser;
+            model = PatientUser;
             break;
         case "doctor":
-            model = users.DoctorUser;
+            model = DoctorUser;
             break;
         default:
             console.log(
@@ -20,4 +20,8 @@ exports.getUserModel = (type, res) => {
     }
 
     return model;
+}
+
+exports.findUserByEmail = (email) => {
+    return PatientUser.findOne({ email }) || DoctorUser.findOne({ email });
 }

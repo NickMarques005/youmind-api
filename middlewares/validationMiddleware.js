@@ -1,6 +1,7 @@
 //---validationMiddleware.js---//
 
 const { body, validationResult } = require('express-validator');
+const { HandleError } = require('../utils/handleResponse');
 
 const validateCreateUser = [
     body('email', 'Email incorreto').isEmail(),
@@ -13,7 +14,8 @@ const validateCreateUser = [
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             const extractedErrors = errors.array().map(err => err.msg);
-            return res.status(400).json({ success: false, errors: extractedErrors })
+            const errorMessage = extractedErrors.join(" | ");
+            return HandleError(res, 400, errorMessage);
         }
         next();
     }
@@ -26,7 +28,8 @@ const validateLoginUser = [
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             const extractedErrors = errors.array().map(err => err.msg);
-            return res.status(400).json({ success: false, errors: extractedErrors })
+            const errorMessage = extractedErrors.join(" | ");
+            return HandleError(res, 400, errorMessage);
         }
         next();
     }

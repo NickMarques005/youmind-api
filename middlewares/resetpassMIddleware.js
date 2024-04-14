@@ -1,39 +1,36 @@
 const { isValidObjectId } = require("mongoose");
-const reset_token = require('../models/reset_token');
+const ResetToken = require('../models/reset_token');
 const { getUserModel } = require("../utils/model");
+const { HandleError } = require("../utils/handleResponse");
 
 exports.isResetTokenValid = async (req, res, next) => {
-    const { token, id, type } = req.query;
-    console.log("Middleware Reset Token Validation!");
-    if (!token || !id || !type) return res.status(401).json({ success: false, errors: ['Requisição inválida'] });
+    try {
+        const { token, id, type } = req.query;
+        console.log("Middleware Reset Token Validation!");
+        if (!token || !id || !type) return HandleError(res, 400, "Requisição inválida");
 
+        if (!isValidObjectId(id)) return HandleError(res, 400, "Usuário inválido");
 
-    if (!isValidObjectId(id)) return res.status(401).json({ success: false, errors: ['Usuário inválido'] });
+        let userModel = getUserModel(type, res);
 
-    let userModel = getUserModel(type, res);
+        const user = await userModel.findById(id);
+        if (!user) return HandleError(res, 404, "Usuário não encontrado");
 
-    if (!userModel) {
-        return res
-            .status(400)
-            .json({
-                success: false,
-                errors: ["Tipo de usuário não especificado"],
-            });
+        const resetToken = await resetToken.findOne({ owner: user._id });
+        if (!resetToken) return HandleError(res, 401, "Token de redefinição não encontrado");
+
+        const isMatched = await ResetToken.compareToken(token);
+
+        if (!isMatched) return HandleError(res, 401, "Token de redefinição inválido");
+
+        console.log("Usuário validado para trocar senha!!");
+        req.user = user;
+        req.type = type;
+
+        next();
     }
-
-    const user = await userModel.findById(id);
-    if (!user) return res.status(400).json({ success: false, errors: [`Usuário não encontrado`] });
-
-    const resetToken = await reset_token.findOne({ owner: user._id });
-    if (!resetToken) return res.status(400).json({ success: false, errors: ['Reset Token não encontrado'] });
-
-    const isMatched = await resetToken.compareToken(token);
-
-    if(!isMatched) return res.status(400).json({ success: false, errors: ['Reset Token inválido'] });
-
-    console.log("Usuário validado para trocar senha!!");
-    req.user = user;
-    req.type = type;
-
-    next();
+    catch (err) {
+        console.error("Houve um erro ao validar reset token");
+        return HandleError(res, 401, "Não autorizado");
+    }
 }

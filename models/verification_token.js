@@ -35,4 +35,6 @@ verificationTokenSchema.methods.compareToken = async function(token) {
     return result;
 };
 
-module.exports = mongoose.model("verification_token", verificationTokenSchema, 'verification_tokens');
+const VerificationToken = mongoose.model("verification_token", verificationTokenSchema, 'verification_tokens');
+
+module.exports = VerificationToken;

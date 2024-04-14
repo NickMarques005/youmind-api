@@ -1,7 +1,8 @@
-const notificationModel = require('../models/notification');
-const users = require('../models/users');
-const firebase_service = require('../firebase/firebase_service');
-const notificationService = require('../services/notificationService');
+const notificationModel = require('../../models/notification');
+const users = require('../../models/users');
+const firebase_service = require('../../firebase/firebase_service');
+const notificationService = require('../../services/notificationService');
+const { HandleError, HandleSuccess } = require('../../utils/handleResponse');
 
 exports.registerPushNotification = async (req, res) => {
     console.log("Register PushNotification!");
@@ -9,69 +10,53 @@ exports.registerPushNotification = async (req, res) => {
     try {
         const { push_token, userId } = req.body;
 
-        if (!userId) {
-            return res.status(401).json({ success: false, errors: ['Usuário não autenticado'] });
-        }
+        if (!userId) return HandleError(res, 401, "Usuário não autorizado");
 
         const token = String(push_token);
-
-        console.log("USER ID: ", userId);
-
         const existingToken = await firebase_service.getToken(userId);
 
         console.log("EXISTING TOKEN: ", existingToken);
 
         if (Object.keys(existingToken).length !== 0) {
-            return res.status(200).json({ success: true, message: "Token já está registrado" })
+            return HandleSuccess(res, 200, "Push Token já registrado");
         }
 
         await firebase_service.saveToken(userId, token);
 
-        return res.status(200).json({ success: true, message: "Token registrado com sucesso" });
+        return HandleSuccess(res, 200, "Push Token registrado com sucesso");
     }
     catch (err) {
         console.error("Algo deu errado em registrar push Notification: ", err);
-        return res.status(500).json({ success: false });
+        return HandleError(res, 500, "Erro ao registrar Push Token");
     }
 }
 
 exports.notifyTreatmentSolicitation = async (req, res) => {
     try {
-
         const { destinatary_user_email, destinatary_user_type, userId } = req.body;
         
-        if (!userId) {
-            return res.status(401).json({ success: false, errors: ['Usuário não autenticado'] });
-        }
+        if (!userId) return HandleError(res, 401, "Usuário não autorizado");
 
-        const patient_model = users.PatientUser;
-        const doctor_model = users.DoctorUser;
-
-        if (destinatary_user_type == "patient") {
+        if (destinatary_user_type === "patient") {
             console.log("PATIENT: ", destinatary_user_email);
-            const destinatary_user = await patient_model.findOne({
+            const destinatary_user = await PatientUser.findOne({
                 email: destinatary_user_email
             }, { _id: 1, name: 1 });
 
-            const sender_user = await doctor_model.findOne({
+            const sender_user = await DoctorUser.findOne({
                 _id: userId
             }, { name: 1, email: 1 });
 
             if (!sender_user || !destinatary_user) {
-                return res.status(400).json({ success: false, errors: ["Paciente não encontrado"] });
+                return HandleError(res, 404, "Paciente não encontrado");
             }
 
-            console.log("ID: ", destinatary_user._id);
-
             const destinatary_id = destinatary_user._id;
-
             const { token } = await firebase_service.getToken(destinatary_id);
 
             if (!token) {
-                return res.status(400).json({ success: false, errors: ["Usuário destinatário não possui registro para notificação"] });
+                return HandleError(res, 400, "Usuário destinatário não possui registro para notificação");
             }
-
-            console.log("SEND PUSH NOTIFICATION!!!", token);
 
             const notificationData = {
                 title: `Solicitação para tratamento`,
@@ -92,7 +77,7 @@ exports.notifyTreatmentSolicitation = async (req, res) => {
 
             await notificationService.sendPushNotificationAndSave(notificationData, token, destinatary_id);
 
-            return res.status(200).json({ success: true, message: `Solicitação enviada para ${destinatary_user.name}` });
+            return HandleError(res, 200, `Solicitação enviada para ${destinatary_user.name}`);
         }
         else {
             console.log("DOCTOR: ", destinatary_user_email);
@@ -106,7 +91,7 @@ exports.notifyTreatmentSolicitation = async (req, res) => {
             }, { name: 1, email: 1 });
 
             if (!destinatary_user || !sender_user) {
-                return res.status(400).json({ success: false, errors: ["Paciente não encontrado"] });
+                return HandleError(res, 400, "Paciente não encontrado");
             }
 
             console.log("ID: ", destinatary_user._id);
@@ -115,10 +100,8 @@ exports.notifyTreatmentSolicitation = async (req, res) => {
             const { token } = await firebase_service.getToken(destinatary_user._id);
 
             if (!token) {
-                return res.status(400).json({ success: false, errors: ["Usuário destinatário não possui registro para notificação"] });
+                return HandleError(res, 400, "Usuário destinatário não possui registro para notificação");
             }
-
-            console.log("SEND PUSH NOTIFICATION!!!", token);
 
             const notificationData = {
                 title: `Solicitação para tratamento`,
@@ -139,13 +122,12 @@ exports.notifyTreatmentSolicitation = async (req, res) => {
 
             await notificationService.sendPushNotificationAndSave(notificationData, token, destinatary_user._id);
 
-
-            return res.status(200).json({ success: true, message: `Solicitação enviada para ${destinatary_user.name}` });
+            return HandleSuccess(res, 200, `Solicitação enviada para ${destinatary_user.name}`);
         }
     }
     catch (err) {
         console.error("Algo deu errado em registrar push Notification: ", err);
-        return res.status(500).json({ success: false, errors: ["Houve um erro no servidor"] });
+        return HandleError(res, 500, "Erro em registrar Push Notification");
     }
 }
 
@@ -162,12 +144,11 @@ exports.sendNotification = async (notification, _id, pushToken) => {
         }
 
         let receipts = await expo.sendPushNotificationsAsync([notificationToSend]);
-        console.log(receipts);
-
-        return console.log("Notificação enviada!!!");
+        return console.log("Notificação enviada: ", receips);
     }
     catch (err) {
-        return console.error("Houve um erro ao enviar a notificação ao usuário: ", err);
+        console.error("Houve um erro ao enviar a notificação ao usuário: ", err);
+        return;
     }
 }
 
@@ -207,78 +188,64 @@ exports.getNotifications = async (req, res) => {
     try {
         const { userId } = req.body;
 
-        if (!userId) {
-            return res.status(401).json({ success: false, errors: ['Usuário não autenticado'] });
-        }
+        if (!userId) return HandleError(res, 401, "Usuário não autorizado");
 
         console.log("Usuário que busca as notificações: ", userId);
 
         const notifications = await notificationModel.find({ user: userId }).sort({ createdAt: -1 });
-        return res.status(200).json({ success: true, data: notifications });
+        return HandleSuccess(res, 200, "Busca de notificações feita com sucesso", notifications);
     }
     catch (err) {
         console.error("Erro ao buscar notificações: ", err);
-        return res.status(500).json({ success: false, errors: ['Erro interno do servidor.'] });
+        return HandleError(res, 500, "Erro ao buscar notificações");
     }
 };
 
 exports.deleteNotification = async (req, res) => {
 
     try {
-        const { userId } = req.body;
+        const { notificationId } = req.body;
+        const { userId } = req.user;
 
-        if (!userId) {
-            return res.status(401).json({ success: false, errors: ['Usuário não autenticado'] });
-        }
+        if (!userId) return HandleError(res, 401, "Usuário não autorizado");
 
-        const notificationId = req.body.notificationId;
         const deletedNotification = await notificationModel.findOneAndDelete({
             _id: notificationId,
             user: userId,
         });
 
-        if (!deletedNotification) {
-            return res.status(404).json({ success: false, errors: ["Notificação não encontrada"] });
-        }
+        if (!deletedNotification) return HandleError(res, 404, "Notificação não encontrada");
 
-        return res.status(200).json({ success: true, message: "Notificação excluída com sucesso!" });
-
+        return HandleSuccess(res, 200, "Notificação excluída com sucesso", notificationId);
     }
     catch (err) {
         console.error("Erro ao deletar notificação: ", err);
-        return res.status(500).json({ success: false, errors: ['Erro interno do servidor.'] });
+        return HandleError(res, 500, "Erro ao deletar notificação");
     }
 };
 
 exports.updateNotification = async (req, res) => {
 
     try {
-        const { userId } = req.body;
+        const { userId, notificationId, updatedNotification } = req.body;
 
-        if (!userId) {
-            return res.status(401).json({ success: false, errors: ['Usuário não autenticado'] });
-        }
+        if (!userId) return HandleError(res, 401, "Usuário não autorizado");
 
-        const notificationId = req.body.notificationId;
-        const updatedData = req.body.notificationUpdate;
-
-        const updatedNotification = await notificationModel.findOneAndUpdate({
+        const NotificationToUpdate = await notificationModel.findOneAndUpdate({
             _id: notificationId,
             user: userId,
         },
-            { $set: updatedData },
+            { $set: updatedNotification },
             { new: true }
         );
 
-        if (!updatedNotification) {
-            return res.status(404).json({ success: false, errors: ["Notificação não encontrada"] });
-        }
+        if (!NotificationToUpdate) return HandleError(res, 404, "Notificação não encontrada");
 
-        return res.status(200).json({ success: true, data: updatedNotification, message: "Mensagem atualizada com sucesso!" });
+        return HandleSuccess(res, 200, "Notificação atualizada com sucesso");
     }
     catch (err) {
         console.error("Erro ao criar notificação: ", err);
-        return res.status(500).json({ success: false, errors: ['Erro interno do servidor.'] });
+        return HandleError(res, 500, "Erro ao criar notificação");
     }
 };
 
