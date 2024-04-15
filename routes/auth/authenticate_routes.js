@@ -11,7 +11,7 @@ const validateMiddleware = require('../../middlewares/validationMiddleware');
 const { isResetTokenValid } = require('../../middlewares/resetpassMIddleware');
 
 
-router.post('/create',
+router.post('/register',
     validateMiddleware.validateCreateUser,
     registrationController.registerUser
 );

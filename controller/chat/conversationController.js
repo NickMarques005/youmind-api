@@ -76,7 +76,8 @@ exports.getConversationTreatment = async (req, res) => {
 
 exports.saveNewMessage = async (req, res) => {
     try {
-        const { conversationId, content, userId } = req.body;
+        const { conversationId, content} = req.body;
+        const { userId } = req.user;
 
         if (!userId) return HandleError(res, 401, "Usuário não autorizado");
         if (!conversationId || !content) return HandleError(res, 400, 'Houve um erro ao postar mensagem');
