@@ -9,10 +9,10 @@ const tokenMiddleware = require('../../middlewares/tokenMiddleware');
 const jsonParser = bodyparser.json();
 const httpParser = bodyparser.urlencoded({ extended: false });
 
-router.post('/register-push-notification', jsonParser, tokenMiddleware.verifyToken, notificationController.registerPushNotification);
-router.post('/notify-treatment-solicitation', tokenMiddleware.verifyToken, notificationController.notifyTreatmentSolicitation);
-router.get('/get-notification', tokenMiddleware.verifyToken, notificationController.getNotifications);
-router.delete('/delete-notification',tokenMiddleware.verifyToken,  notificationController.deleteNotification);
-router.put('/update-notification', tokenMiddleware.verifyToken, notificationController.updateNotification);
+router.post('/push/register', jsonParser, tokenMiddleware.verifyToken, notificationController.registerPushNotification);
+router.post('/treatment/solicitation', tokenMiddleware.verifyToken, notificationController.notifyTreatmentSolicitation);
+router.get('/user/all', tokenMiddleware.verifyToken, notificationController.getNotifications);
+router.delete('/user/delete',tokenMiddleware.verifyToken,  notificationController.deleteNotification);
+router.put('/user/update', tokenMiddleware.verifyToken, notificationController.updateNotification);
 
 module.exports = router;
