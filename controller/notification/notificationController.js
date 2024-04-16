@@ -33,7 +33,8 @@ exports.registerPushNotification = async (req, res) => {
 
 exports.notifyTreatmentSolicitation = async (req, res) => {
     try {
-        const { destinatary_user_email, destinatary_user_type, userId } = req.body;
+        const { userId } = req.user;
+        const { destinatary_user_email, destinatary_user_type } = req.body;
         
         if (!userId) return HandleError(res, 401, "Usuário não autorizado");
 
@@ -48,7 +49,7 @@ exports.notifyTreatmentSolicitation = async (req, res) => {
             }, { name: 1, email: 1 });
 
             if (!sender_user || !destinatary_user) {
-                return HandleError(res, 404, "Paciente não encontrado");
+                return HandleError(res, 404, "Usuário não encontrado. Envie a solicitação novamente");
             }
 
             const destinatary_id = destinatary_user._id;
@@ -91,7 +92,7 @@ exports.notifyTreatmentSolicitation = async (req, res) => {
             }, { name: 1, email: 1 });
 
             if (!destinatary_user || !sender_user) {
-                return HandleError(res, 400, "Paciente não encontrado");
+                return HandleError(res, 400, "Usuário não encontrado. Envie a solicitação novamente");
             }
 
             console.log("ID: ", destinatary_user._id);
@@ -216,7 +217,7 @@ exports.deleteNotification = async (req, res) => {
 
         if (!deletedNotification) return HandleError(res, 404, "Notificação não encontrada");
 
-        return HandleSuccess(res, 200, "Notificação excluída com sucesso", notificationId);
+        return HandleSuccess(res, 200, "Notificação excluída com sucesso", { notificationId: deletedNotification._id});
     }
     catch (err) {
         console.error("Erro ao deletar notificação: ", err);

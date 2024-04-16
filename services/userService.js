@@ -10,7 +10,7 @@ const fetchUsers = async (type, searchData) => {
     
     return await modelUser.find(
         { name: {$regex: new RegExp(`${convertedData}`, 'i')}},
-        { _id: 1, name: 1, email: 1, phone: 1, type: 1, ...searchField}
+        { _id: 1, name: 1, email: 1, phone: 1, type: 1, avatar: 1, ...searchField}
     ).limit(40);
 };
 

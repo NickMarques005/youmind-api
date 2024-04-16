@@ -52,21 +52,21 @@ exports.readNotes = async (req, res) => {
 exports.deleteNote = async (req, res) => {
     try {
 
-        const { note_id } = req.body;
+        const { noteId } = req.body;
         const { userId } = req.user;
 
         const doctor = DoctorUser.findById(userId);
         if(!doctor) return HandleError(res, 404, "Médico não encontrado");
 
-        if (!note_id) return HandleError(res, 400, "Nota não especificada. Tente novamente");
+        if (!noteId) return HandleError(res, 400, "Nota não especificada. Tente novamente");
 
-        const deletedNote = await noteModel.findOneAndDelete({ _id: note_id, doctor_id: userId });
+        const deletedNote = await noteModel.findOneAndDelete({ _id: noteId, doctor_id: userId });
 
         if (!deletedNote) {
             return HandleError(res, 404, "Nota não encontrada");
         }
 
-        return HandleSuccess(res, 200, "Nota deletada com sucesso", deletedNote);
+        return HandleSuccess(res, 200, "Nota deletada com sucesso", { deletedNote: deletedNote._id});
     } catch (err) {
         console.error(err);
         return HandleError(res, 500, "Erro ao deletar nota");
