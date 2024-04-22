@@ -3,6 +3,9 @@ const { getUserModel } = require("../../utils/model");
 const { generateOTP } = require("../../utils/mail");
 const { sendMailService } = require("../../services/mailService");
 const { HandleError, HandleSuccess } = require("../../utils/handleResponse");
+const verification_token = require('../../models/verification_token');
+const { isValidObjectId } = require("mongoose");
+const { formatTimeLeft } = require('../../utils/formatDate');
 
 exports.registerUser = async (req, res) => {
     try {
@@ -39,13 +42,14 @@ exports.registerUser = async (req, res) => {
             token: OTP,
         });
 
+        await sendMailService("sendVerificationEmail", {
+            userData: { email: email, name: name, type: type },
+            OTP: OTP,
+        })
+
+
         await newUser.save();
         await verificationToken.save();
-
-        sendMailService("sendVerificationEmail", {
-            userData: { email: email, name: name },
-            OTP: OTP,
-        });
 
         const registerData = {
             _id: newUser._id,
@@ -59,14 +63,68 @@ exports.registerUser = async (req, res) => {
     }
 }
 
+exports.renewOTP = async (req, res) => {
+    try {
+        const { userId, type } = req.body;
+
+        if (!userId) return HandleError(res, 400, "Usuário não especificado");
+
+        let userModel = getUserModel(type);
+
+        if (!userModel) return HandleError(res, 400, "Tipo de usuário não especificado");
+
+        const user = await userModel.findById(userId);
+        if (!user) return HandleError(res, 404, `Usuário não cadastrado`);
+
+        if (user.verified) return HandleError(res, 400, "Usuário já está verificado!");
+
+        let token = await verification_token.findOne({ owner: user._id });
+
+        if (!token) {
+            const newOTP = generateOTP();
+            token = new verification_token({
+                owner: user._id,
+                token: newOTP,
+                lastRenewedAt: new Date(),
+                renewalCount: 0
+            });
+            await token.save();
+        }
+
+        const now = new Date();
+        const timeElapsedSinceLastRenewal = now - token.lastRenewedAt; 
+        const timeToWait = 1800000 - timeElapsedSinceLastRenewal;
+
+        if (token.renewalCount >= 2 && timeToWait > 0) {
+                const timeLeft = formatTimeLeft(timeToWait)
+                return HandleError(res, 429, `Limite de solicitação para renovação de OTP excedido. Por favor, aguarde até poder solicitar novamente. Faltam ${timeLeft}.`);
+        }
+
+        const newOTP = generateOTP();
+        token.token = newOTP;
+        token.lastRenewedAt = now;
+        token.renewalCount = token.renewalCount >= 2 ? 0 : token.renewalCount + 1;
+        await token.save();
+
+        await sendMailService("renewOTP", {
+            userData: { email: user.email, name: user.name },
+            OTP: newOTP,
+        });
+
+        return HandleSuccess(res, 200, "Um novo código foi enviado ao seu e-mail. Por favor, verifique também a caixa de spam.");
+
+    } catch (err) {
+        console.error("Houve um erro interno no servidor: ", err);
+        return HandleError(res, 500, "Erro ao renovar OTP");
+    }
+}
+
 exports.verifyEmail = async (req, res) => {
 
     try {
-        const { otp, type } = req.body;
-        const { userId } = req.user;
+        const { otp, userId, type } = req.body;
 
         if (!userId || !otp.trim()) return HandleError(res, 400, "Usuário ou OTP não especificado");
-
 
         if (!isValidObjectId(userId)) return HandleError(res, 400, "Usuário inválido");
 
@@ -81,7 +139,7 @@ exports.verifyEmail = async (req, res) => {
         if (user.verified) return HandleError(res, 400, "Essa conta já foi verificada! Por favor faça seu login");
 
         const tokenOtp = await verification_token.findOne({ owner: user._id });
-        if (!tokenOtp) return HandleError(res, 404, "Token do código OTP não encontrado");
+        if (!tokenOtp) return HandleError(res, 404, "Token do código não encontrado ou expirou");
 
         const isMatched = await tokenOtp.compareToken(otp);
         if (!isMatched) return HandleError(res, 400, "Por favor, entre com um token válido!");

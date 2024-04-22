@@ -16,6 +16,7 @@ router.post('/register',
     registrationController.registerUser
 );
 router.post('/verify-email', registrationController.verifyEmail);
+router.post('/renew-otp', registrationController.renewOTP);
 router.post('/login',
     validateMiddleware.validateLoginUser,
     authController.authenticateUser

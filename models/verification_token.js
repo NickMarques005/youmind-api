@@ -16,10 +16,18 @@ const verificationTokenSchema = new mongoose.Schema({
         type: Date,
         expires: 3600,
         default: Date.now
+    },
+    lastRenewedAt: {
+        type: Date,
+        default: Date.now
+    },
+    renewalCount: {
+        type: Number,
+        default: 0  
     }
 });
 
-verificationTokenSchema.pre('save', async function(next) {
+verificationTokenSchema.pre('save', async function (next) {
     if (this.isModified('token')) {
         const salt = await bcrypt.genSalt(10);
         const hashedToken = await bcrypt.hash(this.token, salt);
@@ -30,7 +38,7 @@ verificationTokenSchema.pre('save', async function(next) {
     next();
 });
 
-verificationTokenSchema.methods.compareToken = async function(token) {
+verificationTokenSchema.methods.compareToken = async function (token) {
     const result = await bcrypt.compareSync(token, this.token);
     return result;
 };

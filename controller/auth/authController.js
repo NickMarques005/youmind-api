@@ -4,7 +4,7 @@ const config_environment = require("../../config");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { getUserModel } = require("../../utils/model");
-const { HandleError , HandleSuccess } = require('../../utils/handleResponse');
+const { HandleError, HandleSuccess } = require('../../utils/handleResponse');
 
 const jwt_mainKey = config_environment.jwt_key;
 const jwt_refreshKey = config_environment.refresh_key;
@@ -15,18 +15,31 @@ exports.authenticateUser = async (req, res) => {
         console.log("Login de usuário!\n");
         let userModel = getUserModel(type);
 
+        if (!userModel) return HandleError(res, 400, "Tipo de usuário não especificado");
+
         const userData = await userModel.findOne({ email });
 
         if (!userData) return HandleError(res, 400, "Usuário não cadastrado");
+
+        if (!userData.verified) {
+
+            const otpfromLoginData = {
+                otp: true,
+                _id: userData._id,
+                type: userData.type
+            }
+
+            return HandleError(res, 401, "Conta não verificada. Verifique sua conta antes de fazer login.", otpfromLoginData);
+        }
 
         const passwordCompare = await bcrypt.compare(password, userData.password);
 
         if (!passwordCompare) return HandleError(res, 400, "Senha incorreta");
 
-        const accessTokenExpiresIn = "30s";
+        const accessTokenExpiresIn = "55m";
         const refreshTokenExpiresIn = "30d";
 
-        const dataAuthentication = { user: { id: userData.id,} };
+        const dataAuthentication = { user: { id: userData.id, } };
 
         const accessToken = jwt.sign(dataAuthentication, jwt_mainKey, { expiresIn: accessTokenExpiresIn });
         const refreshToken = jwt.sign(dataAuthentication, jwt_refreshKey, { expiresIn: refreshTokenExpiresIn });

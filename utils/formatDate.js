@@ -26,5 +26,21 @@ const formatDateRelative = (date) => {
     }
 };
 
+const formatTimeLeft = (milliseconds) => {
+    const minutes = Math.floor(milliseconds / 60000);
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
 
-module.exports = { formatDateRelative };
+    if (hours > 0) {
+        if (remainingMinutes > 0) {
+            return `${hours} hora(s) e ${remainingMinutes} minuto(s)`;
+        } else {
+            return `${hours} hora(s)`;
+        }
+    } else {
+        return `${minutes} minuto(s)`;
+    }
+}
+
+
+module.exports = { formatDateRelative, formatTimeLeft };

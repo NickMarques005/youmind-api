@@ -20,7 +20,7 @@ const templates = {
             `
         }
     },
-    verifyAccount: ({ name, OTP }) => {
+    verifyAccount: ({ name, OTP, type }) => {
         return {
             subject: `Bem-vindo(a) à YouMind - Verifique seu endereço de e-mail`,
             html: `
@@ -34,12 +34,36 @@ const templates = {
             </div>
             <div>
                 <p>Queremos estender nossas mais calorosas boas-vindas por se juntar à família YouMind! 🙂</p>
-                <p>Obrigado por se registrar e dar o primeiro passo em direção a uma jornada de bem-estar e saúde mental. Por favor, digite o código a seguir em seu aplicativo YouMind para validar a sua conta:</p>
+                ${type === 'patient' ?
+                    '<p>Obrigado por se registrar e dar o primeiro passo em direção a uma jornada de bem-estar e saúde mental. Por favor, digite o código a seguir em seu aplicativo YouMind para validar a sua conta:</p>'
+                    : '<p>Acreditamos profundamente no poder da colaboração profissional para promover o bem-estar mental. Para começar a usar a plataforma e acessar nossas ferramentas especializadas, por favor, valide sua conta digitando o código a seguir em seu aplicativo YouMind:</p>'}
                 <br>
                 <div style="margin: 30px 0; text-align: center;">
                     <span style="background-color: #F0F0F0; border-radius: 5px; font-size: 35px; padding: 10px 20px; font-weight: bold; letter-spacing: 3px;">${OTP}</span>
                 </div>
             </div>
+                </div>
+            </div>
+            `
+        }
+    },
+    renewOTP: ({ name, OTP }) => {
+        return {
+            subject: "Renovação de PIN - YouMind",
+            html: `
+            <div style="font-family: Arial, sans-serif; color: #333;">
+                <div style="background: linear-gradient(135deg, #9C27B0, #673AB7); padding: 10px; text-align: center;">
+                    <img src="https://lh3.googleusercontent.com/pw/AP1GczNp8RUjBN3ncuBTO4kPAtPA0C9odwcOo7YkLCquMLD19DmbhvLzWxnmO7QUS9zK2yz874rnbnOrjUOci-fYc2UFFcdUPeam6R0WCQsl4pMcKjhz9cRpgGOCZa9swD3p5mBJnoLApvcNDdu28bBfTVU=w330-h318-s-no-gm?authuser=5" style="height: 100px; width: 100px; border-radius: 50%;">
+                </div>
+                <div style="padding: 20px;">
+                    <h1 style="color: #673AB7;">Olá, ${getFirstName(name)}</h1>
+                    <p>Estamos enviando este e-mail como parte do processo de segurança para renovação do seu PIN. Por favor, digite o código a seguir em seu aplicativo YouMind para renovar seu PIN e continuar acessando sua conta com segurança:</p>
+                    <div style="margin: 30px 0; text-align: center;">
+                        <span style="background-color: #F0F0F0; border-radius: 5px; font-size: 35px; padding: 10px 20px; font-weight: bold; letter-spacing: 3px;">${OTP}</span>
+                    </div>
+                    <p>Se você não solicitou a renovação do PIN, por favor, ignore este e-mail ou entre em contato conosco para garantir a segurança da sua conta.</p>
+                    <p>Atenciosamente,</p>
+                    <p>Equipe YouMind</p>
                 </div>
             </div>
             `

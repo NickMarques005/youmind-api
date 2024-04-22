@@ -13,7 +13,7 @@ exports.refreshToken = async (req, res, next) => {
             }
 
             const jwtKey = config_environment.jwt_key;
-            const accessTokenExpiresIn = "30s";
+            const accessTokenExpiresIn = "55m";
 
             const userId = decode.user.id;
             const data_authentication = {

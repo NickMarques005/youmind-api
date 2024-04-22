@@ -16,10 +16,10 @@ exports.isResetTokenValid = async (req, res, next) => {
         const user = await userModel.findById(id);
         if (!user) return HandleError(res, 404, "Usuário não encontrado");
 
-        const resetToken = await resetToken.findOne({ owner: user._id });
+        const resetToken = await ResetToken.findOne({ owner: user._id });
         if (!resetToken) return HandleError(res, 401, "Token de redefinição não encontrado");
 
-        const isMatched = await ResetToken.compareToken(token);
+        const isMatched = await resetToken.compareToken(token);
 
         if (!isMatched) return HandleError(res, 401, "Token de redefinição inválido");
 
@@ -30,7 +30,7 @@ exports.isResetTokenValid = async (req, res, next) => {
         next();
     }
     catch (err) {
-        console.error("Houve um erro ao validar reset token");
+        console.error("Houve um erro ao validar reset token: ", err);
         return HandleError(res, 401, "Não autorizado");
     }
 }

@@ -19,7 +19,7 @@ const userStandardFields = {
         required: true
     },
     phone: {
-        type: Number,
+        type: String,
         required: true
     },
     type: {
@@ -68,7 +68,6 @@ doctorUserSchema.methods.comparePassword = async function(pass) {
     const result = await bcrypt.compareSync(pass, this.password);
     return result;
 };
-
 
 const PatientUser = mongoose.model('patient_user', patientUserSchema, 'patient_forms_data');
 const DoctorUser = mongoose.model('doctor_user', doctorUserSchema, 'doctor_forms_data');

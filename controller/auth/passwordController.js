@@ -4,6 +4,7 @@ const { sendMailService } = require("../../services/mailService");
 const ResetToken = require('../../models/reset_token');
 const { HandleError, HandleSuccess } = require('../../utils/handleResponse.js');
 const { formatDateRelative } = require('../../utils/formatDate');
+const bcrypt = require('bcryptjs');
 
 exports.forgotPassword = async (req, res) => {
     try {
@@ -35,7 +36,7 @@ exports.forgotPassword = async (req, res) => {
         return HandleSuccess(res, 200, 'O link para resetar sua senha foi enviado para seu e-mail.');
     }
     catch (err) {
-        console.error("Erro ao deslogar usuário: ", err);
+        console.error("Erro ao requisitar mudança de senha ao usuário: ", err);
         return HandleError(res, 500, "Erro ao requisitar mudança de senha");
     }
 
@@ -59,7 +60,7 @@ exports.resetPassword = async (req, res) => {
 
         if (passMatched) return HandleError(res, 400, 'A nova senha não pode ser igual a senha anterior!');
 
-        if (password.trim().length < 8 || password.trim().length > 20) {
+        if (password.trim().length < 8 || password.trim().length > 25) {
             return res.status(400).json({ success: false, errors: ['Senha inválida. Deve ser entre 8 à 25 caracteres!'] });
         }
 

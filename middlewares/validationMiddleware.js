@@ -6,7 +6,7 @@ const { HandleError } = require('../utils/handleResponse');
 const validateCreateUser = [
     body('email', 'Email incorreto').isEmail(),
     body('name', "O nome precisa ter entre 3 à 25 caracteres!").isLength({ min: 3, max: 25 }),
-    body('password', "Senha Incorreta. Sua senha necessita de no mínimo 8 caracteres!").isLength({ min: 8 }),
+    body('password', "É recomendado que sua senha precise de no mínimo 8 caracteres! Tome cuidado com senha fraca").isLength({ min: 8 }),
     body('type', "Tipo de usuário não especificado").not().isEmpty(),
     body('phone', "Número de telefone não especificado!").not().isEmpty(),
     body('doctor_crm', "CRM inválido").if(body('type').equals('doctor')).not().isEmpty(),

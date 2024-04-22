@@ -30,7 +30,14 @@ const mailServices = {
     sendVerificationEmail: async ({ userData, OTP }) => {
         const email = userData.email;
         const name = userData.name;
-        const { subject, html } = emailTemplates.verifyAccount({ name, OTP });
+        const type = userData.type;
+        const { subject, html } = emailTemplates.verifyAccount({ name, OTP, type });
+        await sendIndividualMail({ email, name, subject, htmlTemplate: html });
+    },
+    renewOTP: async ({userData, OTP}) => {
+        const email = userData.email;
+        const name = userData.name;
+        const { subject, html } = emailTemplates.renewOTP({ name, OTP });
         await sendIndividualMail({ email, name, subject, htmlTemplate: html });
     },
     welcomeEmail: async ({userData}) => {
