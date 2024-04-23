@@ -1,10 +1,10 @@
-//---authController.js---//
-
 const config_environment = require("../../config");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { getUserModel } = require("../../utils/model");
 const { HandleError, HandleSuccess } = require('../../utils/handleResponse');
+const MessageTypes = require("../../utils/typeResponse");
+
 
 const jwt_mainKey = config_environment.jwt_key;
 const jwt_refreshKey = config_environment.refresh_key;
@@ -49,7 +49,7 @@ exports.authenticateUser = async (req, res) => {
             refreshToken: { token: refreshToken, exp: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000) }
         }
 
-        return HandleSuccess(res, 200, "Login feito com sucesso", tokens);
+        return HandleSuccess(res, 200, "Login feito com sucesso", tokens, MessageTypes.SUCCESS);
     } catch (err) {
         console.error("Erro ao autenticar o usuário: ", err);
         return HandleError(res, 500, "Erro ao logar usuário");
@@ -78,7 +78,7 @@ exports.logoutUser = async (req, res) => {
         //await firebase_service.saveToken(user._id, null);
 
         console.log(`Usuário ${user._id} deslogado com sucesso!`)
-        return HandleSuccess(res, 200, "Sua conta foi deslogada com sucesso!");
+        return HandleSuccess(res, 200, "Sua conta foi deslogada com sucesso!", MessageTypes.SUCCESS);
     } catch (err) {
         console.error("Erro ao deslogar usuário: ", err);
         return HandleError(res, 500, "Erro ao deslogar usuário");

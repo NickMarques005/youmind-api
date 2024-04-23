@@ -6,6 +6,7 @@ const { HandleError, HandleSuccess } = require("../../utils/handleResponse");
 const verification_token = require('../../models/verification_token');
 const { isValidObjectId } = require("mongoose");
 const { formatTimeLeft } = require('../../utils/formatDate');
+const MessageTypes = require("../../utils/typeResponse");
 
 exports.registerUser = async (req, res) => {
     try {
@@ -56,7 +57,7 @@ exports.registerUser = async (req, res) => {
             type: newUser.type
         }
 
-        return HandleSuccess(res, 200, "Sua conta foi criada com sucesso!", registerData);
+        return HandleSuccess(res, 200, "Sua conta foi criada com sucesso!", registerData, MessageTypes.SUCCESS);
     } catch (err) {
         console.error(`Erro ao criar usuário: ${err}`);
         return HandleError(res, 500, "Erro ao criar usuário");
@@ -95,7 +96,7 @@ exports.renewOTP = async (req, res) => {
         const timeElapsedSinceLastRenewal = now - token.lastRenewedAt; 
         const timeToWait = 1800000 - timeElapsedSinceLastRenewal;
 
-        if (token.renewalCount >= 2 && timeToWait > 0) {
+        if (token.renewalCount >= 3 && timeToWait > 0) {
                 const timeLeft = formatTimeLeft(timeToWait)
                 return HandleError(res, 429, `Limite de solicitação para renovação de OTP excedido. Por favor, aguarde até poder solicitar novamente. Faltam ${timeLeft}.`);
         }
@@ -103,7 +104,7 @@ exports.renewOTP = async (req, res) => {
         const newOTP = generateOTP();
         token.token = newOTP;
         token.lastRenewedAt = now;
-        token.renewalCount = token.renewalCount >= 2 ? 0 : token.renewalCount + 1;
+        token.renewalCount = token.renewalCount >= 3 ? 0 : token.renewalCount + 1;
         await token.save();
 
         await sendMailService("renewOTP", {
@@ -111,7 +112,7 @@ exports.renewOTP = async (req, res) => {
             OTP: newOTP,
         });
 
-        return HandleSuccess(res, 200, "Um novo código foi enviado ao seu e-mail. Por favor, verifique também a caixa de spam.");
+        return HandleSuccess(res, 200, "Um novo código foi enviado ao seu e-mail. Por favor, verifique também a caixa de spam.", undefined, MessageTypes.EMAIL_SENT);
 
     } catch (err) {
         console.error("Houve um erro interno no servidor: ", err);
@@ -153,7 +154,7 @@ exports.verifyEmail = async (req, res) => {
             userData: { email: user.email, name: user.name },
         });
 
-        return HandleSuccess(res, 200, "Sua conta foi verificada com sucesso!");
+        return HandleSuccess(res, 200, "Sua conta foi verificada com sucesso!", undefined, MessageTypes.SUCCESS);
     }
     catch (err) {
         console.error("Houve um erro interno no servidor: ", err);

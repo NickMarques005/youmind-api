@@ -17,7 +17,7 @@ exports.isResetTokenValid = async (req, res, next) => {
         if (!user) return HandleError(res, 404, "Usuário não encontrado");
 
         const resetToken = await ResetToken.findOne({ owner: user._id });
-        if (!resetToken) return HandleError(res, 401, "Token de redefinição não encontrado");
+        if (!resetToken) return HandleError(res, 401, "Token de redefinição expirado ou inválido");
 
         const isMatched = await resetToken.compareToken(token);
 

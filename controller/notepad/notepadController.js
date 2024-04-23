@@ -1,5 +1,6 @@
 const noteModel = require('../../models/note');
 const { DoctorUser } = require('../../models/users');
+const MessageTypes = require('../../utils/typeResponse');
 
 exports.createNewNote = async (req, res) => {
     try {
@@ -23,7 +24,7 @@ exports.createNewNote = async (req, res) => {
 
         console.log("Nota salva: ", savedNote);
 
-        return HandleSuccess(res, 200, "Nota criada com sucesso", savedNote);
+        return HandleSuccess(res, 200, "Nota criada com sucesso", savedNote, MessageTypes.SUCCESS);
 
     }
     catch (err) {
@@ -66,7 +67,7 @@ exports.deleteNote = async (req, res) => {
             return HandleError(res, 404, "Nota não encontrada");
         }
 
-        return HandleSuccess(res, 200, "Nota deletada com sucesso", { deletedNote: deletedNote._id});
+        return HandleSuccess(res, 200, "Nota deletada com sucesso", { deletedNote: deletedNote._id}, MessageTypes.SUCCESS);
     } catch (err) {
         console.error(err);
         return HandleError(res, 500, "Erro ao deletar nota");

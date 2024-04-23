@@ -1,27 +1,26 @@
 const notificationModel = require('../../models/notification');
-const users = require('../../models/users');
-const firebase_service = require('../../firebase/firebase_service');
+const { PatientUser, DoctorUser} = require('../../models/users');
+const { getTokenFromFirebase, saveTokenOnFirebase} = require('../../firebase/push_notification/push_notification');
 const notificationService = require('../../services/notificationService');
 const { HandleError, HandleSuccess } = require('../../utils/handleResponse');
+const MessageTypes = require('../../utils/typeResponse');
 
 exports.registerPushNotification = async (req, res) => {
-    console.log("Register PushNotification!");
-
     try {
         const { push_token, userId } = req.body;
 
         if (!userId) return HandleError(res, 401, "Usuário não autorizado");
 
         const token = String(push_token);
-        const existingToken = await firebase_service.getToken(userId);
+        const existingToken = await getTokenFromFirebase(userId);
 
         console.log("EXISTING TOKEN: ", existingToken);
 
-        if (Object.keys(existingToken).length !== 0) {
+        if (existingToken && Object.keys(existingToken).length !== 0) {
             return HandleSuccess(res, 200, "Push Token já registrado");
         }
 
-        await firebase_service.saveToken(userId, token);
+        await saveTokenOnFirebase(userId, token);
 
         return HandleSuccess(res, 200, "Push Token registrado com sucesso");
     }
@@ -32,157 +31,52 @@ exports.registerPushNotification = async (req, res) => {
 }
 
 exports.notifyTreatmentSolicitation = async (req, res) => {
+    const { userId } = req.user;
+    const { destinatary_user_email, destinatary_user_type } = req.body;
+
+    if (!userId) return HandleError(res, 401, "Usuário não autorizado");
+
+    const User = destinatary_user_type === "patient" ? PatientUser : DoctorUser;
+    const otherTypeUser = destinatary_user_type === "patient" ? DoctorUser : PatientUser;
+
     try {
-        const { userId } = req.user;
-        const { destinatary_user_email, destinatary_user_type } = req.body;
-        
-        if (!userId) return HandleError(res, 401, "Usuário não autorizado");
+        const destinatary_user = await User.findOne({ email: destinatary_user_email }, '_id name');
+        const sender_user = await otherTypeUser.findById(userId, 'name email');
 
-        if (destinatary_user_type === "patient") {
-            console.log("PATIENT: ", destinatary_user_email);
-            const destinatary_user = await PatientUser.findOne({
-                email: destinatary_user_email
-            }, { _id: 1, name: 1 });
+        if (!sender_user || !destinatary_user) {
+            return HandleError(res, 404, "Usuário não encontrado. Envie a solicitação novamente");
+        }
 
-            const sender_user = await DoctorUser.findOne({
-                _id: userId
-            }, { name: 1, email: 1 });
+        const token = await getTokenFromFirebase(destinatary_user._id);
 
-            if (!sender_user || !destinatary_user) {
-                return HandleError(res, 404, "Usuário não encontrado. Envie a solicitação novamente");
-            }
+        if (!token) {
+            return HandleError(res, 400, "Usuário destinatário não possui registro para notificação");
+        }
 
-            const destinatary_id = destinatary_user._id;
-            const { token } = await firebase_service.getToken(destinatary_id);
-
-            if (!token) {
-                return HandleError(res, 400, "Usuário destinatário não possui registro para notificação");
-            }
-
-            const notificationData = {
-                title: `Solicitação para tratamento`,
-                body: `O especialista ${sender_user.name} enviou uma solicitação para inicializar tratamento. Deseja aceitar a solicitação?`,
-                data: {
-                    notify_type: 'treatment',
-                    notify_function: 'solicitation',
-                    buttons: {
-                        button_accept: "Aceitar",
-                        button_decline: "Recusar"
-                    },
-                    sender_params: {
-                        email: sender_user.email
-                    },
-                    show_modal: true,
+        const notificationData = {
+            title: `Solicitação para tratamento`,
+            body: `O ${destinatary_user_type === "patient" ? "especialista" : "paciente"} ${sender_user.name} enviou uma solicitação para inicializar tratamento. Deseja aceitar a solicitação?`,
+            data: {
+                notify_type: 'treatment',
+                notify_function: 'solicitation',
+                buttons: {
+                    button_accept: "Aceitar",
+                    button_decline: "Recusar"
                 },
-            };
-
-            await notificationService.sendPushNotificationAndSave(notificationData, token, destinatary_id);
-
-            return HandleError(res, 200, `Solicitação enviada para ${destinatary_user.name}`);
-        }
-        else {
-            console.log("DOCTOR: ", destinatary_user_email);
-
-            const destinatary_user = await doctor_model.findOne({
-                email: destinatary_user_email
-            }, { _id: 1, name: 1 });
-
-            const sender_user = await patient_model.findOne({
-                _id: userId
-            }, { name: 1, email: 1 });
-
-            if (!destinatary_user || !sender_user) {
-                return HandleError(res, 400, "Usuário não encontrado. Envie a solicitação novamente");
+                sender_params: {
+                    email: sender_user.email
+                },
+                show_modal: true,
             }
+        };
 
-            console.log("ID: ", destinatary_user._id);
-            console.log("USER ID: ", sender_user._id);
+        await notificationService.sendPushNotificationAndSave(notificationData, token, destinatary_user._id);
 
-            const { token } = await firebase_service.getToken(destinatary_user._id);
-
-            if (!token) {
-                return HandleError(res, 400, "Usuário destinatário não possui registro para notificação");
-            }
-
-            const notificationData = {
-                title: `Solicitação para tratamento`,
-                body: `O paciente ${sender_user.name} enviou uma solicitação para inicializar tratamento. Deseja aceitar a solicitação?`,
-                data: {
-                    notify_type: 'treatment',
-                    notify_function: 'solicitation',
-                    buttons: {
-                        button_accept: "Aceitar",
-                        button_decline: "Recusar"
-                    },
-                    sender_params: {
-                        email: sender_user.email
-                    },
-                    show_modal: true,
-                }
-            };
-
-            await notificationService.sendPushNotificationAndSave(notificationData, token, destinatary_user._id);
-
-            return HandleSuccess(res, 200, `Solicitação enviada para ${destinatary_user.name}`);
-        }
-    }
-    catch (err) {
-        console.error("Algo deu errado em registrar push Notification: ", err);
-        return HandleError(res, 500, "Erro em registrar Push Notification");
+        return HandleSuccess(res, 200, `Solicitação enviada para ${destinatary_user.name}`);
+    } catch (err) {
+        return HandleError(res, 500, "Erro em registrar Push Notification", err);
     }
 }
-
-exports.sendNotification = async (notification, _id, pushToken) => {
-    const { Expo } = require('expo-server-sdk');
-    const expo = new Expo();
-    console.log("Notification Data: ", notification, " // pushToken: ", pushToken, " // message Id: ", _id);
-    try {
-        const notificationToSend = {
-            to: pushToken,
-            title: notification.title,
-            body: notification.body,
-            data: { ...notification.data, _id }
-        }
-
-        let receipts = await expo.sendPushNotificationsAsync([notificationToSend]);
-        return console.log("Notificação enviada: ", receips);
-    }
-    catch (err) {
-        console.error("Houve um erro ao enviar a notificação ao usuário: ", err);
-        return;
-    }
-}
-
-exports.createNotification = async (notificationData, userId) => {
-    console.log("NOTIFICATION CREATION IN DB....");
-    if (!userId) {
-        console.log("Houve um erro! Usuário não fornecido");
-        return console.log("Usuário não encontrado");
-    }
-
-    try {
-
-        const newNotification = new notificationModel({
-            user: userId,
-            title: notificationData.title,
-            body: notificationData.body,
-            data: notificationData.data,
-        });
-
-        const savedNotification = await newNotification.save();
-
-        if (!savedNotification) {
-            return console.log("Houve um erro ao salvar a notificação!");
-        }
-
-        console.log("Notificação criada com sucesso")
-
-        return savedNotification._id;
-    }
-    catch (err) {
-        return console.error("Erro ao criar notificação: ", err);
-    }
-};
 
 exports.getNotifications = async (req, res) => {
 

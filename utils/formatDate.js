@@ -8,13 +8,13 @@ const formatDateRelative = (date) => {
     const diffInDays = Math.floor(diffInHours / 24);
 
     if (diffInSeconds < 60) {
-        return 'há menos de um minuto atrás';
+        return 'menos de um minuto atrás';
     } else if (diffInMinutes < 60) {
-        return `há ${diffInMinutes} minuto(s) atrás`;
+        return `${diffInMinutes} minuto(s) atrás`;
     } else if (diffInHours < 24) {
-        return `há ${diffInHours} hora(s) atrás`;
+        return `${diffInHours} hora(s) atrás`;
     } else if (diffInDays < 7) {
-        return `há ${diffInDays} dia(s) atrás`;
+        return `${diffInDays} dia(s) atrás`;
     } else {
         const day = datePast.getDate().toString().padStart(2, '0');
         const month = (datePast.getMonth() + 1).toString().padStart(2, '0');

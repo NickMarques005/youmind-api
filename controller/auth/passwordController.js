@@ -5,6 +5,7 @@ const ResetToken = require('../../models/reset_token');
 const { HandleError, HandleSuccess } = require('../../utils/handleResponse.js');
 const { formatDateRelative } = require('../../utils/formatDate');
 const bcrypt = require('bcryptjs');
+const MessageTypes = require("../../utils/typeResponse.js");
 
 exports.forgotPassword = async (req, res) => {
     try {
@@ -19,7 +20,7 @@ exports.forgotPassword = async (req, res) => {
         if (!user) return HandleError(res, 404, "Usuário não encontrado");
 
         const token = await ResetToken.findOne({ owner: user._id });
-        if (token) return HandleError(res, 400, `Seu token já foi ativado para resetar sua senha ${formatDateRelative(token.createdAt)}. Só depois de uma hora você poderá requisitar novamente.`);
+        if (token) return HandleError(res, 400, `Você já solicitou a redefinição de senha há ${formatDateRelative(token.createdAt)}. Por favor, aguarde uma hora após a última solicitação antes de tentar novamente.`);
 
         const newTokenForResetPass = await createRandomBytes();
 
@@ -33,7 +34,7 @@ exports.forgotPassword = async (req, res) => {
             resetLink: `${process.env.RESETPASS_URL}/reset-password?token=${newTokenForResetPass}&id=${user._id}&type=${user.type}`,
         });
 
-        return HandleSuccess(res, 200, 'O link para resetar sua senha foi enviado para seu e-mail.');
+        return HandleSuccess(res, 200, 'O link para resetar sua senha foi enviado para seu e-mail.', undefined, MessageTypes.EMAIL_SENT);
     }
     catch (err) {
         console.error("Erro ao requisitar mudança de senha ao usuário: ", err);

@@ -1,11 +1,11 @@
 const { Server } = require('socket.io');
 const mongoose = require('mongoose');
-const { initializeChangeStream } = require('../database/changeStreams');
+const { initializeChangeStreams } = require('../database/streams');
 
 const initializeSocket = (httpServer, dbURI) => {
     const io = new Server(httpServer);
 
-    initializeChangeStream(io);
+    initializeChangeStreams({ io })
 
     io.on('connection', (socket) => {
         console.log("Usuário conectado: ", socket.id);

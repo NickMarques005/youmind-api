@@ -2,6 +2,7 @@ const treatment = require('../../models/treatment');
 const { PatientUser, DoctorUser } = require('../../models/users');
 const { HandleError, HandleSuccess } = require('../../utils/handleResponse');
 const { getUserModel } = require("../../utils/model");
+const MessageTypes = require('../../utils/typeResponse');
 
 exports.initializeTreatment = async (req, res) => {
     try {
@@ -40,7 +41,7 @@ exports.initializeTreatment = async (req, res) => {
 
         console.log("Tratamento iniciado com sucesso!");
 
-        return HandleSuccess(res, 200, "Tratamento iniciado com sucesso", newTreatment);
+        return HandleSuccess(res, 200, "Tratamento iniciado com sucesso", newTreatment, MessageTypes.SUCCESS);
     }
     catch (err) {
         console.error("Erro ao inicializar o tratamento: ", err);
@@ -121,7 +122,7 @@ exports.deleteTreatment = async (req, res) => {
         await treatment.findByIdAndDelete(treatmentId);
         await PatientUser.findByIdAndUpdate(treatmentToDelete.patientId, { is_treatment_running: false });
 
-        return HandleSuccess(res, 200, "Tratamento excluído com sucesso", { treatmentId });
+        return HandleSuccess(res, 200, "Tratamento excluído com sucesso", { treatmentId }, MessageTypes.SUCCESS);
     }
     catch (err) {
         console.error('Erro ao excluir o tratamento:', err);
