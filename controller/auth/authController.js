@@ -60,7 +60,7 @@ exports.logoutUser = async (req, res) => {
         if (!user) return HandleError(res, 404, "Usuário não encontrado");
         
         // Processo de remoção de PushToken (Desabilitado para fins de testes):
-        /*
+        
         const tokenData = await getTokenFromFirebase(uid, pushToken);
         if (tokenData) {
             const { key: tokenKey } = tokenData;
@@ -72,7 +72,7 @@ exports.logoutUser = async (req, res) => {
         }
         await user.save();
 
-        console.log(`Token removido e usuário ${uid} deslogado com sucesso!`)*/
+        console.log(`Token removido e usuário ${uid} deslogado com sucesso!`)
         return HandleSuccess(res, 200, undefined, undefined);
     } catch (err) {
         console.error("Erro ao deslogar usuário: ", err);
