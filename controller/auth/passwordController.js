@@ -1,11 +1,12 @@
-const { getUserModel } = require("../../utils/model");
-const { createRandomBytes } = require("../../utils/security");
+const { getUserModel } = require("../../utils/db/model");
+const { createRandomBytes } = require("../../utils/user/security.js");
 const { sendMailService } = require("../../services/mailService");
 const ResetToken = require('../../models/reset_token');
-const { HandleError, HandleSuccess } = require('../../utils/handleResponse.js');
-const { formatDateRelative } = require('../../utils/formatDate');
-const bcrypt = require('bcryptjs');
-const MessageTypes = require("../../utils/typeResponse.js");
+const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse.js');
+const { formatDateRelative } = require('../../utils/date/formatDate.js');
+const MessageTypes = require("../../utils/response/typeResponse.js");
+const { changeUserPassword } = require('../../firebase/auth/authentication.js');
+const { generateUserToken } = require('../../utils/user/userToken.js');
 
 exports.forgotPassword = async (req, res) => {
     try {
@@ -24,14 +25,16 @@ exports.forgotPassword = async (req, res) => {
 
         const newTokenForResetPass = await createRandomBytes();
 
+        const userToken  = generateUserToken({userId: user._id, type: type});
+
         const resetToken = new ResetToken({ owner: user._id, token: newTokenForResetPass })
         await resetToken.save();
 
-        console.log(`URL para resetar senha: ${process.env.RESETPASS_URL}/reset-password?token=${newTokenForResetPass}&id=${user._id}&type=${user.type}`);
+        console.log(`URL para resetar senha: ${process.env.RESETPASS_URL}/reset-password?token=${newTokenForResetPass}&user=${user._id}&type=${user.type}`);
 
         await sendMailService("resetPasswordEmail", {
             userData: { email: user.email, name: user.name },
-            resetLink: `${process.env.RESETPASS_URL}/reset-password?token=${newTokenForResetPass}&id=${user._id}&type=${user.type}`,
+            resetLink: `${process.env.RESETPASS_URL}/reset-password?token=${newTokenForResetPass}&user=${userToken}`,
         });
 
         return HandleSuccess(res, 200, 'O link para resetar sua senha foi enviado para seu e-mail.', undefined, MessageTypes.EMAIL_SENT);
@@ -49,28 +52,26 @@ exports.resetPassword = async (req, res) => {
 
     try {
         const { password } = req.body;
-        const type = req.type;
+        const { id: userId, type } = req.user;
+
         let userModel = getUserModel(type);
 
         if (!userModel) return HandleError(res, 400, "Tipo de usuário não especificado");
 
-        const user = await userModel.findById(req.user._id);
+        const user = await userModel.findById(userId);
         if (!user) return HandleError(res, 404, "Usuário não encontrado");
-
-        const passMatched = await user.comparePassword(password);
-
-        if (passMatched) return HandleError(res, 400, 'A nova senha não pode ser igual a senha anterior!');
 
         if (password.trim().length < 8 || password.trim().length > 25) {
             return res.status(400).json({ success: false, errors: ['Senha inválida. Deve ser entre 8 à 25 caracteres!'] });
         }
 
-        const salt = await bcrypt.genSalt(10);
-        const newPassword = await bcrypt.hash(password, salt);
+        const updatedUser = await changeUserPassword(user.uid, password);
+        if (!updatedUser) {
+            return HandleError(res, 500, 'Erro ao atualizar senha no Firebase.');
+        }
 
-        user.password = newPassword.trim();
+        console.log(updatedUser);
 
-        await user.save();
         await ResetToken.findOneAndDelete({ owner: user._id });
 
         sendMailService("passwordUpdatedEmail", {

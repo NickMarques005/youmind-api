@@ -1,7 +1,7 @@
 const { google } = require('googleapis');
 const OAuth2 = google.auth.OAuth2;
-const { getOAuthRefreshToken } = require('./db_helpers');
-const { youmind_email } = require('../config');
+const { getOAuthRefreshToken } = require('../db/db_helpers');
+const { youmind_email } = require('../../config');
 
 const OAuthCreation = (params) => {
     return new OAuth2(

@@ -1,5 +1,5 @@
 const OAuthData = require('../../models/oauth');
-const { HandleError, HandleSuccess } = require('../../utils/handleResponse');
+const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
 
 exports.saveEmail = async (req, res) => {
     try {

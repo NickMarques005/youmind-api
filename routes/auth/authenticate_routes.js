@@ -1,5 +1,3 @@
-//---authenticate_routes.js---//
-
 const express = require('express');
 const router = express.Router();
 const authController = require('../../controller/auth/authController')
@@ -9,7 +7,6 @@ const tokenController = require('../../controller/auth/tokenController');
 const tokenMiddleware = require('../../middlewares/tokenMiddleware');
 const validateMiddleware = require('../../middlewares/validationMiddleware');
 const { isResetTokenValid } = require('../../middlewares/resetpassMIddleware');
-
 
 router.post('/register',
     validateMiddleware.validateCreateUser,
@@ -21,7 +18,7 @@ router.post('/login',
     validateMiddleware.validateLoginUser,
     authController.authenticateUser
 );
-router.post('/logout', tokenMiddleware.verifyToken, authController.logoutUser);
+router.post('/logout', tokenMiddleware.verifyUidToken, authController.logoutUser);
 
 router.post('/refresh-token', tokenController.refreshToken);
 

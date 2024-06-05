@@ -7,7 +7,7 @@ const noteSchema = new mongoose.Schema({
     },
     description: {
         type: String,
-        required: true,
+        required: false,
     },
     content: {
         type: [String],
@@ -21,6 +21,6 @@ const noteSchema = new mongoose.Schema({
     { timestamps: true }
 );
 
-const Note = mongoose.model('notes', noteSchema, 'notepad_data');
+const Note = mongoose.model('Note', noteSchema, 'notepad_data');
 
 module.exports = Note;

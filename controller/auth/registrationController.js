@@ -1,23 +1,19 @@
-const bcrypt = require("bcryptjs");
-const { getUserModel } = require("../../utils/model");
-const { generateOTP } = require("../../utils/mail");
+const { getUserModel } = require("../../utils/db/model");
+const { generateOTP } = require("../../utils/mail/mail");
 const { sendMailService } = require("../../services/mailService");
-const { HandleError, HandleSuccess } = require("../../utils/handleResponse");
+const { HandleError, HandleSuccess } = require("../../utils/response/handleResponse");
 const verification_token = require('../../models/verification_token');
 const { isValidObjectId } = require("mongoose");
-const { formatTimeLeft } = require('../../utils/formatDate');
-const MessageTypes = require("../../utils/typeResponse");
+const { formatTimeLeft } = require('../../utils/date/formatDate');
+const MessageTypes = require("../../utils/response/typeResponse");
+const firebaseAuthentication = require('../../firebase/auth/authentication');
 
 exports.registerUser = async (req, res) => {
     try {
 
         const { name, email, password, type, phone, doctor_crm } = req.body;
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
         let userModel = getUserModel(type);
-
         if (!userModel) return HandleError(res, 400, "Tipo de usuário não especificado");
 
         const registered = await userModel.findOne({ email });
@@ -25,16 +21,19 @@ exports.registerUser = async (req, res) => {
 
         if (type === "doctor" && !doctor_crm) return HandleError(res, 400, "Registro CRM inválido");
 
+        const userRecord = await firebaseAuthentication.createUser(email, password);
+
         const OTP = generateOTP();
 
         console.log("OTP CRIADO: ", OTP);
 
         const newUser = new userModel({
+            uid: userRecord.data.uid,
             name,
             email,
-            password: hashedPassword,
             phone,
             type,
+            pushTokenKeys: [],
             ...(type === "doctor" && { doctor_crm }),
         });
 
@@ -43,12 +42,6 @@ exports.registerUser = async (req, res) => {
             token: OTP,
         });
 
-        await sendMailService("sendVerificationEmail", {
-            userData: { email: email, name: name, type: type },
-            OTP: OTP,
-        })
-
-
         await newUser.save();
         await verificationToken.save();
 
@@ -56,6 +49,11 @@ exports.registerUser = async (req, res) => {
             _id: newUser._id,
             type: newUser.type
         }
+
+        await sendMailService("sendVerificationEmail", {
+            userData: { email: email, name: name, type: type },
+            OTP: OTP,
+        });
 
         return HandleSuccess(res, 200, "Sua conta foi criada com sucesso!", registerData, MessageTypes.SUCCESS);
     } catch (err) {
@@ -93,12 +91,12 @@ exports.renewOTP = async (req, res) => {
         }
 
         const now = new Date();
-        const timeElapsedSinceLastRenewal = now - token.lastRenewedAt; 
+        const timeElapsedSinceLastRenewal = now - token.lastRenewedAt;
         const timeToWait = 1800000 - timeElapsedSinceLastRenewal;
 
         if (token.renewalCount >= 3 && timeToWait > 0) {
-                const timeLeft = formatTimeLeft(timeToWait)
-                return HandleError(res, 429, `Limite de solicitação para renovação de OTP excedido. Por favor, aguarde até poder solicitar novamente. Faltam ${timeLeft}.`);
+            const timeLeft = formatTimeLeft(timeToWait)
+            return HandleError(res, 429, `Limite de solicitação para renovação de OTP excedido. Por favor, aguarde até poder solicitar novamente. Faltam ${timeLeft}.`);
         }
 
         const newOTP = generateOTP();

@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
-const { SettingOAuthClient } = require('../utils/oauth');
-const { getOAuthRefreshToken } = require('./db_helpers');
-const { youmind_email } = require('../config');
+const { SettingOAuthClient } = require('./oauth');
+const { getOAuthRefreshToken } = require('../db/db_helpers');
+const { youmind_email } = require('../../config');
 
 const createTransporterEmail = async () => {
 

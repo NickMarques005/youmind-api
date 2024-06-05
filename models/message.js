@@ -10,14 +10,23 @@ const MessageSchema = new mongoose.Schema(
             type: String,
             required: true
         },
+        audioUrl: {
+            type: String
+        },
+        duration: {
+            type: String
+        },
         content: {
             type: String,
             required: true
         },
+        readBy: [{
+            type: String
+        }]
     },
     { timestamps: true }
 );
 
-const Message = mongoose.model("messages", MessageSchema, 'message_data');
+const Message = mongoose.model("Message", MessageSchema, 'message_data');
 
 module.exports = Message;

@@ -1,7 +1,7 @@
 //---mailService.js---//
 
-const { sendMail } = require('../utils/mail');
-const emailTemplates = require('../utils/mailTemplates');
+const { sendMail } = require('../utils/mail/mail');
+const emailTemplates = require('../utils/mail/mailTemplates');
 
 const sendMultipleMails = ({ emails, subject, htmlTemplate }) => {
 

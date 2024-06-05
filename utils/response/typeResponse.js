@@ -4,6 +4,8 @@ const MessageTypes = {
     INFO: 'info',
     TREATMENT: 'treatment',
     WARNING: 'warning',
+    MEDICATION: 'medication',
+    QUESTIONNAIRE: 'questionnaire',
 }
 
 module.exports = MessageTypes;

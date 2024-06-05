@@ -1,23 +1,24 @@
 const noteModel = require('../../models/note');
 const { DoctorUser } = require('../../models/users');
-const MessageTypes = require('../../utils/typeResponse');
+const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
+const MessageTypes = require('../../utils/response/typeResponse');
 
 exports.createNewNote = async (req, res) => {
     try {
 
         const { title, description } = req.body;
-        const { userId } = req.user;
+        const { uid } = req.user;
 
-        const doctor = DoctorUser.findById(userId);
+        const doctor = DoctorUser.findById(uid);
 
-        if(!doctor) return HandleError(res, 404, "Médico não encontrado");
+        if (!doctor) return HandleError(res, 404, "Médico não encontrado");
 
-        if (!title || !description) return HandleError(res, 400, 'Titulo ou descrição inválido');
+        if (!title) return HandleError(res, 400, 'Titulo ou descrição inválido');
 
         const newNote = new noteModel({
-            title: title,
-            description: description,
-            doctor_id: userId,
+            title,
+            description,
+            doctor_id: uid,
         });
 
         const savedNote = await newNote.save();
@@ -35,13 +36,10 @@ exports.createNewNote = async (req, res) => {
 
 exports.readNotes = async (req, res) => {
     try {
-        const { userId } = req.user;
-
-        const doctor = DoctorUser.findById(userId);
-        if(!doctor) return HandleError(res, 404, "Médico não encontrado");
-
-        const notes = await noteModel.find({ doctor_id: userId });
-
+        const { uid } = req.user;
+        const doctor = DoctorUser.findOne({ uid: uid });
+        if (!doctor) return HandleError(res, 404, "Médico não encontrado");
+        const notes = await noteModel.find({ doctor_id: uid });
         return HandleSuccess(res, 200, "Notas encontradas", notes);
 
     } catch (err) {
@@ -50,24 +48,57 @@ exports.readNotes = async (req, res) => {
     }
 };
 
+exports.updateNote = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { title, description, content } = req.body;
+        const { uid } = req.user;
+
+        const doctor = await DoctorUser.find({uid: uid});
+        if (!doctor) return HandleError(res, 404, "Médico não encontrado");
+
+        if (!id) return HandleError(res, 400, "Nota não especificada. Tente novamente");
+
+        const noteToUpdate = await noteModel.findById(id);
+        if (!noteToUpdate) {
+            return res.status(404).json({ message: "Nota não encontrada" });
+        }
+
+        noteToUpdate.title = title || noteToUpdate.title;
+        noteToUpdate.description = description || noteToUpdate.description;
+        noteToUpdate.content = content || noteToUpdate.content;
+
+        const updatedNote = await noteToUpdate.save();
+
+        if (!updatedNote) {
+            return HandleError(res, 404, "Nota não encontrada");
+        }
+
+        return HandleSuccess(res, 200, "Nota atualizada com sucesso", { updatedNote }, MessageTypes.SUCCESS);
+    } catch (err) {
+        console.error("Erro ao atualizar a nota: ", err);
+        return HandleError(res, 500, "Erro ao atualizar nota");
+    }
+};
+
 exports.deleteNote = async (req, res) => {
     try {
 
-        const { noteId } = req.body;
-        const { userId } = req.user;
+        const { id } = req.params;
+        const { uid } = req.user;
 
-        const doctor = DoctorUser.findById(userId);
-        if(!doctor) return HandleError(res, 404, "Médico não encontrado");
+        const doctor = DoctorUser.findOne({ uid: uid });
+        if (!doctor) return HandleError(res, 404, "Médico não encontrado");
 
-        if (!noteId) return HandleError(res, 400, "Nota não especificada. Tente novamente");
+        if (!id) return HandleError(res, 400, "Nota não especificada. Tente novamente");
 
-        const deletedNote = await noteModel.findOneAndDelete({ _id: noteId, doctor_id: userId });
+        const deletedNote = await noteModel.findOneAndDelete({ _id: id, doctor_id: uid });
 
         if (!deletedNote) {
             return HandleError(res, 404, "Nota não encontrada");
         }
 
-        return HandleSuccess(res, 200, "Nota deletada com sucesso", { deletedNote: deletedNote._id}, MessageTypes.SUCCESS);
+        return HandleSuccess(res, 200, "Nota deletada com sucesso", { deletedNote: deletedNote._id }, MessageTypes.SUCCESS);
     } catch (err) {
         console.error(err);
         return HandleError(res, 500, "Erro ao deletar nota");

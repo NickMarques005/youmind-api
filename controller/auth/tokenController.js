@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const config_environment = require("../../config");
-const { HandleError, HandleSuccess } = require("../../utils/handleResponse");
+const { HandleError, HandleSuccess } = require("../../utils/response/handleResponse");
 
 exports.refreshToken = async (req, res, next) => {
 

@@ -1,7 +1,7 @@
 //---validationMiddleware.js---//
 
 const { body, validationResult } = require('express-validator');
-const { HandleError } = require('../utils/handleResponse');
+const { HandleError } = require('../utils/response/handleResponse');
 
 const validateCreateUser = [
     body('email', 'Email incorreto').isEmail(),

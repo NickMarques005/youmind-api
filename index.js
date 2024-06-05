@@ -9,6 +9,7 @@ const { initializeSocket } = require('./socket/socket');
 const bodyparser = require('body-parser');
 const { google } = require('googleapis');
 const OAuth2 = google.auth.OAuth2;
+const initializeSQS = require('./aws/sqs/sqs_manager');
 const PORT = process.env.PORT || 3000;
 
 const app = express();
@@ -25,8 +26,10 @@ const firebaseApp = require('./firebase/firebase_config');
 //***************//
 
 //Executando funcionalidades do banco de dados: 
-database().then(() => {
+database().then(async () => {
     initializeSocket(server);
+    await initializeSQS();
+    require('./agenda/agenda_config');
 }).catch((err) => {
     console.error("Conexão com o database falhou: ", err);
 });

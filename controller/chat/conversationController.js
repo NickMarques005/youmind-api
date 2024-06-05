@@ -2,69 +2,46 @@ const treatment = require('../../models/treatment');
 const message = require('../../models/message');
 const { PatientUser, DoctorUser } = require('../../models/users');
 const mongoose = require('mongoose');
-const { HandleError, HandleSuccess } = require('../../utils/handleResponse');
+const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
+const { findUserByEmail } = require('../../utils/db/model');
 
 exports.getConversationTreatment = async (req, res) => {
     try {
-        const { userId } = req.user;
+        const { uid } = req.user;
         const { email_1, email_2 } = req.query;
 
-        if (!userId) return HandleError(res, 401, 'Usuário não autorizado');
+        if (!uid) return HandleError(res, 401, 'Usuário não autorizado');
+
+        if (!email_1 || !email_2) return HandleError(res, 400, "Emails inválidos. Tente novamente");
+        if (email_1 === email_2) return HandleError(res, 400, "E-mail iguais não são permitidos");
 
         console.log("EMAILS: ", email_1, email_2);
 
-        if (!email_1 || !email_2) return HandleError(res, 400, "Emails inválidos. Tente novamente");
+        const users = await Promise.all([
+            findUserByEmail(email_1),
+            findUserByEmail(email_2)
+        ]);
 
+        console.log(users);
 
-        let user_patient;
-        let user_doctor;
+        const user_patient = users.find(user => user && user.type === "patient");
+        console.log(user_patient);
 
-        const emails = [
-            email_1,
-            email_2
-        ];
+        const user_doctor = users.find(user => user && user.type === "doctor");
+        console.log(user_doctor);
 
-        console.log(`EMAILS: ${email_1} e ${email_2}`);
+        if (!user_patient || !user_doctor) return HandleError(res, 404, "Usuários não encontrados ou tipo de usuário inválido");
 
+        const patient_id = user_patient.uid;
+        const doctor_id = user_doctor.uid;
 
-        for (const email of emails) {
-            let user;
-
-            if (email === email_1 && email === email_2) {
-                return HandleError(res, 400, "E-mail iguais não são permitidos");
-            }
-
-            user = await PatientUser.findOne({ email: email }, { _id: 1, type: 1 });
-            if (!user) {
-                user = await DoctorUser.findOne({ email: email }, { _id: 1, type: 1 });
-                if (!user) {
-                    return HandleError(res, 404, `E-mail ${email} não está registrado`);
-                }
-            }
-
-            if (user.type === "patient") {
-                if (user_patient) {
-                    return HandleError(res, 400, "Ambos são pacientes");
-                }
-                user_patient = user;
-            } else {
-                if (user_doctor) {
-                    return HandleError(res, 400, "Ambos são médicos");
-                }
-                user_doctor = user;
-            }
-        }
-
-        const patient_id = user_patient._id;
-        const doctor_id = user_doctor._id;
-
-        const existingTreatment = await treatment.find({
+        const existingTreatment = await treatment.findOne({
             patientId: patient_id,
             doctorId: doctor_id
         });
 
-        if (existingTreatment.length === 0) return HandleError(res, 404, "Tratamento não encontrado");
-        const treatmentId = existingTreatment[0]._id;
+        if (!existingTreatment) return HandleError(res, 404, "Tratamento não encontrado");
+        const treatmentId = existingTreatment._id;
 
         return HandleSuccess(res, 200, "Tratamento encontrado", treatmentId);
     }
@@ -76,21 +53,23 @@ exports.getConversationTreatment = async (req, res) => {
 
 exports.saveNewMessage = async (req, res) => {
     try {
-        const { conversationId, content} = req.body;
-        const { userId } = req.user;
+        const { conversationId, content, audioUrl, duration } = req.body;
+        const { uid } = req.user;
 
-        if (!userId) return HandleError(res, 401, "Usuário não autorizado");
+        if (!uid) return HandleError(res, 401, "Usuário não autorizado");
         if (!conversationId || !content) return HandleError(res, 400, 'Houve um erro ao postar mensagem');
 
         const conversationObjectId = new mongoose.Types.ObjectId(conversationId);
-        
+
         const id_verification = await treatment.findById(conversationObjectId);
         if (!id_verification) return HandleError(res, 400, 'A conversa de tratamento não existe');
 
         const new_message = {
             conversationId: conversationId,
             content: content,
-            sender: userId
+            sender: uid,
+            ...(audioUrl && { audioUrl }),
+            ...(duration && { duration })
         }
 
         const newMessage = new message(new_message);
@@ -107,10 +86,10 @@ exports.saveNewMessage = async (req, res) => {
 exports.getMessages = async (req, res) => {
     try {
 
-        const { userId } = req.body;
+        const { uid } = req.user;
         const { conversationId } = req.query;
 
-        if (!userId) return HandleError(res, 401, "Usuário não autorizado");
+        if (!uid) return HandleError(res, 401, "Usuário não autorizado");
 
         if (!conversationId) return HandleError(res, 400, 'Você não está registrado na conversa do tratamento');
 

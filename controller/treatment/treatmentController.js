@@ -1,15 +1,22 @@
-const treatment = require('../../models/treatment');
 const { PatientUser, DoctorUser } = require('../../models/users');
-const { HandleError, HandleSuccess } = require('../../utils/handleResponse');
-const { getUserModel } = require("../../utils/model");
-const MessageTypes = require('../../utils/typeResponse');
+const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
+const { getUserModel, findUserByEmail } = require("../../utils/db/model");
+const MessageTypes = require('../../utils/response/typeResponse');
+const agenda = require('../../agenda/agenda_config');
+const { PatientMedicationHistory, PatientQuestionnaireHistory } = require('../../models/patient_history');
+const { cancelMedicationSchedules } = require('../../services/medicationService');
+const { checkAndScheduleMedications } = require('../../services/medicationScheduler');
+const Treatment = require('../../models/treatment');
+const Questionnaire = require('../../models/questionnaire');
+const QuestionnaireTemplate = require('../../models/questionnaire_template');
+const { addNewQuestionnaire } = require('../../services/addNewQuestionnaire');
 
 exports.initializeTreatment = async (req, res) => {
     try {
-        const { userId } = req.user;
+        const { uid } = req.user;
         const { email_1, email_2 } = req.body;
 
-        if (!userId) return HandleError(res, 401, "Usuário não autorizado");
+        if (!uid) return HandleError(res, 401, "Usuário não autorizado");
         if (email_1 === email_2) return HandleError(res, 400, "E-mails iguais não são permitidos");
 
         console.log("REGISTER TREATMENT:");
@@ -18,77 +25,115 @@ exports.initializeTreatment = async (req, res) => {
         const users = await Promise.all([findUserByEmail(email_1), findUserByEmail(email_2)]);
 
         const [user1, user2] = users;
+        console.log(users);
 
         if (!user1 || !user2) return HandleError(res, 400, "Um ou ambos os e-mails não registrados");
         if (user1.type === user2.type) return HandleError(res, 400, "Ambos os usuários não podem ser do mesmo tipo");
 
         const { patient, doctor } = user1.type === 'patient' ? { patient: user1, doctor: user2 } : { patient: user2, doctor: user1 };
 
-        const existingTreatment = await treatment.find({
-            patientId: patient._id,
+        const existingTreatment = await Treatment.findOne({
+            patientId: patient.uid,
+            doctorId: doctor.uid
         });
 
-        console.log("EXISTING TREATMENT: ", existingTreatment);
+        if (existingTreatment) {
+            if (existingTreatment.status === 'pending') {
+                
+                const template = await QuestionnaireTemplate.findOne({});
+                if (!template) {
+                    console.log('Nenhum template de questionário encontrado.');
+                    return;
+                }
+                await addNewQuestionnaire(existingTreatment.patientId, template._id);
+                await checkAndScheduleMedications(patient.uid);
+                existingTreatment.status = 'active';
+                await existingTreatment.save();
+                return HandleSuccess(res, 200, "Tratamento reiniciado com sucesso", existingTreatment, MessageTypes.SUCCESS);
+            } else {
+                return HandleError(res, 400, "Tratamento já está em progresso");
+            }
+        } else {
+            const newTreatment = new Treatment({
+                patientId: patient.uid,
+                doctorId: doctor.uid,
+                status: 'active'
+            });
 
-        if (existingTreatment.length > 0) return HandleError(res, 400, "Paciente já possui tratamento em andamento");
+            await newTreatment.save();
+            await checkAndScheduleMedications(patient.uid);
 
-        const newTreatment = new treatment({ patientId: patient._id, doctorId: doctor._id });
+            await PatientUser.findByIdAndUpdate(patient._id, { is_treatment_running: true });
+            await DoctorUser.findByIdAndUpdate(doctor._id, { $addToSet: { total_treatments: patient._id } });
 
-        await newTreatment.save();
-
-        await PatientUser.findByIdAndUpdate(patient._id, { is_treatment_running: true });
-        await DoctorUser.findByIdAndUpdate(doctor._id, { $addToSet: { total_treatments: patient.email } });
-
-        console.log("Tratamento iniciado com sucesso!");
-
-        return HandleSuccess(res, 200, "Tratamento iniciado com sucesso", newTreatment, MessageTypes.SUCCESS);
-    }
-    catch (err) {
+            return HandleSuccess(res, 201, "Tratamento iniciado com sucesso", newTreatment, MessageTypes.SUCCESS);
+        }
+    } catch (err) {
         console.error("Erro ao inicializar o tratamento: ", err);
         return HandleError(res, 500, "Erro ao inicializar o tratamento");
     }
 }
 
-exports.getTreatment = async (req, res) => {
 
+exports.getTreatment = async (req, res) => {
+    console.log("Get Treatment!!");
     try {
 
-        const { userId } = req.user;
+        const { uid } = req.user;
         const { type } = req.query;
 
-        if (!userId) return HandleError(res, 401, "Usuário não autorizado");
+        if (!uid) return HandleError(res, 401, "Usuário não autorizado");
+        if (!type) return HandleError(res, 400, "Tipo de usuário não definido");
 
         const treatmentKey = type === 'patient' ? 'patientId' : 'doctorId';
-        const userTreatments = await treatment.find({ [treatmentKey]: userId });
-
+        const userTreatments = await Treatment.find({ [treatmentKey]: uid, status: "active" });
+        console.log("GET TREATMENTS");
         if (userTreatments.length === 0) return HandleSuccess(res, 200, "Não há tratamentos em andamento");
 
         if (type === 'patient') {
             const singleTreatment = userTreatments[0];
-            const doctor = await DoctorUser.findById(singleTreatment.doctorId, { name: 1, email: 1 });
+            const doctor = await DoctorUser.findOne({ uid: singleTreatment.doctorId });
             if (!doctor) return HandleError(res, 404, "médico do tratamento não encontrado");
 
-            const treatmentInfo = {
-                name: doctor.name,
-                email: doctor.email,
-                _id: singleTreatment._id
-            };
+            const treatmentInfo = [
+                {
+                    name: doctor.name,
+                    email: doctor.email,
+                    avatar: doctor.avatar,
+                    phone: doctor.phone,
+                    birth: doctor.birth,
+                    gender: doctor.gender,
+                    uid: doctor.uid,
+                    online: doctor.online,
+                    _id: singleTreatment._id
+                }
+            ];
 
-            return HandleSuccess(res, 200, "Tratamento em andamento", { treatmentInfo });
+            console.log(treatmentInfo);
+
+            return HandleSuccess(res, 200, "Tratamento em andamento", treatmentInfo);
         }
         else {
             const treatmentPatients = await Promise.all(userTreatments.map(async (treatment) => {
-                const patient = await PatientUser.findById(treatment.patientId);
+                const patient = await PatientUser.findOne({ uid: treatment.patientId });
                 if (!patient) return null;
                 return {
                     name: patient.name,
                     email: patient.email,
+                    avatar: patient.avatar,
+                    phone: patient.phone,
+                    birth: patient.birth,
+                    gender: patient.gender,
+                    uid: patient.uid,
+                    online: patient.online,
                     _id: treatment._id
                 };
-            }))
+            }));
+
+            console.log(treatmentPatients);
 
             const filteredPatients = treatmentPatients.filter(patient => patient !== null);
-            return HandleSuccess(res, 200, "Tratamento(s) em andamento", { filteredPatients });
+            return HandleSuccess(res, 200, "Tratamento(s) em andamento", filteredPatients);
         }
     }
     catch (err) {
@@ -97,35 +142,74 @@ exports.getTreatment = async (req, res) => {
     }
 }
 
-exports.deleteTreatment = async (req, res) => {
+exports.endTreatment = async (req, res) => {
 
     try {
-        const { userId } = req.user;
+        const { uid } = req.user;
         const { treatmentId, type } = req.body;
 
-        if (!userId) return HandleError(res, 401, "Usuário não autorizado");
+        if (!uid) return HandleError(res, 401, "Usuário não autorizado");
         if (!treatmentId) return HandleError(res, 400, 'Tratamento não especificado');
 
         const userModel = getUserModel(type);
-        const user = await userModel.findById(userId);
+        const user = await userModel.findOne({ uid: uid });
 
         if (!user) return HandleError(res, 404, "Usuário não encontrado");
 
-        const treatmentToDelete = await treatment.findOne({ _id: treatmentId });
+        const treatmentToUpdate = await Treatment.findOne({ _id: treatmentId });
 
-        if (!treatmentToDelete) return HandleError(res, 404, "Tratamento não encontrado");
+        if (!treatmentToUpdate) return HandleError(res, 404, "Tratamento não encontrado");
 
-        if (type === 'doctor' && treatmentToDelete.doctorId.toString() !== userId) {
-            return HandleError(res, 401, "Não possui autorização para excluir o tratamento");
+        if (type === 'doctor' && treatmentToUpdate.doctorId.toString() !== uid) {
+            return HandleError(res, 401, "Não possui autorização para encerrar o tratamento");
         }
 
-        await treatment.findByIdAndDelete(treatmentId);
-        await PatientUser.findByIdAndUpdate(treatmentToDelete.patientId, { is_treatment_running: false });
+        await cancelMedicationSchedules(treatmentToUpdate.patientId);
 
-        return HandleSuccess(res, 200, "Tratamento excluído com sucesso", { treatmentId }, MessageTypes.SUCCESS);
+        await PatientMedicationHistory.deleteMany({
+            patientId: treatmentToUpdate.patientId,
+            'medication.pending': true
+        });
+
+        const patientHistoryQuestionnaires = await PatientQuestionnaireHistory.find({
+            patientId: treatmentToUpdate.patientId,
+            'questionnaire.pending': true
+        });
+
+        const questionnaireIds = patientHistoryQuestionnaires.map(phq => phq.questionnaire.questionnaireId);
+
+        await Questionnaire.deleteMany({ _id: { $in: questionnaireIds } });
+
+        await PatientQuestionnaireHistory.deleteMany({
+            patientId: treatmentToUpdate.patientId,
+            'questionnaire.pending': true
+        });
+
+        await PatientUser.findOneAndUpdate({ uid: treatmentToUpdate.patientId }, { is_treatment_running: false });
+
+        treatmentToUpdate.status = 'completed';
+        await treatmentToUpdate.save();
+
+        const patient = await PatientUser.findOne({ uid: treatmentToUpdate.patientId });
+        if (!patient) return HandleError(res, 404, "Paciente ou médico não encontrado");
+
+
+        const treatment = {
+            name: patient.name,
+            email: patient.email,
+            avatar: patient.avatar,
+            phone: patient.phone,
+            birth: patient.birth,
+            gender: patient.gender,
+            uid: patient.uid,
+            online: patient.online,
+            _id: treatmentToUpdate._id
+        }
+
+        return HandleSuccess(res, 200, "Tratamento excluído com sucesso", { treatmentToUpdate: treatment }, MessageTypes.SUCCESS);
     }
     catch (err) {
-        console.error('Erro ao excluir o tratamento:', err);
-        return HandleError(res, 500, "Erro ao excluir o tratamento");
+        console.error('Erro ao encerrar o tratamento:', err);
+        return HandleError(res, 500, "Erro ao encerrar o tratamento");
     }
 }

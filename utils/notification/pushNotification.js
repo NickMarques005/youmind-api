@@ -1,23 +1,26 @@
-const notificationModel = require('../models/notification');
+const notificationModel = require('../../models/notification');
 
 exports.sendPushNotification = async (notification, _id, pushToken) => {
     const { Expo } = require('expo-server-sdk');
     const expo = new Expo();
-    console.log("Notification Data: ", notification, " // pushToken: ", pushToken, " // message Id: ", _id);
+    console.log("Notification Data: ", notification, " \n// pushToken: ", pushToken, "\n // message Id: ", _id);
     try {
         const notificationToSend = {
             to: pushToken,
             title: notification.title,
             body: notification.body,
-            data: { ...notification.data, _id }
+            data: { ...notification.data, _id },
+            sound: 'default',
+            icon: notification.icon ? notification.icon : ''
         }
 
         let receipts = await expo.sendPushNotificationsAsync([notificationToSend]);
-        return console.log("Notificação enviada: ", receipts);
+        console.log("Notificação enviada: ", receipts);
+        return true;
     }
     catch (err) {
         console.error("Houve um erro ao enviar a notificação ao usuário: ", err);
-        return;
+        return false;
     }
 }
 
@@ -25,9 +28,9 @@ exports.createNotification = async (notificationData, userId) => {
     console.log("NOTIFICATION CREATION IN DB....");
     if (!userId) {
         console.log("Houve um erro! Usuário não fornecido");
-        return console.log("Usuário não encontrado");
+        return;
     }
-
+    
     try {
 
         const newNotification = new notificationModel({
@@ -40,7 +43,7 @@ exports.createNotification = async (notificationData, userId) => {
         const savedNotification = await newNotification.save();
 
         if (!savedNotification) {
-            return console.log("Houve um erro ao salvar a notificação!");
+            return console.log("Houve um erro ao salvar a notificação! Notificação não foi salvo no banco de dados");
         }
 
         console.log("Notificação criada com sucesso")

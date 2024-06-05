@@ -1,4 +1,4 @@
-const { PatientUser, DoctorUser } = require('../models/users');
+const { PatientUser, DoctorUser } = require('../../models/users');
 
 exports.getUserModel = (type) => {
 
@@ -22,6 +22,10 @@ exports.getUserModel = (type) => {
     return model;
 }
 
-exports.findUserByEmail = (email) => {
-    return PatientUser.findOne({ email }) || DoctorUser.findOne({ email });
+exports.findUserByEmail = async (email) => {
+    const patient = await PatientUser.findOne({ email });
+    if (patient) return patient;
+
+    const doctor = await DoctorUser.findOne({ email });
+    return doctor;
 }

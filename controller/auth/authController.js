@@ -1,55 +1,43 @@
-const config_environment = require("../../config");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const { getUserModel } = require("../../utils/model");
-const { HandleError, HandleSuccess } = require('../../utils/handleResponse');
-const MessageTypes = require("../../utils/typeResponse");
-
-
-const jwt_mainKey = config_environment.jwt_key;
-const jwt_refreshKey = config_environment.refresh_key;
+const { getUserModel } = require("../../utils/db/model");
+const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
+const { removeTokenOnFirebase, getTokenFromFirebase } = require("../../firebase/push_notification/push_notification");
+const MessageTypes = require("../../utils/response/typeResponse");
+const { DoctorUser, PatientUser } = require("../../models/users");
 
 exports.authenticateUser = async (req, res) => {
     const { email, password, type } = req.body;
     try {
         console.log("Login de usuário!\n");
-        let userModel = getUserModel(type);
 
+        if (!email || !password) {
+            return HandleError(res, 400, "E-mail ou senha não fornecidos.");
+        }
+        
+        if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
+            return HandleError(res, 400, "Formato de e-mail inválido.");
+        }
+
+        let userModel = getUserModel(type);
         if (!userModel) return HandleError(res, 400, "Tipo de usuário não especificado");
 
         const userData = await userModel.findOne({ email });
-
         if (!userData) return HandleError(res, 400, "Usuário não cadastrado");
 
         if (!userData.verified) {
-
             const otpfromLoginData = {
                 otp: true,
                 _id: userData._id,
                 type: userData.type
             }
-
             return HandleError(res, 401, "Conta não verificada. Verifique sua conta antes de fazer login.", otpfromLoginData);
         }
 
-        const passwordCompare = await bcrypt.compare(password, userData.password);
-
-        if (!passwordCompare) return HandleError(res, 400, "Senha incorreta");
-
-        const accessTokenExpiresIn = "55m";
-        const refreshTokenExpiresIn = "30d";
-
-        const dataAuthentication = { user: { id: userData.id, } };
-
-        const accessToken = jwt.sign(dataAuthentication, jwt_mainKey, { expiresIn: accessTokenExpiresIn });
-        const refreshToken = jwt.sign(dataAuthentication, jwt_refreshKey, { expiresIn: refreshTokenExpiresIn });
-
-        const tokens = {
-            accessToken: { token: accessToken, exp: new Date(new Date().getTime() + 30 * 1000) },
-            refreshToken: { token: refreshToken, exp: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000) }
+        const data = {
+            email: email,
+            password: password
         }
 
-        return HandleSuccess(res, 200, "Login feito com sucesso", tokens, MessageTypes.SUCCESS);
+        return HandleSuccess(res, 200, "Validação de Login feita com sucesso", data, MessageTypes.SUCCESS);
     } catch (err) {
         console.error("Erro ao autenticar o usuário: ", err);
         return HandleError(res, 500, "Erro ao logar usuário");
@@ -58,27 +46,34 @@ exports.authenticateUser = async (req, res) => {
 
 exports.logoutUser = async (req, res) => {
     try {
-        const { type } = req.body;
-        const { userId } = req.user;
+        const { pushToken } = req.body;
+        const { uid } = req.user;
 
         console.log("LOGOUT USER...");
+        console.log("Push Token para retirar no Logout: ", pushToken);
 
-        if (!userId) return HandleError(res, 401, "Usuário não autorizado");
+        if (!uid) return HandleError(res, 401, "Usuário não autorizado");
 
-        console.log("Usuário a ser deslogado: ", userId);
+        console.log("Usuário a ser deslogado: ", uid);
 
-        if (!type) return HandleError(res, 400, "Tipo de usuário não especificado. Tente novamente.");
-
-        let userModel = getUserModel(type);
-
-        const user = await userModel.findById(userId);
-
+        let user = await PatientUser.findOne({ uid: uid }) || await DoctorUser.findOne({ uid: uid });
         if (!user) return HandleError(res, 404, "Usuário não encontrado");
+        
+        // Processo de remoção de PushToken (Desabilitado para fins de testes):
+        /*
+        const tokenData = await getTokenFromFirebase(uid, pushToken);
+        if (tokenData) {
+            const { key: tokenKey } = tokenData;
+            await removeTokenOnFirebase(user.uid, tokenKey);
+            user.pushTokenKeys = user.pushTokenKeys.filter(key => key !== tokenKey);
+            console.log("TOKEN REMOVIDO!!", tokenKey);
+        } else {
+            console.log("Token especificado não encontrado, pode já ter sido removido.");
+        }
+        await user.save();
 
-        //await firebase_service.saveToken(user._id, null);
-
-        console.log(`Usuário ${user._id} deslogado com sucesso!`)
-        return HandleSuccess(res, 200, "Sua conta foi deslogada com sucesso!", MessageTypes.SUCCESS);
+        console.log(`Token removido e usuário ${uid} deslogado com sucesso!`)*/
+        return HandleSuccess(res, 200, undefined, undefined);
     } catch (err) {
         console.error("Erro ao deslogar usuário: ", err);
         return HandleError(res, 500, "Erro ao deslogar usuário");

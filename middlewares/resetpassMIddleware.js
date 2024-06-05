@@ -1,31 +1,38 @@
 const { isValidObjectId } = require("mongoose");
 const ResetToken = require('../models/reset_token');
-const { getUserModel } = require("../utils/model");
-const { HandleError } = require("../utils/handleResponse");
+const { getUserModel } = require("../utils/db/model");
+const { HandleError } = require("../utils/response/handleResponse");
+const { verifyUserToken } = require('../utils/user/userToken');
 
 exports.isResetTokenValid = async (req, res, next) => {
     try {
-        const { token, id, type } = req.query;
+        const { token, user } = req.query;
         console.log("Middleware Reset Token Validation!");
-        if (!token || !id || !type) return HandleError(res, 400, "Requisição inválida");
+        if (!token || !user) return HandleError(res, 400, "Requisição inválida");
 
-        if (!isValidObjectId(id)) return HandleError(res, 400, "Usuário inválido");
+        const verification = verifyUserToken(user);
+        if (!verification.valid) {
+            return HandleError(res, 403, "Não autorizado");
+        }
 
-        let userModel = getUserModel(type, res);
+        const data = verification.data;
 
-        const user = await userModel.findById(id);
-        if (!user) return HandleError(res, 404, "Usuário não encontrado");
+        if (!isValidObjectId(data.userId)) return HandleError(res, 400, "Usuário inválido");
 
-        const resetToken = await ResetToken.findOne({ owner: user._id });
+        let userModel = getUserModel(data.type);
+        if (!userModel) return HandleError(res, 400, "Tipo de usuário não especificado");
+
+        const userData = await userModel.findById(data.userId);
+        if (!userData) return HandleError(res, 404, "Usuário não encontrado");
+
+        const resetToken = await ResetToken.findOne({ owner: userData._id });
         if (!resetToken) return HandleError(res, 401, "Token de redefinição expirado ou inválido");
 
         const isMatched = await resetToken.compareToken(token);
-
         if (!isMatched) return HandleError(res, 401, "Token de redefinição inválido");
 
         console.log("Usuário validado para trocar senha!!");
-        req.user = user;
-        req.type = type;
+        req.user = { id: data.userId, type: data.type };
 
         next();
     }
