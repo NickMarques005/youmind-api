@@ -2,7 +2,6 @@ const Treatment = require('../../models/treatment');
 const { PatientUser, DoctorUser } = require('../../models/users');
 const mongoose = require('mongoose');
 
-
 const handleUserChange = async (io, change) => {
     console.log("\n\n***User Change Stream Event: ", change);
 

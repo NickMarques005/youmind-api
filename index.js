@@ -1,21 +1,20 @@
-//---index.js---//
-
 const express = require('express');
 const http = require('http');
 const dotenv = require('dotenv').config();
 const cors = require('cors');
 const { createServer } = require('node:http');
-const { initializeSocket } = require('./socket/socket');
 const bodyparser = require('body-parser');
 const { google } = require('googleapis');
 const OAuth2 = google.auth.OAuth2;
+const { initializeSocket } = require('./socket/socket');
 const initializeSQS = require('./aws/sqs/sqs_manager');
+const { initializeAgenda } = require('./agenda/agenda_manager');
 const PORT = process.env.PORT || 3000;
 
 const app = express();
 const server = http.createServer(app);
 
-const database = require('./database/database');
+const { dbURI, db_YouMind_App } = require('./database/database');
 
 //Firebase server:
 
@@ -26,10 +25,10 @@ const firebaseApp = require('./firebase/firebase_config');
 //***************//
 
 //Executando funcionalidades do banco de dados: 
-database().then(async () => {
+db_YouMind_App().then(async () => {
     initializeSocket(server);
-    await initializeSQS();
-    require('./agenda/agenda_config');
+    initializeSQS();
+    await initializeAgenda(dbURI);
 }).catch((err) => {
     console.error("Conexão com o database falhou: ", err);
 });

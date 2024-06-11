@@ -1,9 +1,14 @@
 const Medication = require('../models/medication');
 const { scheduleMedicationTask } = require('../agenda/defines/medications');
-const agenda = require('../agenda/agenda_config');
 
-const checkAndScheduleMedications = async (patientId) => {
+const checkAndScheduleMedications = async (patientId, agenda) => {
+    if (!agenda) {
+        console.warn("Agenda não inicializada, não foi possível verificar o agendamento de medicamentos.");
+        return;
+    }
+
     try {
+
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -49,6 +54,11 @@ const checkAndScheduleMedications = async (patientId) => {
 };
 
 const scheduleMedicationNotTakenTask = async (medicationHistory, medication, agenda) => {
+    if (!agenda) {
+        console.warn("Agenda não inicializada, não foi possível verificar o agendamento de medicamentos.");
+        return;
+    }
+
     const { alarmDuration } = medication;
 
     if (!alarmDuration) {
@@ -66,4 +76,41 @@ const scheduleMedicationNotTakenTask = async (medicationHistory, medication, age
     console.log(`Tarefa medication not taken agendada para ${notTakenTime}`);
 };
 
-module.exports = { checkAndScheduleMedications, scheduleMedicationNotTakenTask }
+const cancelMedicationSchedules = async (patientId, agenda) => {
+    if (!agenda) {
+        console.warn("Agenda não inicializada, não foi possível verificar o agendamento de medicamentos.");
+        return;
+    }
+
+    try {
+
+        const medications = await Medication.find({ patientId: patientId });
+        if (!medications || medications.length === 0) {
+            console.log("Nenhum medicamento encontrado para o paciente");
+            return;
+        }
+
+        for (const medication of medications) {
+            const canceledAlerts = await agenda.cancel({ name: 'send medication alert', 'data.medicationId': medication._id });
+            const canceledNotTaken = await agenda.cancel({ name: 'medication not taken', 'data.medicationId': medication._id });
+
+            if (canceledAlerts > 0) {
+                console.log(`Agendamentos de alertas cancelados para o medicamento: ${medication._id}`);
+            } else {
+                console.warn(`Nenhum agendamento de alerta foi cancelado para o medicamento: ${medication._id}`);
+            }
+
+            if (canceledNotTaken > 0) {
+                console.log(`Agendamentos de "não tomado" cancelados para o medicamento: ${medication._id}`);
+            } else {
+                console.warn(`Nenhum agendamento de "não tomado" foi cancelado para o medicamento: ${medication._id}`);
+            }
+            medication.isScheduled = false;
+            await medication.save();
+        }
+    } catch (err) {
+        console.error(`Erro ao cancelar agendamentos de medicamentos: ${err.message}`);
+    }
+}
+
+module.exports = { checkAndScheduleMedications, scheduleMedicationNotTakenTask, cancelMedicationSchedules }

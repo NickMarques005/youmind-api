@@ -1,7 +1,6 @@
 const Medication = require('../models/medication');
 const { PatientMedicationHistory } = require('../models/patient_history');
 const Treatment = require('../models/treatment');
-const agenda = require('../agenda/agenda_config');
 
 const createNewMedicationHistory = async (medicationId, patientId, scheduleTime) => {
     try {
@@ -44,36 +43,4 @@ const updateMedicationHistoryToAlert = async (medicationHistoryId) => {
     }
 }
 
-const cancelMedicationSchedules = async (patientId) => {
-    try {
-        
-        const medications = await Medication.find({ patientId: patientId });
-        if (!medications || medications.length === 0) {
-            console.log("Nenhum medicamento encontrado para o paciente");
-            return;
-        }
-
-        for (const medication of medications) {
-            const canceledAlerts = await agenda.cancel({ name: 'send medication alert', 'data.medicationId': medication._id });
-            const canceledNotTaken = await agenda.cancel({ name: 'medication not taken', 'data.medicationId': medication._id });
-
-            if (canceledAlerts > 0) {
-                console.log(`Agendamentos de alertas cancelados para o medicamento: ${medication._id}`);
-            } else {
-                console.warn(`Nenhum agendamento de alerta foi cancelado para o medicamento: ${medication._id}`);
-            }
-
-            if (canceledNotTaken > 0) {
-                console.log(`Agendamentos de "não tomado" cancelados para o medicamento: ${medication._id}`);
-            } else {
-                console.warn(`Nenhum agendamento de "não tomado" foi cancelado para o medicamento: ${medication._id}`);
-            }
-            medication.isScheduled = false;
-            await medication.save();
-        }
-    } catch (err) {
-        console.error(`Erro ao cancelar agendamentos de medicamentos: ${err.message}`);
-    }
-}
-
-module.exports = { createNewMedicationHistory,updateMedicationHistoryToAlert, cancelMedicationSchedules }
+module.exports = { createNewMedicationHistory, updateMedicationHistoryToAlert }

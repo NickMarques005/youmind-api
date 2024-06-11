@@ -2,10 +2,10 @@ const Medication = require('../../models/medication');
 const { medicationsQueueUrl } = require('../../aws/sqs/sqs_queues');
 const { sendMessage } = require('../../aws/services/sqs_service');
 const { PatientMedicationHistory } = require('../../models/patient_history');
+const { createNewMedicationHistory } = require('../../services/medicationService');
 
 const scheduleMedicationTask = async (medication, scheduleTime, agenda) => {
-    const { createNewMedicationHistory } = require('../../services/medicationService');
-
+    
     const medicationHistory = await createNewMedicationHistory(medication._id, medication.patientId, scheduleTime);
 
     const jobId = `medication-${medication._id}-${scheduleTime}`;

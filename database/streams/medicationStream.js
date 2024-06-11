@@ -1,11 +1,12 @@
 const { PatientUser } = require('../../models/users');
 const Medication = require('../../models/medication');
 const { scheduleMedicationTask } = require('../../agenda/defines/medications');
-const agenda = require('../../agenda/agenda_config');
+const { getAgenda } = require('../../agenda/agenda_manager');
 const Treatment = require('../../models/treatment');
 
 const handleMedicationChange = async (io, change) => {
     console.log("medication Change Stream Event: ", change);
+    const agenda = getAgenda();
 
     if (change.operationType === 'insert') {
         const newMedication = change.fullDocument;
@@ -23,12 +24,15 @@ const handleMedicationChange = async (io, change) => {
             return;
         }
 
-        const firstSchedule = newMedication.schedules[0];
-        const firstScheduleTime = new Date(newMedication.start);
-        const [hours, minutes] = firstSchedule.split(':');
-        firstScheduleTime.setHours(hours, minutes, 0, 0);
-        await scheduleMedicationTask(newMedication, firstScheduleTime, agenda);
-        
+        if (agenda) {
+            const firstSchedule = newMedication.schedules[0];
+            const firstScheduleTime = new Date(newMedication.start);
+            const [hours, minutes] = firstSchedule.split(':');
+            firstScheduleTime.setHours(hours, minutes, 0, 0);
+            await scheduleMedicationTask(newMedication, firstScheduleTime, agenda);
+        }
+
+
         const existingMedication = await Medication.findOne({ _id: newMedication._id });
         if (!existingMedication) {
             console.log(`O medicamento para atualização de agendamento não foi encontrado.`);

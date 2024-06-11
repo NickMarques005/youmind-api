@@ -3,7 +3,7 @@ const Treatment = require('../../models/treatment');
 const { PatientMedicationHistory } = require('../../models/patient_history');
 const Medication = require('../../models/medication');
 const { scheduleMedicationNotTakenTask } = require('../../services/medicationScheduler');
-const agenda = require('../../agenda/agenda_config');
+const { getAgenda } = require('../../agenda/agenda_manager');
 const notificationService = require('../../services/notificationService');
 const { ScreenTypes, MenuTypes, PageTypes } = require('../../utils/app/screenMenuTypes');
 const MessageTypes = require('../../utils/response/typeResponse');
@@ -23,6 +23,7 @@ const emitUpdateHistory = async (io, doctorId, patientId) => {
 
 const handleMedicationHistoryChange = async (io, change) => {
     console.log("MedicationHistory Change Stream Event! ");
+    const agenda = getAgenda();
 
     if (change.operationType === 'insert') {
         const medication = change.fullDocument;
@@ -108,7 +109,10 @@ const handleMedicationHistoryChange = async (io, change) => {
                 }
             }
 
-            await scheduleMedicationNotTakenTask(medicationHistory, medication, agenda);
+            if(agenda)
+            {
+                await scheduleMedicationNotTakenTask(medicationHistory, medication, agenda);
+            }  
         }
         else if (updatedFields['medication.taken'] === false) {
             console.log("MEDICATION NOT TAKEN EVENT DETECTED");
