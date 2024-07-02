@@ -9,7 +9,7 @@ const initializeAgenda = async (dbURI) => {
     defineAgendaTasks(agenda);
 
     await agenda.start();
-    await agenda.every(cronIntervals['diariamente às 4h da manhã'], 'send daily questionnaires');
+    await agenda.every(cronIntervals['diariamente às 4h da manhã'], 'send daily questionnaires', {}, { timezone: 'America/Sao_Paulo' });
 
     process.on('SIGTERM', async () => {
         await finishAgenda();
