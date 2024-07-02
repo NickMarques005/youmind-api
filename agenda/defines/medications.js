@@ -51,10 +51,12 @@ const rescheduleMedication = async (job, agenda) => {
     });
 
     if (validSchedule) {
+        console.log("Schedule Válido ainda hoje!");
         const [hours, minutes] = validSchedule.split(':');
         nextScheduleTime = new Date(today);
         nextScheduleTime.setHours(hours, minutes, 0, 0);
     } else {
+        console.log("Schedule para próximo dia!");
         let nextDay = new Date(medication.start);
         while (nextDay <= today) {
             nextDay.setDate(nextDay.getDate() + medication.frequency);

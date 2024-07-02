@@ -51,7 +51,7 @@ const handleMedicationHistoryChange = async (io, change) => {
         const updatedFields = change.updateDescription.updatedFields;
         console.log(updatedFields);
         if (updatedFields['medication.alert'] === true || updatedFields['alert'] === true) {
-            console.log("ALERTA DE MEDICAMENTO ATUALIZADO ");
+            console.log("ALERTA DE MEDICAMENTO!!");
 
             const medicationHistoryId = change.documentKey._id;
             const medicationHistory = await PatientMedicationHistory.findById(medicationHistoryId);
@@ -111,6 +111,7 @@ const handleMedicationHistoryChange = async (io, change) => {
 
             if(agenda)
             {
+                console.log("Schedule Not Taken Medication!!");
                 await scheduleMedicationNotTakenTask(medicationHistory, medication, agenda);
             }  
         }
