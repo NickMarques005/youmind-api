@@ -3,6 +3,7 @@ const QuestionnaireTemplate = require('../models/questionnaire_template');
 const { getFormattedQuestionnaireName } = require('../utils/questionnaires/format');
 const { PatientQuestionnaireHistory } = require('../models/patient_history');
 const Treatment = require('../models/treatment');
+const { getCurrentDateInBrazilTime } = require('../utils/date/timeZones');
 
 const validateQuestions = (questions) => {
     if (!Array.isArray(questions)) return false;
@@ -39,7 +40,7 @@ const createNewQuestionnaire = async (patientId, templateId) => {
             throw new Error("Template de questionário não encontrado");
         }
 
-        const currentDate = new Date();
+        const currentDate = getCurrentDateInBrazilTime();
         const name = getFormattedQuestionnaireName();
 
         const expirationDate = new Date(currentDate);

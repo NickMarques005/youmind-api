@@ -32,6 +32,9 @@ exports.createMedication = async (req, res) => {
             return HandleError(res, 400, "Dados incompletos para criar o medicamento");
         }
 
+        console.log(new Date(expiresAt));
+        console.log(Date.now());
+
         if (new Date(expiresAt) <= Date.now()) {
             return HandleError(res, 400, "Data de término deve ser posterior à data atual");
         }
