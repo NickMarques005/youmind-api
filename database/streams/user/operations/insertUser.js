@@ -1,4 +1,4 @@
-const handleInsertUser = async (change, io) => {
+const handleInsertUser = async (change, userModel, io) => {
     return;
 };
 

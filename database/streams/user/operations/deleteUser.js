@@ -1,4 +1,4 @@
-const handleDeleteUser = async (change, io) => {
+const handleDeleteUser = async (change, userModel, io) => {
     return;
 };
 

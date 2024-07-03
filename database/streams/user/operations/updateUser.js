@@ -1,6 +1,6 @@
 const Treatment = require('../../../../models/treatment');
 
-const handleUpdateUser = async (change, io) => {
+const handleUpdateUser = async (change, userModel, io) => {
     const userId = change.documentKey._id;
     const updatedUser = await userModel.findById(userId);
 

@@ -19,13 +19,13 @@ const handleUserChange = async (io, change) => {
     {
         switch (change.operationType) {
             case 'insert':
-                await handleInsertUser(change, io);
+                await handleInsertUser(change, userModel, io);
                 break;
             case 'update':
-                await handleUpdateUser(change, io);
+                await handleUpdateUser(change, userModel, io);
                 break;
             case 'delete':
-                await handleDeleteUser(change, io);
+                await handleDeleteUser(change, userModel, io);
                 break;
             default:
                 console.error('Tipo de operação não configurado: ', change.operationType);
