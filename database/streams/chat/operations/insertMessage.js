@@ -29,7 +29,7 @@ const handleInsertMessage = async (change) => {
 
             const notificationData = {
                 title: `${senderMessage.type === 'doctor' ? 'Dr. ' : ''}${senderMessage.name}`,
-                body: `${updatedMessage.content}`,
+                body: `${newMessage.content}`,
                 data: {
                     notify_type: 'chat',
                     notify_function: 'message_alert',
