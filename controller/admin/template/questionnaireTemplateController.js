@@ -1,6 +1,6 @@
 const { HandleError, HandleSuccess } = require('../../../utils/response/handleResponse');
 const QuestionnaireTemplate = require('../../../models/questionnaire_template');
-const { validateQuestions } = require('../../../services/questionnaireService');
+const { validateQuestions } = require('../../../services/questionnaires/questionnaireService');
 
 exports.createTemplate = async (req, res) => {
     try {

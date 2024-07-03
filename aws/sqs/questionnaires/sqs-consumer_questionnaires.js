@@ -1,7 +1,7 @@
 const { receiveMessages, deleteMessage } = require('../../services/sqs_service');
 const { questionnairesQueueUrl } = require('../sqs_queues');
 const { PatientUser } = require('../../../models/users');
-const { createNewQuestionnaire } = require('../../../services/questionnaireService');
+const { createNewQuestionnaire } = require('../../../services/questionnaires/questionnaireService');
 
 const processQuestionnaireMessage = async (message) => {
     console.log(message);

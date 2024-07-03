@@ -1,6 +1,6 @@
 const { getUserModel } = require("../../utils/db/model");
 const { createRandomBytes } = require("../../utils/user/security.js");
-const { sendMailService } = require("../../services/mailService");
+const { sendMailService } = require("../../services/mail/mailService");
 const ResetToken = require('../../models/reset_token');
 const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse.js');
 const { formatDateRelative } = require('../../utils/date/formatDate.js');

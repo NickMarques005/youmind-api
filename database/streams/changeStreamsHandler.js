@@ -1,10 +1,11 @@
-const messageStream = require("./chat/messageStream");
-const treatmentStream = require("./treatmentStream");
-const userStream = require("./userStream");
-const questionnaireStream = require('./questionnaireStream');
-const medicationStream = require('./medication/medicationStream');
-const questionnaireHistoryStream = require("./historyQuestionnaireStream");
 const medicationHistoryStream = require("./history/medication/historyMedicationStream");
+const questionnaireHistoryStream = require("./history/questionnaire/historyQuestionnaireStream");
+const medicationStream = require("./medication/medicationStream");
+const questionnaireStream = require("./questionnaire/questionnaireStream");
+const treatmentStream = require("./treatment/treatmentStream");
+const userStream = require("./user/userStream");
+const messageStream = require('./chat/messageStream');
+
 class ChangeStreamHandler {
     constructor(options) {
         this.io = options.io;
@@ -20,6 +21,7 @@ class ChangeStreamHandler {
             medicationStream(this.io);
             questionnaireHistoryStream(this.io);
             medicationHistoryStream(this.io);
+
         }
         else{
             console.log("Streams sem a utilização de Socket.io");

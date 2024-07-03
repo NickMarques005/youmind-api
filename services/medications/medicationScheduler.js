@@ -1,5 +1,5 @@
-const Medication = require('../models/medication');
-const { scheduleMedicationTask } = require('../agenda/defines/medications');
+const Medication = require('../../models/medication');
+const { scheduleMedicationTask } = require('../../agenda/defines/medications');
 
 const checkAndScheduleMedications = async (patientId, agenda) => {
     if (!agenda) {

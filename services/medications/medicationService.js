@@ -1,6 +1,6 @@
-const Medication = require('../models/medication');
-const { PatientMedicationHistory } = require('../models/patient_history');
-const Treatment = require('../models/treatment');
+const Medication = require('../../models/medication');
+const { PatientMedicationHistory } = require('../../models/patient_history');
+const Treatment = require('../../models/treatment');
 
 const createNewMedicationHistory = async (medicationId, patientId, scheduleTime) => {
     try {

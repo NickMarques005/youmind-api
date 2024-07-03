@@ -1,4 +1,4 @@
-const { PatientUser } = require("../models/users");
+const { PatientUser } = require("../../models/users");
 const { createNewQuestionnaire } = require("./questionnaireService");
 
 const addNewQuestionnaire = async (patientId, questionnaireTemplateId) => {

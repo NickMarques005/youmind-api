@@ -2,7 +2,7 @@ const notificationModel = require('../../models/notification');
 const Treatment = require('../../models/treatment');
 const { PatientUser, DoctorUser } = require('../../models/users');
 const { getTokenFromFirebase, saveTokenOnFirebase } = require('../../firebase/push_notification/push_notification');
-const notificationService = require('../../services/notificationService');
+const notificationService = require('../../services/notifications/notificationService');
 const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
 const MessageTypes = require('../../utils/response/typeResponse');
 

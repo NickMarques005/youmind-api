@@ -4,12 +4,12 @@ const { getUserModel, findUserByEmail } = require("../../utils/db/model");
 const MessageTypes = require('../../utils/response/typeResponse');
 const agenda = require('../../agenda/agenda_manager');
 const { PatientMedicationHistory, PatientQuestionnaireHistory } = require('../../models/patient_history');
-const { cancelMedicationSchedules } = require('../../services/medicationService');
-const { checkAndScheduleMedications } = require('../../services/medicationScheduler');
+const { cancelMedicationSchedules } = require('../../services/medications/medicationService');
+const { checkAndScheduleMedications } = require('../../services/medications/medicationScheduler');
 const Treatment = require('../../models/treatment');
 const Questionnaire = require('../../models/questionnaire');
 const QuestionnaireTemplate = require('../../models/questionnaire_template');
-const { addNewQuestionnaire } = require('../../services/addNewQuestionnaire');
+const { addNewQuestionnaire } = require('../../services/questionnaires/addNewQuestionnaire');
 
 exports.initializeTreatment = async (req, res) => {
     try {

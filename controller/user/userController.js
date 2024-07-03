@@ -1,6 +1,6 @@
 const { PatientUser, DoctorUser } = require('../../models/users');
 const { handleDataText } = require('../../utils/text/textUtils');
-const { fetchUsers } = require('../../services/userService');
+const { fetchUsers } = require('../../services/user/userService');
 const { getUserModel } = require("../../utils/db/model");
 const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
 const MessageTypes = require('../../utils/response/typeResponse');

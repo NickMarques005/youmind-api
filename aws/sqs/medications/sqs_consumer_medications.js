@@ -1,7 +1,7 @@
 const { receiveMessages, deleteMessage } = require('../../services/sqs_service');
 const { medicationsQueueUrl } = require('../sqs_queues');
 const { PatientUser } = require('../../../models/users');
-const { updateMedicationHistoryToAlert } = require('../../../services/medicationService');
+const { updateMedicationHistoryToAlert } = require('../../../services/medications/medicationService');
 
 const processMedicationMessage = async (message) => {
     const { patientId, medicationHistoryId } = JSON.parse(message.Body);

@@ -1,12 +1,12 @@
 const { getUserModel } = require("../../utils/db/model");
 const { generateOTP } = require("../../utils/mail/mail");
-const { sendMailService } = require("../../services/mailService");
 const { HandleError, HandleSuccess } = require("../../utils/response/handleResponse");
 const verification_token = require('../../models/verification_token');
 const { isValidObjectId } = require("mongoose");
 const { formatTimeLeft } = require('../../utils/date/formatDate');
 const MessageTypes = require("../../utils/response/typeResponse");
 const firebaseAuthentication = require('../../firebase/auth/authentication');
+const { sendMailService } = require("../../services/mail/mailService");
 
 exports.registerUser = async (req, res) => {
     try {
@@ -124,17 +124,13 @@ exports.verifyEmail = async (req, res) => {
         const { otp, userId, type } = req.body;
 
         if (!userId || !otp.trim()) return HandleError(res, 400, "Usuário ou OTP não especificado");
-
         if (!isValidObjectId(userId)) return HandleError(res, 400, "Usuário inválido");
 
         let userModel = getUserModel(type);
-
         if (!userModel) return HandleError(res, 400, "Tipo de usuário não especificado");
 
         const user = await userModel.findById(userId);
-
         if (!user) return HandleError(res, 404, `Usuário não cadastrado`);
-
         if (user.verified) return HandleError(res, 400, "Essa conta já foi verificada! Por favor faça seu login");
 
         const tokenOtp = await verification_token.findOne({ owner: user._id });
