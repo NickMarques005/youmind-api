@@ -1,10 +1,10 @@
-const messageStream = require("./messageStream");
+const messageStream = require("./chat/messageStream");
 const treatmentStream = require("./treatmentStream");
 const userStream = require("./userStream");
 const questionnaireStream = require('./questionnaireStream');
-const medicationStream = require('./medicationStream');
+const medicationStream = require('./medication/medicationStream');
 const questionnaireHistoryStream = require("./historyQuestionnaireStream");
-const medicationHistoryStream = require("./historyMedicationStream");
+const medicationHistoryStream = require("./history/medication/historyMedicationStream");
 class ChangeStreamHandler {
     constructor(options) {
         this.io = options.io;
