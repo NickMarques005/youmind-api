@@ -5,8 +5,8 @@ const getCurrentDateInBrazilTime = () => {
 };
 
 const convertToBrazilTime = (date) => {
-    console.log("Data antes da conversão em fuso horário America/Brasilia: ", date);
-    console.log("Data convertida: ", moment.tz(date, 'America/Brasilia').toDate());
+    console.log("Data antes da conversão em fuso horário America/Sao_Paulo: ", date);
+    console.log("Data convertida: ", moment.tz(date, 'America/Sao_Paulo').toDate());
     return moment.tz(date, 'America/Sao_Paulo').toDate();
 };
 
