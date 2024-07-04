@@ -9,7 +9,12 @@ const createNewMedicationHistory = async (medicationId, patientId, scheduleTime)
         const treatment = await Treatment.findOne({patientId: patientId});
         if(!treatment) return console.error("Usuário não está em tratamento no momento");
         
+        console.log("MedicationHistory Criação: ")
+        console.log(scheduleTime);
+
         const timeZoneScheduleTime = convertToBrazilTime(scheduleTime);
+
+        console.log(timeZoneScheduleTime);
 
         const currentSchedule = timeZoneScheduleTime.toTimeString().slice(0, 5);
 
