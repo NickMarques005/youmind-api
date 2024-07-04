@@ -5,9 +5,13 @@ const getCurrentDateInBrazilTime = () => {
 };
 
 const convertToBrazilTime = (date) => {
-    console.log("Data antes da conversão em fuso horário America/Sao_Paulo: ", date);
-    console.log("Data convertida: ", moment.tz(date, 'America/Sao_Paulo').toDate());
-    return moment.tz(date, 'America/Sao_Paulo').toDate();
+    
+    const momentDate = moment(date);
+    
+    console.log("Data antes da conversão em fuso horário America/Sao_Paulo: ", momentDate);
+    const brazilTime = momentDate.tz('America/Sao_Paulo');
+    console.log("Data convertida: ", brazilTime.toDate());
+    return brazilTime.toDate();
 };
 
 const convertToUTC = (date) => {
