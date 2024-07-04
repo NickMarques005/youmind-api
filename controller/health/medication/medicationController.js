@@ -169,7 +169,7 @@ exports.deleteMedication = async (req, res) => {
 
         if (!medication) return HandleError(res, 404, "Medicamento não encontrado");
 
-        await PatientMedicationHistory.findOneAndDelete({ medicationId: id, pending: true });
+        await PatientMedicationHistory.deleteMany({ 'medication.medicationId': id, 'medication.pending': true });
 
         const agenda = getAgenda();
         if (agenda) {
