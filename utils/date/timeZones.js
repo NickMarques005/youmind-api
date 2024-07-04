@@ -5,9 +5,9 @@ const getCurrentDateInBrazilTime = () => {
 };
 
 const convertToBrazilTime = (date) => {
-    console.log("Data antes da conversão em fuso horário America/Sao_Paulo");
-    const utcDate = moment.utc(date);
-    return utcDate.clone().tz('America/Sao_Paulo').toDate();
+    console.log("Data antes da conversão em fuso horário America/Brasilia: ", date);
+    console.log("Data convertida: ", moment.tz(date, 'America/Brasilia').toDate());
+    return moment.tz(date, 'America/Sao_Paulo').toDate();
 };
 
 const convertToUTC = (date) => {
