@@ -22,11 +22,8 @@ const handleInsertMedication = async (change) => {
     }
 
     if (agenda) {
-        const firstSchedule = newMedication.schedules[0];
-        const firstScheduleTime = new Date(newMedication.start);
-        const [hours, minutes] = firstSchedule.split(':');
-        firstScheduleTime.setHours(hours, minutes, 0, 0);
-        console.log(firstScheduleTime);
+        
+        const firstScheduleTime = getNextScheduleTime(newMedication.schedules, newMedication.start, newMedication.frequency, 'America/Sao_Paulo');
         await scheduleMedicationTask(newMedication, firstScheduleTime, agenda);
     }
 

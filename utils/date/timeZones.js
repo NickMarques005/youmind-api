@@ -12,8 +12,46 @@ const convertToUTC = (date) => {
     return moment(date).utc().toDate();
 };
 
+const getExpirationDateInUTC = (date, timezone = 'America/Sao_Paulo', addDays, targetHour) => {
+    const expirationDate = moment.tz(date, timezone)
+        .add(addDays, 'days')
+        .set({ hour: targetHour, minute: 0, second: 0, millisecond: 0 });
+    return convertToUTC(expirationDate);
+};
+
+const getNextScheduleTime = (schedules, startDate, frequency, timezone = 'America/Sao_Paulo') => {
+    const now = moment().tz(timezone);
+    const today = moment(now).startOf('day');
+    let nextScheduleTime = null;
+
+    for (const schedule of schedules) {
+        const [hours, minutes] = schedule.split(':').map(Number);
+        const scheduleTimeToday = moment(today).set({ hour: hours, minute: minutes });
+
+        if (scheduleTimeToday.isAfter(now)) {
+            nextScheduleTime = scheduleTimeToday;
+            break;
+        }
+    }
+
+    if (!nextScheduleTime) {
+        nextScheduleTime = moment(startDate).tz(timezone);
+        while (nextScheduleTime.isSameOrBefore(now)) {
+            nextScheduleTime.add(frequency, 'days');
+        }
+
+        const firstSchedule = schedules[0];
+        const [hours, minutes] = firstSchedule.split(':').map(Number);
+        nextScheduleTime.set({ hour: hours, minute: minutes, second: 0, millisecond: 0 });
+    }
+
+    return convertToUTC(nextScheduleTime);
+};
+
 module.exports = {
     getCurrentDateInBrazilTime,
     convertToBrazilTime,
-    convertToUTC
+    convertToUTC,
+    getExpirationDateInUTC,
+    getNextScheduleTime
 };

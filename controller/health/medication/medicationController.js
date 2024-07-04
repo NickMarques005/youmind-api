@@ -6,6 +6,7 @@ const MessageTypes = require('../../../utils/response/typeResponse');
 const { getAgenda } = require('../../../agenda/agenda_manager');
 const { scheduleMedicationTask } = require('../../../agenda/defines/medications');
 const Treatment = require('../../../models/treatment');
+const { getNextScheduleTime } = require('../../../utils/date/timeZones');
 
 exports.getMedications = async (req, res) => {
     try {
@@ -141,32 +142,7 @@ exports.updateMedication = async (req, res) => {
                     console.log("Nenhum agendamento not taken foi cancelado.");
                 }
 
-                let nextScheduleTime = null;
-                const now = new Date();
-                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-                for (const schedule of updatedMedication.schedules) {
-                    const [hours, minutes] = schedule.split(':').map(Number);
-                    const scheduleTime = new Date(today);
-                    scheduleTime.setHours(hours, minutes, 0, 0);
-
-                    if (scheduleTime > now) {
-                        nextScheduleTime = scheduleTime;
-                        break;
-                    }
-                }
-
-                if (!nextScheduleTime) {
-                    nextScheduleTime = new Date(updatedMedication.start);
-                    while (nextScheduleTime <= now) {
-                        nextScheduleTime.setDate(nextScheduleTime.getDate() + updatedMedication.frequency);
-                    }
-
-                    const firstSchedule = updatedMedication.schedules[0];
-                    const [hours, minutes] = firstSchedule.split(':').map(Number);
-                    nextScheduleTime.setHours(hours, minutes, 0, 0);
-                }
-
+                const nextScheduleTime = getNextScheduleTime(updatedMedication.schedules, updatedMedication.start, updatedMedication.frequency, 'America/Sao_Paulo');
                 await scheduleMedicationTask(updatedMedication, nextScheduleTime, agenda);
             }
             else {

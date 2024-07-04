@@ -3,6 +3,7 @@ const { medicationsQueueUrl } = require('../../aws/sqs/sqs_queues');
 const { sendMessage } = require('../../aws/services/sqs_service');
 const { PatientMedicationHistory } = require('../../models/patient_history');
 const { createNewMedicationHistory } = require('../../services/medications/medicationService');
+const { getNextScheduleTime } = require('../../utils/date/timeZones');
 
 const scheduleMedicationTask = async (medication, scheduleTime, agenda) => {
     
@@ -27,7 +28,6 @@ const rescheduleMedication = async (job, agenda) => {
     };
 
     await sendMessage(medicationsQueueUrl, messageBody);
-
     await agenda.cancel({ _id: job.attrs._id });
 
     const medication = await Medication.findById(medicationId);
@@ -37,36 +37,7 @@ const rescheduleMedication = async (job, agenda) => {
         return;
     }
 
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    let nextScheduleTime = null;
-
-    const validSchedule = medication.schedules.find(schedule => {
-        const [hours, minutes] = schedule.split(':').map(Number);
-        const scheduleTime = new Date(today);
-        scheduleTime.setHours(hours, minutes, 0, 0);
-
-        return scheduleTime > now;
-    });
-
-    if (validSchedule) {
-        console.log("Schedule Válido ainda hoje!");
-        const [hours, minutes] = validSchedule.split(':');
-        nextScheduleTime = new Date(today);
-        nextScheduleTime.setHours(hours, minutes, 0, 0);
-    } else {
-        console.log("Schedule para próximo dia!");
-        let nextDay = new Date(medication.start);
-        while (nextDay <= today) {
-            nextDay.setDate(nextDay.getDate() + medication.frequency);
-        }
-
-        const firstSchedule = medication.schedules[0];
-        const [hours, minutes] = firstSchedule.split(':');
-        nextDay.setHours(hours, minutes, 0, 0);
-        nextScheduleTime = nextDay;
-    }
+    const nextScheduleTime = getNextScheduleTime(medication.schedules, medication.start, medication.frequency, 'America/Sao_Paulo');
 
     if (nextScheduleTime) {
         await scheduleMedicationTask(medication, nextScheduleTime, agenda);

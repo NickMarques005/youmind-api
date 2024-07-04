@@ -1,5 +1,6 @@
 const Medication = require('../../models/medication');
 const { scheduleMedicationTask } = require('../../agenda/defines/medications');
+const { getNextScheduleTime } = require('../../utils/date/timeZones');
 
 const checkAndScheduleMedications = async (patientId, agenda) => {
     if (!agenda) {
@@ -9,9 +10,6 @@ const checkAndScheduleMedications = async (patientId, agenda) => {
 
     try {
 
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
         const unscheduledMedications = await Medication.find({
             patientId: patientId,
             $or: [{ isScheduled: false }, { isScheduled: { $exists: false } }]
@@ -20,29 +18,7 @@ const checkAndScheduleMedications = async (patientId, agenda) => {
         for (const medication of unscheduledMedications) {
             console.log("Medicamento não agendado: ", medication.name);
 
-            let nextScheduleTime = null;
-
-            for (const schedule of medication.schedules) {
-                const [hours, minutes] = schedule.split(':').map(Number);
-                const scheduleTime = new Date(today);
-                scheduleTime.setHours(hours, minutes, 0, 0);
-
-                if (scheduleTime > now) {
-                    nextScheduleTime = scheduleTime;
-                    break;
-                }
-            }
-
-            if (!nextScheduleTime) {
-                nextScheduleTime = new Date(medication.start);
-                while (nextScheduleTime <= now) {
-                    nextScheduleTime.setDate(nextScheduleTime.getDate() + medication.frequency);
-                }
-
-                const firstSchedule = medication.schedules[0];
-                const [hours, minutes] = firstSchedule.split(':').map(Number);
-                nextScheduleTime.setHours(hours, minutes, 0, 0);
-            }
+            const nextScheduleTime = getNextScheduleTime(medication.schedules, medication.start, medication.frequency, 'America/Sao_Paulo');
 
             await scheduleMedicationTask(medication, nextScheduleTime, agenda);
             medication.isScheduled = true;
