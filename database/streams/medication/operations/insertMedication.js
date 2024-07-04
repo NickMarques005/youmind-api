@@ -3,6 +3,7 @@ const Medication = require('../../../../models/medication');
 const { scheduleMedicationTask } = require('../../../../agenda/defines/medications');
 const { getAgenda } = require('../../../../agenda/agenda_manager');
 const Treatment = require('../../../../models/treatment');
+const { getNextScheduleTime } = require('../../../../utils/date/timeZones');
 
 const handleInsertMedication = async (change) => {
     const agenda = getAgenda();
