@@ -10,7 +10,9 @@ const convertToBrazilTime = (date) => {
     console.log("Data antes da conversão em fuso horário America/Sao_Paulo: ", date);
     console.log("Data convertida: ", momentDate);
 
-    const adjustedDate = new Date(momentDate.format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+    const offset = momentDate.utcOffset();
+
+    const adjustedDate = new Date(momentDate.toDate().getTime() - (offset * 60000));
     return adjustedDate;
 };
 
