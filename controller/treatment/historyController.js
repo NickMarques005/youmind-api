@@ -267,7 +267,19 @@ exports.getHistoryMedicationsForCurrentPatient = async (req, res) => {
         console.log(medicationHistories);
 
         const medications = await Promise.all(medicationHistories.map(async (history) => {
-            const medication = await Medication.findById(history.medication.medicationId);
+            const hasMedication = await Medication.findById(history.medication.medicationId);
+            const inProgress = hasMedication ? true : false;
+
+            const medication = {
+                name: history.medication.name,
+                dosage: history.medication.dosage,
+                schedules: history.medication.schedules,
+                type: history.medication.type,
+                start: history.medication.start,
+                expiresAt: history.medication.expiresAt,
+                frequency: history.medication.frequency
+            }
+
             return {
                 _id: history._id,
                 patientId: history.patientId,
@@ -277,7 +289,8 @@ exports.getHistoryMedicationsForCurrentPatient = async (req, res) => {
                 alert: history.medication.alert,
                 taken: history.medication.taken,
                 consumeDate: history.medication.consumeDate,
-                updatedAt: history.medication.updatedAt
+                updatedAt: history.medication.updatedAt,
+                inProgress: inProgress
             };
         }));
 

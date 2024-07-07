@@ -1,5 +1,5 @@
 const notificationService = require('../../../../services/notifications/notificationService');
-const { findSender } = require('../../../../utils/chat/chat');
+const { findSender, handleSenderIcon } = require('../../../../utils/chat/chat');
 const Treatment = require('../../../../models/treatment');
 const { ScreenTypes, MenuTypes } = require('../../../../utils/app/screenMenuTypes');
 
@@ -27,6 +27,8 @@ const handleInsertMessage = async (change) => {
 
             console.log(senderMessage);
 
+            const senderIcon = senderMessage.avatar || handleSenderIcon(senderMessage.type);
+
             const notificationData = {
                 title: `${senderMessage.type === 'doctor' ? 'Dr. ' : ''}${senderMessage.name}`,
                 body: `${newMessage.content}`,
@@ -45,7 +47,7 @@ const handleInsertMessage = async (change) => {
                         menu_option: MenuTypes.TRATAMENTO
                     }
                 },
-                icon: senderMessage.avatar
+                icon: senderIcon
             };
 
             console.log(notificationData);

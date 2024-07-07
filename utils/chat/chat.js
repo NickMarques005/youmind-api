@@ -27,4 +27,16 @@ const findSender = async (senderId) => {
     }
 }
 
-module.exports = { findSender }
+const handleSenderIcon = (type) => {
+    switch (type) {
+        case 'doctor': 
+            return process.env.DEFAULT_SENDER_PATIENT_ICON_URI;
+        case 'patient': 
+            return process.env.DEFAULT_SENDER_DOCTOR_ICON_URI;
+        default:
+            console.error("Houve um erro na verificação de sender para escolher o icone: Tipo de usuário inválido ", type);
+            return;
+    }
+}
+
+module.exports = { findSender, handleSenderIcon }

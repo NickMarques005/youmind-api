@@ -6,6 +6,34 @@ const medicationHistorySchema = new mongoose.Schema(
             type: String,
             required: true
         },
+        name: {
+            type: String,
+            required: true
+        },
+        dosage: {
+            type: String,
+            required: true
+        },
+        type: {
+            type: String,
+            required: true
+        },
+        frequency: {
+            type: Number,
+            required: true
+        },
+        start: {
+            type: Date,
+            required: true
+        },
+        expiresAt: {
+            type: Date,
+            required: true
+        },
+        schedules: {
+            type: [String],
+            required: true
+        },
         taken: {
             type: Boolean,
             required: false
