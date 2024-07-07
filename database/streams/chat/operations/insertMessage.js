@@ -39,7 +39,7 @@ const handleInsertMessage = async (change) => {
                         name: senderMessage.name,
                         email: senderMessage.email,
                         id: senderId,
-                        avatar: senderIcon
+                        avatar: senderMessage.avatar || ''
                     },
                     show_modal: false,
                     redirect_params: {
