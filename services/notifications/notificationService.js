@@ -4,22 +4,28 @@ const { getTokenFromFirebase } = require('../../firebase/push_notification/push_
 const sendNotificationToAllDevices = async (uid, notification) => {
     try {
         const pushTokenKeys = await getTokenFromFirebase(uid);
-        let serviceCompleted;
         if (!pushTokenKeys) {
             console.log('Nenhum token encontrado para UID:', uid);
-            serviceCompleted = await sendPushNotificationAndSave(notification, undefined, uid);
-        }
-        else {
+            return await sendPushNotificationAndSave(notification, undefined, uid);
+        } else {
             console.log("Push Keys: ", pushTokenKeys);
+            
+            const notificationId = await createNotification(notification, uid);
+            if (!notificationId) {
+                console.log("Falha ao criar notificação no banco de dados");
+                return { success: false };
+            }
 
+            const pushPromises = [];
             for (let tokenKey in pushTokenKeys) {
                 console.log("Key que receberá notificação: ", tokenKey);
-                await sendPushNotificationAndSave(notification, pushTokenKeys[tokenKey].token, uid);
+                pushPromises.push(sendPushNotification(notification, notificationId, pushTokenKeys[tokenKey].token));
             }
-            serviceCompleted = { success: true };
+            
+            const results = await Promise.all(pushPromises);
+            const serviceCompleted = { success: results.every(result => result) };
+            return serviceCompleted;
         }
-
-        return serviceCompleted;
     } catch (error) {
         console.error('Erro ao enviar notificações para todos os dispositivos:', error);
         return { success: false, message: `${error}` };

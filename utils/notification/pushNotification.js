@@ -43,7 +43,7 @@ exports.createNotification = async (notificationData, userId) => {
         const savedNotification = await newNotification.save();
 
         if (!savedNotification) {
-            return console.log("Houve um erro ao salvar a notificação! Notificação não foi salvo no banco de dados");
+            return console.log("Houve um erro ao salvar a notificação! Notificação não foi salva no banco de dados");
         }
 
         console.log("Notificação criada com sucesso")
