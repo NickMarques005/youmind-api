@@ -8,6 +8,7 @@ const { scheduleMedicationTask } = require('../../../agenda/defines/medications'
 const Treatment = require('../../../models/treatment');
 const { getNextScheduleTime } = require('../../../utils/date/timeZones');
 
+
 exports.getMedications = async (req, res) => {
     try {
         const { uid } = req.user;
@@ -250,6 +251,7 @@ exports.confirmMedicationAlert = async (req, res) => {
     try {
         const { uid } = req.user;
         const { medicationHistoryId } = req.body;
+        const agenda = getAgenda();
 
         console.log("CONFIRM MEDICATION ALERT!");
         console.log("Dados necessários: ");
