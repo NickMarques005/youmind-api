@@ -3,9 +3,10 @@ const { PatientMedicationHistory } = require('../../models/patient_history');
 const Treatment = require('../../models/treatment');
 const { convertToBrazilTime } = require('../../utils/date/timeZones');
 
-const createNewMedicationHistory = async (medicationId, patientId, scheduleTime) => {
+const createNewMedicationHistory = async (medication, scheduleTime) => {
     try {
-
+        const medicationId = medication._id;
+        const patientId = medication.patientId;
         const treatment = await Treatment.findOne({patientId: patientId});
         if(!treatment) return console.error("Usuário não está em tratamento no momento");
         
@@ -23,10 +24,16 @@ const createNewMedicationHistory = async (medicationId, patientId, scheduleTime)
             medication: {
                 medicationId: medicationId,
                 currentSchedule: currentSchedule,
-                consumeDate: scheduleTime
+                consumeDate: scheduleTime,
+                name: medication.name,
+                dosage: medication.dosage,
+                type: medication.type,
+                frequency: medication.frequency,
+                start: medication.start,
+                expiresAt: medication.expiresAt,
+                schedules: medication.schedules
             },
             treatmentId: treatment._id,
-            
         });
 
         return newMedicationHistory;

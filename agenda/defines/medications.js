@@ -7,7 +7,7 @@ const { getNextScheduleTime } = require('../../utils/date/timeZones');
 
 const scheduleMedicationTask = async (medication, scheduleTime, agenda) => {
     
-    const medicationHistory = await createNewMedicationHistory(medication._id, medication.patientId, scheduleTime);
+    const medicationHistory = await createNewMedicationHistory(medication, scheduleTime);
 
     const jobId = `medication-${medication._id}-${scheduleTime}`;
     console.log(`Próximo alerta de medicamento ${medication.name} será em ${scheduleTime}`);
