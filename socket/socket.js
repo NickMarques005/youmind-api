@@ -76,8 +76,7 @@ const initializeSocket = (httpServer, dbURI) => {
                 });
 
                 const updatedMessage = { ...newMessage, _id: savedMessage._id, sending: false };
-                io.to(newMessage.conversationId).emit('receiveMessage', newMessage);
-                socket.emit("updateTempMessage", { updatedMessage, tempId: newMessage._id });
+                io.to(newMessage.conversationId).emit('receiveMessage', { newMessage: updatedMessage, tempId: newMessage._id });
             }
             catch (err)
             {
