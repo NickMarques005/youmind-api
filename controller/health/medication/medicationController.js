@@ -253,11 +253,6 @@ exports.confirmMedicationAlert = async (req, res) => {
         const { medicationHistoryId } = req.body;
         const agenda = getAgenda();
 
-        console.log("CONFIRM MEDICATION ALERT!");
-        console.log("Dados necessários: ");
-        console.log("Uid: ", uid);
-        console.log("MedicationHistoryId: ", medicationHistoryId);
-
         const patient = await PatientUser.findOne({ uid: uid });
         if (!patient) return HandleError(res, 404, "Paciente não encontrado");
 

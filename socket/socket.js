@@ -1,5 +1,4 @@
 const { Server } = require('socket.io');
-const mongoose = require('mongoose');
 const { initializeChangeStreams } = require('../database/streams');
 const { verifySocketToken } = require('../middlewares/tokenMiddleware');
 const Message = require('../models/message');
@@ -61,9 +60,29 @@ const initializeSocket = (httpServer, dbURI) => {
             }
         });
 
-        socket.on("sendMessage", (socket_new_message) => {
-            console.log(`Mensagem ${socket_new_message.content} mandada por ${socket_new_message.sender} para a sala ${socket_new_message.conversationId} `)
-            io.to(socket_new_message.conversationId).emit('receiveMessage', socket_new_message);
+        socket.on("sendMessage", async (newMessage) => {
+            console.log(`Mensagem ${newMessage.content} mandada por ${newMessage.sender} para a sala ${newMessage.conversationId} `)
+            
+            try{
+                const savedMessage = await Message.create({
+                    conversationId: newMessage.conversationId,
+                    sender: newMessage.sender,
+                    content: newMessage.content,
+                    audioUrl: newMessage.audioUrl,
+                    duration: newMessage.duration,
+                    readBy: [],
+                    createdAt: newMessage.createdAt,
+                    updatedAt: newMessage.updatedAt,
+                });
+
+                const updatedMessage = { ...newMessage, _id: savedMessage._id, sending: false };
+                io.to(newMessage.conversationId).emit('receiveMessage', newMessage);
+                socket.emit("updateTempMessage", { updatedMessage, tempId: newMessage._id });
+            }
+            catch (err)
+            {
+                console.error("Erro ao salvar mensagem: ", err);
+            }
         });
 
         socket.on("messageRead", async ({ message, userId }) => {
