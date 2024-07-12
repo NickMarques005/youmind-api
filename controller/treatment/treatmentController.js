@@ -1,14 +1,13 @@
 const { PatientUser, DoctorUser } = require('../../models/users');
-const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
-const { getUserModel, findUserByEmail } = require("../../utils/db/model");
-const MessageTypes = require('../../utils/response/typeResponse');
-const agenda = require('../../agenda/agenda_manager');
-const { PatientMedicationHistory, PatientQuestionnaireHistory } = require('../../models/patient_history');
-const { cancelMedicationSchedules } = require('../../services/medications/medicationService');
-const { checkAndScheduleMedications } = require('../../services/medications/medicationScheduler');
 const Treatment = require('../../models/treatment');
 const Questionnaire = require('../../models/questionnaire');
 const QuestionnaireTemplate = require('../../models/questionnaire_template');
+const { PatientMedicationHistory, PatientQuestionnaireHistory } = require('../../models/patient_history');
+const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
+const { getUserModel, findUserByEmail } = require("../../utils/db/model");
+const { getAgenda } = require('../../agenda/agenda_manager');
+const { cancelMedicationSchedules } = require('../../services/medications/medicationScheduler');
+const { checkAndScheduleMedications } = require('../../services/medications/medicationScheduler');
 const { addNewQuestionnaire } = require('../../services/questionnaires/addNewQuestionnaire');
 
 exports.initializeTreatment = async (req, res) => {
@@ -164,7 +163,9 @@ exports.endTreatment = async (req, res) => {
             return HandleError(res, 401, "Não possui autorização para encerrar o tratamento");
         }
 
-        await cancelMedicationSchedules(treatmentToUpdate.patientId);
+        const agenda = getAgenda();
+
+        await cancelMedicationSchedules(treatmentToUpdate.patientId, agenda);
 
         await PatientMedicationHistory.deleteMany({
             patientId: treatmentToUpdate.patientId,
@@ -192,7 +193,6 @@ exports.endTreatment = async (req, res) => {
 
         const patient = await PatientUser.findOne({ uid: treatmentToUpdate.patientId });
         if (!patient) return HandleError(res, 404, "Paciente ou médico não encontrado");
-
 
         const treatment = {
             name: patient.name,
