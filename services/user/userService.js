@@ -23,8 +23,8 @@ const fetchUsers = async (type, searchData) => {
             if(user.total_treatments.length > 0)
             {
                 const patientIds = user.total_treatments;
-                const patients = await PatientUser.find({ _id: { $in: patientIds}}, { name: 1, avatar: 1 });
-                user.total_treatments = patients.map(patient => ({ name: patient.name, avatar: patient.avatar }));
+                const patients = await PatientUser.find({ _id: { $in: patientIds}}, { name: 1, avatar: 1, email: 1 });
+                user.total_treatments = patients.map(patient => ({ name: patient.name, avatar: patient.avatar, email: patient.email }));
             }
             
             return user;
@@ -39,8 +39,8 @@ const fetchUsers = async (type, searchData) => {
                 const currentTreatment = await Treatment.findOne({ patientId: user.uid, status: "active"});
                 if(currentTreatment)
                 {
-                    const doctor = await DoctorUser.findOne({ uid: currentTreatment.doctorId }, { name: 1, avatar: 1 });
-                    user.doctor = doctor ? { name: doctor.name, avatar: doctor.avatar } : null
+                    const doctor = await DoctorUser.findOne({ uid: currentTreatment.doctorId }, { name: 1, avatar: 1, email: 1 });
+                    user.doctor = doctor ? { name: doctor.name, avatar: doctor.avatar, email: doctor.email } : null
                 }
             }
 
