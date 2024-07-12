@@ -1,5 +1,6 @@
 //---userService.js---//
 
+const Treatment = require('../../models/treatment');
 const { DoctorUser, PatientUser } = require('../../models/users');
 const { handleDataText } = require('../../utils/text/textUtils');
 
@@ -8,7 +9,7 @@ const fetchUsers = async (type, searchData) => {
     const modelUser = type === 'patient' ? DoctorUser : PatientUser;
     const searchField = type === 'patient' ? { total_treatments: 1 } : { is_treatment_running: 1 };
 
-    return await modelUser.find(
+    const users = await modelUser.find(
         {
             name: { $regex: new RegExp(`${convertedData}`, 'i') },
             verified: true
@@ -16,6 +17,40 @@ const fetchUsers = async (type, searchData) => {
         { _id: 1, name: 1, email: 1, phone: 1, type: 1, avatar: 1, birth: 1, gender: 1, ...searchField }
 
     ).limit(30);
+
+    if(type === 'patient'){
+        const updatedUsers = await Promise.all(users.map(async user => {
+            if(user.total_treatments.length > 0)
+            {
+                const patientIds = user.total_treatments;
+                const patients = await PatientUser.find({ _id: { $in: patientIds}}, { name: 1, avatar: 1 });
+                user.total_treatments = patients.map(patient => ({ name: patient.name, avatar: patient.avatar }));
+            }
+            
+            return user;
+        }));
+
+        return updatedUsers;
+    }
+    else {
+        const updatedUsers = await Promise.all(users.map(async user => {
+            if(user.is_treatment_running)
+            {
+                const currentTreatment = await Treatment.findOne({ patientId: user.uid, status: "active"});
+                if(currentTreatment)
+                {
+                    const doctor = await DoctorUser.findOne({ uid: currentTreatment.doctorId }, { name: 1, avatar: 1 });
+                    user.doctor = doctor ? { name: doctor.name, avatar: doctor.avatar } : null
+                }
+            }
+
+            return user;
+        }));
+
+        return updatedUsers;
+    }
+
+
 };
 
 module.exports = { fetchUsers };

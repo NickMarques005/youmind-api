@@ -120,7 +120,7 @@ exports.createTreatmentSolicitation = async (req, res) => {
             return HandleError(res, 400, notificationsService.message);
         }
 
-        return HandleSuccess(res, 200, `Solicitação enviada para ${receiver.name}`);
+        return HandleSuccess(res, 200, `Solicitação enviada para ${receiver.name}`, undefined, MessageTypes.TREATMENT);
     } catch (err) {
         return HandleError(res, 500, "Erro em registrar Push Notification", err);
     }
