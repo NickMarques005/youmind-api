@@ -9,6 +9,7 @@ const { getAgenda } = require('../../agenda/agenda_manager');
 const { cancelMedicationSchedules } = require('../../services/medications/medicationScheduler');
 const { checkAndScheduleMedications } = require('../../services/medications/medicationScheduler');
 const { addNewQuestionnaire } = require('../../services/questionnaires/addNewQuestionnaire');
+const MessageTypes = require('../../utils/response/typeResponse');
 
 exports.initializeTreatment = async (req, res) => {
     try {
