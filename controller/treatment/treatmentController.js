@@ -16,6 +16,7 @@ exports.initializeTreatment = async (req, res) => {
         const { uid } = req.user;
         const { email_1, email_2 } = req.body;
 
+
         if (!uid) return HandleError(res, 401, "Usuário não autorizado");
         if (email_1 === email_2) return HandleError(res, 400, "E-mails iguais não são permitidos");
 
@@ -30,6 +31,7 @@ exports.initializeTreatment = async (req, res) => {
         if (!user1 || !user2) return HandleError(res, 400, "Um ou ambos os e-mails não registrados");
         if (user1.type === user2.type) return HandleError(res, 400, "Ambos os usuários não podem ser do mesmo tipo");
 
+        const agenda = getAgenda();
         const { patient, doctor } = user1.type === 'patient' ? { patient: user1, doctor: user2 } : { patient: user2, doctor: user1 };
 
         const existingTreatment = await Treatment.findOne({
@@ -38,6 +40,7 @@ exports.initializeTreatment = async (req, res) => {
         });
 
         if (existingTreatment) {
+            
             if (existingTreatment.status === 'pending') {
                 
                 const template = await QuestionnaireTemplate.findOne({});
@@ -46,7 +49,7 @@ exports.initializeTreatment = async (req, res) => {
                     return;
                 }
                 await addNewQuestionnaire(existingTreatment.patientId, template._id);
-                await checkAndScheduleMedications(patient.uid);
+                await checkAndScheduleMedications(patient.uid, agenda);
                 existingTreatment.status = 'active';
                 await existingTreatment.save();
                 return HandleSuccess(res, 200, "Tratamento reiniciado com sucesso", existingTreatment, MessageTypes.SUCCESS);
@@ -61,10 +64,10 @@ exports.initializeTreatment = async (req, res) => {
             });
 
             await newTreatment.save();
-            await checkAndScheduleMedications(patient.uid);
+            await checkAndScheduleMedications(patient.uid, agenda);
 
             await PatientUser.findByIdAndUpdate(patient._id, { is_treatment_running: true });
-            await DoctorUser.findByIdAndUpdate(doctor._id, { $addToSet: { total_treatments: patient._id } });
+            await DoctorUser.findByIdAndUpdate(doctor._id, { $addToSet: { total_treatments: patient._id.toString() } });
 
             return HandleSuccess(res, 201, "Tratamento iniciado com sucesso", newTreatment, MessageTypes.SUCCESS);
         }

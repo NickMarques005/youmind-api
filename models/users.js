@@ -69,7 +69,7 @@ const doctorUserSchema = new Schema({
     },
     total_treatments: [
         {
-            type: Array,
+            type: String,
             default: []
         }
     ]

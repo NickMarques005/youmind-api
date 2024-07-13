@@ -15,6 +15,11 @@ const checkAndScheduleMedications = async (patientId, agenda) => {
             $or: [{ isScheduled: false }, { isScheduled: { $exists: false } }]
         });
 
+        if(unscheduledMedications.length === 0)
+        {
+            return console.log("Não há medicamentos para agendar");
+        }
+
         for (const medication of unscheduledMedications) {
             console.log("Medicamento não agendado: ", medication.name);
 

@@ -20,31 +20,53 @@ const fetchUsers = async (type, searchData) => {
 
     if(type === 'patient'){
         const updatedUsers = await Promise.all(users.map(async user => {
-            if(user.total_treatments.length > 0)
-            {
+            const newUser = {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                type: user.type,
+                avatar: user.avatar,
+                birth: user.birth,
+                gender: user.gender
+            };
+
+            if (user.total_treatments.length > 0) {
                 const patientIds = user.total_treatments;
-                const patients = await PatientUser.find({ _id: { $in: patientIds}}, { name: 1, avatar: 1, email: 1 });
-                user.total_treatments = patients;
+                const patients = await PatientUser.find({ _id: { $in: patientIds } }, { name: 1, avatar: 1, email: 1 });
+                newUser.total_treatments = patients.map(patient => ({ name: patient.name, avatar: patient.avatar, email: patient.email }));
             }
-            
-            return user;
+
+            return newUser;
+
         }));
+
+        console.log(updatedUsers);
 
         return updatedUsers;
     }
     else {
         const updatedUsers = await Promise.all(users.map(async user => {
-            if(user.is_treatment_running)
-            {
-                const currentTreatment = await Treatment.findOne({ patientId: user.uid, status: "active"});
-                if(currentTreatment)
-                {
+            const newUser = {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                type: user.type,
+                avatar: user.avatar,
+                birth: user.birth,
+                gender: user.gender
+            };
+            
+            if (user.is_treatment_running) {
+                const currentTreatment = await Treatment.findOne({ patientId: user.uid, status: "active" });
+                if (currentTreatment) {
                     const doctor = await DoctorUser.findOne({ uid: currentTreatment.doctorId }, { name: 1, avatar: 1, email: 1 });
-                    user.doctor = doctor ? { name: doctor.name, avatar: doctor.avatar, email: doctor.email } : null
+                    newUser.doctor = doctor ? { name: doctor.name, avatar: doctor.avatar, email: doctor.email } : null;
                 }
             }
 
-            return user;
+            return newUser;
         }));
 
         return updatedUsers;
