@@ -24,7 +24,7 @@ const fetchUsers = async (type, searchData) => {
             {
                 const patientIds = user.total_treatments;
                 const patients = await PatientUser.find({ _id: { $in: patientIds}}, { name: 1, avatar: 1, email: 1 });
-                user.total_treatments = patients.map(patient => ({ name: patient.name, avatar: patient.avatar, email: patient.email }));
+                user.total_treatments = patients;
             }
             
             return user;
