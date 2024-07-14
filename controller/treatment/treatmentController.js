@@ -16,7 +16,6 @@ exports.initializeTreatment = async (req, res) => {
         const { uid } = req.user;
         const { email_1, email_2 } = req.body;
 
-
         if (!uid) return HandleError(res, 401, "Usuário não autorizado");
         if (email_1 === email_2) return HandleError(res, 400, "E-mails iguais não são permitidos");
 
@@ -52,8 +51,13 @@ exports.initializeTreatment = async (req, res) => {
                 await checkAndScheduleMedications(patient.uid, agenda);
                 existingTreatment.status = 'active';
                 await existingTreatment.save();
-                return HandleSuccess(res, 200, "Tratamento reiniciado com sucesso", existingTreatment, MessageTypes.SUCCESS);
-            } else {
+                return HandleSuccess(res, 201, undefined, undefined, MessageTypes.SUCCESS);
+            } 
+            else if (existingTreatment.status === 'completed')
+            {
+                return HandleError(res, 400, "Tratamento já encerrado");
+            }
+            else {
                 return HandleError(res, 400, "Tratamento já está em progresso");
             }
         } else {
@@ -69,7 +73,7 @@ exports.initializeTreatment = async (req, res) => {
             await PatientUser.findByIdAndUpdate(patient._id, { is_treatment_running: true });
             await DoctorUser.findByIdAndUpdate(doctor._id, { $addToSet: { total_treatments: patient._id.toString() } });
 
-            return HandleSuccess(res, 201, "Tratamento iniciado com sucesso", newTreatment, MessageTypes.SUCCESS);
+            return HandleSuccess(res, 201, undefined, undefined, MessageTypes.SUCCESS);
         }
     } catch (err) {
         console.error("Erro ao inicializar o tratamento: ", err);
@@ -193,6 +197,7 @@ exports.endTreatment = async (req, res) => {
         await PatientUser.findOneAndUpdate({ uid: treatmentToUpdate.patientId }, { is_treatment_running: false });
 
         treatmentToUpdate.status = 'completed';
+        treatmentToUpdate.wasCompleted = true;
         await treatmentToUpdate.save();
 
         const patient = await PatientUser.findOne({ uid: treatmentToUpdate.patientId });

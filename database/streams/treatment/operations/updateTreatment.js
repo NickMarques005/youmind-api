@@ -1,12 +1,12 @@
 const Treatment = require('../../../../models/treatment');
 const { PatientUser, DoctorUser } = require('../../../../models/users');
-const MessageTypes = require('../../../../utils/response/typeResponse');
+const { createNotice } = require('../../../../utils/user/notice');
 
 const handleUpdateTreatment = async (change, io) => {
     const updatedFields = change.updateDescription.updatedFields;
     const treatmentId = change.documentKey._id;
     if (updatedFields.status === 'active') {
-        console.log("(change Streams) Tratamento atualizado!!\n");
+        console.log("(change Streams) Tratamento atualizado para ATIVO!!\n");
         const updatedTreatment = await Treatment.findById(treatmentId);
 
         if (!updatedTreatment) {
@@ -49,14 +49,19 @@ const handleUpdateTreatment = async (change, io) => {
         io.to(patientId).emit('treatmentUpdate', { treatment: treatmentPatientInfo });
         io.to(doctorId).emit('treatmentUpdate', { treatment: treatmentDoctorInfo });
 
-        const notice = {
-            message: "Parabéns por iniciar o tratamento! Gostaria de ver instruções de como funciona o processo de tratamento no YouMind?",
-            type: 'welcome',
-            icon: MessageTypes.INFO
-        };
+        if (updatedTreatment.wasCompleted) {
+            // Mandar todos os dados anteriores do tratamento (histórico do paciente, etc)
+        }
 
-        io.to(patientId).emit('welcomeMessage', { notice: notice });
-        io.to(doctorId).emit('welcomeMessage', { notice: notice });
+        const messagePatient = `Parabéns por iniciar o tratamento com ${treatmentDoctorInfo.name}! Gostaria de ver instruções de como funciona o processo de tratamento no YouMind?`;
+        const messageDoctor = `Parabéns por iniciar o tratamento com ${treatmentPatientInfo.name}! Gostaria de ver instruções de como funciona o processo de tratamento no YouMind?`;
+
+        const noticePatient = createNotice(messagePatient);
+        const noticeDoctor = createNotice(messageDoctor);
+
+        io.to(patientId).emit('welcomeMessage', { notice: noticePatient });
+        io.to(doctorId).emit('welcomeMessage', { notice: noticeDoctor });
+        console.log("Tratamento e Notice mandado...");
     }
 };
 

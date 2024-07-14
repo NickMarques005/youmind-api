@@ -1,11 +1,37 @@
+const Questionnaire = require("../../models/questionnaire");
 const { PatientUser } = require("../../models/users");
+const { getCurrentDateInBrazilTime } = require("../../utils/date/timeZones");
 const { createNewQuestionnaire } = require("./questionnaireService");
+
+const hasAlreadyAddedQuestionnaires = async (patientId, questionnaireTemplateId) => {
+    const currentDate = getCurrentDateInBrazilTime();
+    const startOfDay = new Date(currentDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(currentDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const addedQuestionnaires = await Questionnaire.find({
+        patientId,
+        createdAt: {
+            $gte: startOfDay,
+            $lte: endOfDay
+        }
+    });
+
+    return addedQuestionnaires.length > 0;
+}
+
 
 const addNewQuestionnaire = async (patientId, questionnaireTemplateId) => {
 
     if (!patientId || !questionnaireTemplateId) {
-        console.error('Mensagem inválida recebida:', message.Body);
+        console.error('Erro ao adicionar novo questionário: Valores inválidos');
         return;
+    }
+
+    if(hasAlreadyAddedQuestionnaires(patientId, questionnaireTemplateId))
+    {
+        return console.log("\nQuestionário já adicionado hoje\n");
     }
 
     try {
@@ -25,4 +51,4 @@ const addNewQuestionnaire = async (patientId, questionnaireTemplateId) => {
     }
 }
 
-module.exports = { addNewQuestionnaire };
+module.exports = { addNewQuestionnaire, hasAlreadyAddedQuestionnaires };

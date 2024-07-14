@@ -15,6 +15,10 @@ const treatmentSchema = new mongoose.Schema({
         default: "pending",
         enum: ["pending", "active", "declined", "expired", "completed"]
     },
+    wasCompleted: {
+        type: Boolean,
+        default: false
+    },
     createdAt: {
         type: Date,
         default: Date.now
