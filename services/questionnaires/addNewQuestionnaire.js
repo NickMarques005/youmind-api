@@ -12,6 +12,7 @@ const hasAlreadyAddedQuestionnaires = async (patientId, questionnaireTemplateId)
 
     const addedQuestionnaires = await Questionnaire.find({
         patientId,
+        questionnaireTemplateId,
         createdAt: {
             $gte: startOfDay,
             $lte: endOfDay
@@ -29,8 +30,8 @@ const addNewQuestionnaire = async (patientId, questionnaireTemplateId) => {
         return;
     }
 
-    if(hasAlreadyAddedQuestionnaires(patientId, questionnaireTemplateId))
-    {
+    const alreadyAdded = await hasAlreadyAddedQuestionnaires(patientId);
+    if (alreadyAdded) {
         return console.log("\nQuestionário já adicionado hoje\n");
     }
 

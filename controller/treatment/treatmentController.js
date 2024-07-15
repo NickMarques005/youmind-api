@@ -215,7 +215,7 @@ exports.endTreatment = async (req, res) => {
             _id: treatmentToUpdate._id
         }
 
-        return HandleSuccess(res, 200, "Tratamento excluído com sucesso", { treatmentToUpdate: treatment }, MessageTypes.SUCCESS);
+        return HandleSuccess(res, 200, "Tratamento encerrado com sucesso", { treatmentToUpdate: treatment }, MessageTypes.SUCCESS);
     }
     catch (err) {
         console.error('Erro ao encerrar o tratamento:', err);
