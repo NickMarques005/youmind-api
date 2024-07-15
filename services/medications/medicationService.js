@@ -58,4 +58,10 @@ const updateMedicationHistoryToAlert = async (medicationHistoryId) => {
     }
 }
 
-module.exports = { createNewMedicationHistory, updateMedicationHistoryToAlert }
+const endMedication = async (medication) => {
+        console.log(`Medicação ${medication.name} expirou e não será reagendada.`);
+        await Medication.findByIdAndDelete(medication._id);
+        return;
+}
+
+module.exports = { createNewMedicationHistory, updateMedicationHistoryToAlert, endMedication }

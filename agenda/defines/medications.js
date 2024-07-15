@@ -2,7 +2,7 @@ const Medication = require('../../models/medication');
 const { medicationsQueueUrl } = require('../../aws/sqs/sqs_queues');
 const { sendMessage } = require('../../aws/services/sqs_service');
 const { PatientMedicationHistory } = require('../../models/patient_history');
-const { createNewMedicationHistory } = require('../../services/medications/medicationService');
+const { createNewMedicationHistory, endMedication } = require('../../services/medications/medicationService');
 const { getNextScheduleTime } = require('../../utils/date/timeZones');
 
 const scheduleMedicationTask = async (medication, scheduleTime, agenda) => {
@@ -38,6 +38,11 @@ const rescheduleMedication = async (job, agenda) => {
     }
 
     const nextScheduleTime = getNextScheduleTime(medication.schedules, medication.start, medication.frequency, 'America/Sao_Paulo');
+
+    if (medication.expiresAt && new Date(medication.expiresAt) < nextScheduleTime) {
+        endMedication(medication);
+        return;
+    }
 
     if (nextScheduleTime) {
         await scheduleMedicationTask(medication, nextScheduleTime, agenda);
