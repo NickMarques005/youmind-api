@@ -8,13 +8,15 @@ const notificationService = require('../../../../../services/notifications/notif
 const { ScreenTypes, MenuTypes, PageTypes } = require('../../../../../utils/app/screenMenuTypes');
 const MessageTypes = require('../../../../../utils/response/typeResponse');
 const { emitUpdateHistory } = require('../../../../../services/history/historyService');
+const { getNextScheduleTime } = require('../../../../../utils/date/timeZones');
+const { endMedication } = require('../../../../../services/medications/medicationService');
 
 const handleUpdateHistoryMedication = async (change, io) => {
     const agenda = getAgenda();
 
     const updatedFields = change.updateDescription.updatedFields;
     console.log("Update History Medication: ", updatedFields);
-    
+
     if (updatedFields['medication.alert'] === true || updatedFields['alert'] === true) {
         console.log("ALERTA DE MEDICAMENTO!!");
 
@@ -77,6 +79,13 @@ const handleUpdateHistoryMedication = async (change, io) => {
         if (agenda) {
             console.log("Schedule Not Taken Medication!!");
             await scheduleMedicationNotTakenTask(medicationHistory, medication, agenda);
+        }
+
+        const nextScheduleTime = getNextScheduleTime(medication.schedules, medication.start, medication.frequency, 'America/Sao_Paulo');
+
+        if (medication.expiresAt && new Date(medication.expiresAt) < nextScheduleTime) {
+            endMedication(medication);
+            
         }
     }
     else if (updatedFields['medication.taken'] === false) {

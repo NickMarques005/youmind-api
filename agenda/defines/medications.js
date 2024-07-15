@@ -40,7 +40,6 @@ const rescheduleMedication = async (job, agenda) => {
     const nextScheduleTime = getNextScheduleTime(medication.schedules, medication.start, medication.frequency, 'America/Sao_Paulo');
 
     if (medication.expiresAt && new Date(medication.expiresAt) < nextScheduleTime) {
-        endMedication(medication);
         return;
     }
 
