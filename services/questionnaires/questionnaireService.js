@@ -29,9 +29,9 @@ const validateQuestions = (questions) => {
 };
 
 const createNewQuestionnaire = async (patientId, templateId) => {
-
+    console.log("Criando novo questionário para o usuário ", patientId);
     try {
-        const treatment = await Treatment.findOne({ patientId: patientId });
+        const treatment = await Treatment.findOne({ patientId: patientId, status: "active" });
         if (!treatment) return console.error("Usuário não está em tratamento no momento");
 
         const questionnaireTemplate = await QuestionnaireTemplate.findById(templateId);

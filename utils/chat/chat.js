@@ -8,7 +8,9 @@ const findSender = async (senderId) => {
             name: patientUser.name,
             email: patientUser.email,
             type: patientUser.type,
-            avatar: patientUser.avatar
+            avatar: patientUser.avatar,
+            gender: patientUser.gender,
+            birth: patientUser.birth
         }
 
         return patientMessage;
@@ -20,10 +22,12 @@ const findSender = async (senderId) => {
             name: doctorUser.name,
             email: doctorUser.email,
             type: doctorUser.type,
-            avatar: doctorUser.avatar
+            avatar: doctorUser.avatar,
+            birth: doctorUser.birth,
+            gender: doctorUser.gender
         }
 
-        return doctorMessage
+        return doctorMessage;
     }
 }
 

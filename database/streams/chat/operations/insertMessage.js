@@ -38,9 +38,12 @@ const handleInsertMessage = async (change) => {
                     sender_params: {
                         name: senderMessage.name,
                         email: senderMessage.email,
-                        id: senderId,
+                        _id: associatedTreatment._id,
                         avatar: senderMessage.avatar || '',
-                        type: senderMessage.type
+                        type: senderMessage.type,
+                        uid: senderId,
+                        birth: senderMessage.birth,
+                        gender: senderMessage.gender
                     },
                     show_modal: false,
                     redirect_params: {
