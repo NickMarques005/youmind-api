@@ -97,7 +97,7 @@ exports.getLatestHistory = async (req, res) => {
             patientId: { $in: patientIds },
             'medication.pending': false
         })
-            .sort({ 'medication.updatedAt': -1  })
+            .sort({ 'medication.updatedAt': -1 })
             .limit(8);
 
         const latestQuestionnaires = await Promise.all(latestQuestionnairesHistory.map(async (history) => {
@@ -118,11 +118,27 @@ exports.getLatestHistory = async (req, res) => {
         }));
 
         const latestMedications = await Promise.all(latestMedicationsHistory.map(async (history) => {
-            const medication = await Medication.findById(history.medication.medicationId);
+            const medication = history.medication;
+            const currentMedication = {
+                _id: medication.medicationId,
+                name: medication.name,
+                dosage: medication.dosage,
+                type: medication.type,
+                expiresAt: medication.expiresAt,
+                frequency: medication.frequency,
+                schedules: medication.schedules,
+                start: medication.start,
+                alarmDuration: medication.alarmDuration,
+                reminderTimes: medication.reminderTimes,
+                patientId: history.patientId,
+                createdAt: medication.createdAt,
+                updatedAt: medication.updatedAt,
+            }
+            
             return {
                 _id: history._id,
                 patientId: history.patientId,
-                currentMedication: medication,
+                currentMedication: currentMedication,
                 currentSchedule: history.medication.currentSchedule,
                 pending: history.medication.pending,
                 alert: history.medication.alert,
@@ -152,8 +168,8 @@ exports.getQuestionPerformance = async (req, res) => {
 
         const treatment = await Treatment.findOne({ patientId: patient.uid, status: "active" });
 
-        if(!treatment) return HandleSuccess(res, 200, "Nenhum tratamento sendo feito");
-        
+        if (!treatment) return HandleSuccess(res, 200, "Nenhum tratamento sendo feito");
+
         const questionnaireHistories = await PatientQuestionnaireHistory.find({ patientId: uid });
 
         let totalPerformance = 0;

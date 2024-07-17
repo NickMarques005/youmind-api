@@ -31,7 +31,9 @@ const createNewMedicationHistory = async (medication, scheduleTime) => {
                 frequency: medication.frequency,
                 start: medication.start,
                 expiresAt: medication.expiresAt,
-                schedules: medication.schedules
+                schedules: medication.schedules,
+                alarmDuration: medication.alarmDuration,
+                reminderTimes: medication.reminderTimes
             },
             treatmentId: treatment._id,
         });

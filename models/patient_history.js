@@ -34,6 +34,14 @@ const medicationHistorySchema = new mongoose.Schema(
             type: [String],
             required: true
         },
+        alarmDuration: {
+            type: Number,
+            required: true
+        },
+        reminderTimes: {
+            type: Number,
+            required: true
+        },
         taken: {
             type: Boolean,
             required: false
@@ -59,7 +67,7 @@ const medicationHistorySchema = new mongoose.Schema(
 );
 
 const answerSchema = new mongoose.Schema({
-    answer: { type: String},
+    answer: { type: String },
     type: { type: String }
 });
 
