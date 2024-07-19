@@ -1,5 +1,6 @@
 const Treatment = require('../../../../models/treatment');
 const { PatientUser, DoctorUser } = require('../../../../models/users');
+const { emitEventToUser } = require('../../../../utils/socket/connection');
 const { createNotice } = require('../../../../utils/user/notice');
 
 const handleUpdateTreatment = async (change, io) => {
@@ -19,6 +20,15 @@ const handleUpdateTreatment = async (change, io) => {
 
         const currentPatient = await PatientUser.findOne({ uid: patientId });
         const currentDoctor = await DoctorUser.findOne({ uid: doctorId });
+
+        if (currentPatient) {
+            currentPatient.welcomeTreatment = true;
+            await currentPatient.save();
+        }
+        if (currentDoctor) {
+            currentDoctor.welcomeTreatment = true;
+            await currentDoctor.save();
+        }
 
         const treatmentDoctorInfo = {
             avatar: currentPatient.avatar,
@@ -46,8 +56,8 @@ const handleUpdateTreatment = async (change, io) => {
 
         console.log("Tratamento atualizado para ativo: ", updatedTreatment);
         console.log("Emitir socket...");
-        io.to(patientId).emit('treatmentUpdate', { treatment: treatmentPatientInfo });
-        io.to(doctorId).emit('treatmentUpdate', { treatment: treatmentDoctorInfo });
+        await emitEventToUser(io, patientId, 'treatmentUpdate', { treatment: treatmentPatientInfo });
+        await emitEventToUser(io, doctorId, 'treatmentUpdate', { treatment: treatmentDoctorInfo });
 
         if (updatedTreatment.wasCompleted) {
             // Mandar todos os dados anteriores do tratamento (histórico do paciente, etc)
@@ -56,11 +66,15 @@ const handleUpdateTreatment = async (change, io) => {
         const messagePatient = `Parabéns por iniciar o tratamento com ${treatmentDoctorInfo.name}! Gostaria de ver instruções de como funciona o processo de tratamento no YouMind?`;
         const messageDoctor = `Parabéns por iniciar o tratamento com ${treatmentPatientInfo.name}! Gostaria de ver instruções de como funciona o processo de tratamento no YouMind?`;
 
-        const noticePatient = createNotice(messagePatient);
-        const noticeDoctor = createNotice(messageDoctor);
+        const noticePatient = createNotice({ message: messagePatient, type: "welcome", dontshow: true, acceptText: "Sim", declineText: "Não, Obrigado" });
+        const noticeDoctor = createNotice({ message: messageDoctor, type: "welcome", dontshow: true, acceptText: "Sim", declineText: "Não, Obrigado" });
 
-        io.to(patientId).emit('welcomeMessage', { notice: noticePatient });
-        io.to(doctorId).emit('welcomeMessage', { notice: noticeDoctor });
+        if (noticePatient) {
+            await emitEventToUser(io, patientId, 'welcomeMessage', { notice: noticePatient });
+        }
+        if (noticeDoctor) {
+            await emitEventToUser(io, doctorId, 'welcomeMessage', { notice: noticeDoctor });
+        }
         console.log("Tratamento e Notice mandado...");
     }
 };

@@ -10,6 +10,7 @@ const { cancelMedicationSchedules } = require('../../services/medications/medica
 const { checkAndScheduleMedications } = require('../../services/medications/medicationScheduler');
 const { addNewQuestionnaire } = require('../../services/questionnaires/addNewQuestionnaire');
 const MessageTypes = require('../../utils/response/typeResponse');
+const { createNotice } = require('../../utils/user/notice');
 
 exports.initializeTreatment = async (req, res) => {
     try {
@@ -39,9 +40,9 @@ exports.initializeTreatment = async (req, res) => {
         });
 
         if (existingTreatment) {
-            
+
             if (existingTreatment.status === 'pending') {
-                
+
                 const template = await QuestionnaireTemplate.findOne({});
                 if (!template) {
                     console.log('Nenhum template de questionário encontrado.');
@@ -52,9 +53,8 @@ exports.initializeTreatment = async (req, res) => {
                 existingTreatment.status = 'active';
                 await existingTreatment.save();
                 return HandleSuccess(res, 201, undefined, undefined, MessageTypes.SUCCESS);
-            } 
-            else if (existingTreatment.status === 'completed')
-            {
+            }
+            else if (existingTreatment.status === 'completed') {
                 return HandleError(res, 400, "Tratamento já encerrado");
             }
             else {
@@ -220,5 +220,89 @@ exports.endTreatment = async (req, res) => {
     catch (err) {
         console.error('Erro ao encerrar o tratamento:', err);
         return HandleError(res, 500, "Erro ao encerrar o tratamento");
+    }
+}
+
+exports.welcomeTreatment = async (req, res) => {
+    try {
+        const { uid } = req.user;
+        const { type } = req.body;
+
+        if (!uid) return HandleError(res, 401, "Usuário não autorizado");
+        if (!type) return HandleError(res, 400, "Tipo de usuário não definido");
+
+        const userModel = type === 'patient' ? PatientUser : DoctorUser;
+        const user = await userModel.findOne({ uid });
+
+        if (!user) return HandleError(res, 404, "Usuário não encontrado");
+
+        if (!user.welcomeTreatment) {
+            return HandleError(res, 400, "Usuário não possui o aviso ativado");
+        }
+
+        let message;
+        if (type === 'patient') {
+            const treatment = await Treatment.findOne({ patientId: uid, status: 'active' });
+
+            if (!treatment) return HandleError(res, 404, "Tratamento não encontrado");
+
+            if (treatment.wasCompleted) {
+                const doctor = await DoctorUser.findOne({ uid: treatment.doctorId });
+                if (!doctor) return HandleError(res, 404, "Médico não encontrado");
+
+                message = `Parabéns por retomar o tratamento com ${doctor.name}! Gostaria de ver novamente as instruções de como funciona o processo de tratamento no YouMind?`;
+            } else {
+                message = `Parabéns por iniciar o tratamento com seu médico! Gostaria de ver instruções de como funciona o processo de tratamento no YouMind?`;
+            }
+        } else {
+            const treatments = await Treatment.find({ doctorId: uid, status: 'active' });
+
+            if (treatments.length === 0) return HandleError(res, 404, "Tratamentos não encontrados");
+
+            if (treatments.length > 1) {
+                message = `Parabéns por mais um tratamento iniciado! Gostaria de ver instruções de como funciona o processo de tratamento no YouMind?`;
+            } else {
+                const patient = await PatientUser.findOne({ uid: treatments[0].patientId });
+                if (!patient) return HandleError(res, 404, "Paciente não encontrado");
+
+                message = `Parabéns por iniciar o tratamento com seu paciente! Gostaria de ver instruções de como funciona o processo de tratamento no YouMind?`;
+            }
+        }
+
+        const notice = createNotice({
+            message,
+            type: "welcome",
+            dontshow: true,
+            acceptText: "Sim",
+            declineText: "Não, Obrigado"
+        });
+
+        return HandleSuccess(res, 200, "Mensagem de boas-vindas enviada", notice, MessageTypes.SUCCESS);
+    } catch (err) {
+        console.error('Erro ao remover mensagem de boas-vindas:', err);
+        return HandleError(res, 500, "Erro ao remover mensagem de boas-vindas");
+    }
+}
+
+exports.removeWelcomeTreatment = async (req, res) => {
+    try {
+        const { uid } = req.user;
+        const { type } = req.body;
+
+        if (!uid) return HandleError(res, 401, "Usuário não autorizado");
+        if (!type) return HandleError(res, 400, "Tipo de usuário não definido");
+
+        const userModel = type === 'patient' ? PatientUser : DoctorUser;
+        const user = await userModel.findOne({ uid });
+
+        if (!user) return HandleError(res, 404, "Usuário não encontrado");
+
+        user.welcomeTreatment = false;
+        await user.save();
+
+        return HandleSuccess(res, 200, "Mensagem de boas-vindas removida com sucesso", undefined, MessageTypes.SUCCESS);
+    } catch (err) {
+        console.error('Erro ao remover mensagem de boas-vindas:', err);
+        return HandleError(res, 500, "Erro ao remover mensagem de boas-vindas");
     }
 }

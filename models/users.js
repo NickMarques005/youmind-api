@@ -50,6 +50,11 @@ const userStandardFields = {
         type: Boolean,
         default: false,
         required: false
+    },
+    welcomeTreatment: {
+        type: Boolean,
+        default: false,
+        required: false
     }
 }
 
