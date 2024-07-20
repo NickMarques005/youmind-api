@@ -1,5 +1,6 @@
 const Treatment = require('../../../../models/treatment');
 const { PatientUser, DoctorUser } = require('../../../../models/users');
+const { handleStartPatientTreatmentServices } = require('../../../../services/treatment/treatmentServices');
 const { emitEventToUser } = require('../../../../utils/socket/connection');
 const { createNotice } = require('../../../../utils/user/notice');
 
@@ -59,6 +60,10 @@ const handleUpdateTreatment = async (change, io) => {
         await emitEventToUser(io, patientId, 'treatmentUpdate', { treatment: treatmentDoctorInfo });
         await emitEventToUser(io, doctorId, 'treatmentUpdate', { treatment: treatmentPatientInfo });
 
+
+        // Acionar os serviços do paciente aqui
+        await handleStartPatientTreatmentServices(patientId);
+
         if (updatedTreatment.wasCompleted) {
             // Mandar todos os dados anteriores do tratamento (histórico do paciente, etc)
         }
@@ -78,7 +83,7 @@ const handleUpdateTreatment = async (change, io) => {
         console.log("Tratamento e Notice mandado...");
     }
     else if (updatedFields.status === 'completed') {
-        
+
     }
 };
 

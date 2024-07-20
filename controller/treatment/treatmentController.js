@@ -1,14 +1,11 @@
 const { PatientUser, DoctorUser } = require('../../models/users');
 const Treatment = require('../../models/treatment');
 const Questionnaire = require('../../models/questionnaire');
-const QuestionnaireTemplate = require('../../models/questionnaire_template');
 const { PatientMedicationHistory, PatientQuestionnaireHistory } = require('../../models/patient_history');
 const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
 const { getUserModel, findUserByEmail } = require("../../utils/db/model");
 const { getAgenda } = require('../../agenda/agenda_manager');
 const { cancelMedicationSchedules } = require('../../services/medications/medicationScheduler');
-const { checkAndScheduleMedications } = require('../../services/medications/medicationScheduler');
-const { addNewQuestionnaire } = require('../../services/questionnaires/addNewQuestionnaire');
 const MessageTypes = require('../../utils/response/typeResponse');
 const { createNotice } = require('../../utils/user/notice');
 
@@ -31,7 +28,6 @@ exports.initializeTreatment = async (req, res) => {
         if (!user1 || !user2) return HandleError(res, 400, "Um ou ambos os e-mails não registrados");
         if (user1.type === user2.type) return HandleError(res, 400, "Ambos os usuários não podem ser do mesmo tipo");
 
-        const agenda = getAgenda();
         const { patient, doctor } = user1.type === 'patient' ? { patient: user1, doctor: user2 } : { patient: user2, doctor: user1 };
 
         const existingTreatment = await Treatment.findOne({
@@ -42,17 +38,15 @@ exports.initializeTreatment = async (req, res) => {
         if (existingTreatment) {
 
             if (existingTreatment.status === 'pending') {
-
-                const template = await QuestionnaireTemplate.findOne({});
-                if (!template) {
-                    console.log('Nenhum template de questionário encontrado.');
-                    return;
-                }
-                await addNewQuestionnaire(existingTreatment.patientId, template._id);
-                await checkAndScheduleMedications(patient.uid, agenda);
                 existingTreatment.status = 'active';
                 await existingTreatment.save();
+                
                 await PatientUser.findByIdAndUpdate(patient._id, { is_treatment_running: true });
+                const doctorData = await DoctorUser.findById(doctor._id);
+                if (!doctorData.total_treatments.includes(patient._id.toString())) {
+                    await DoctorUser.findByIdAndUpdate(doctor._id, { $addToSet: { total_treatments: patient._id.toString() } });
+                }
+                
                 return HandleSuccess(res, 201, undefined, undefined, MessageTypes.SUCCESS);
             }
             else if (existingTreatment.status === 'completed') {
@@ -69,7 +63,6 @@ exports.initializeTreatment = async (req, res) => {
             });
 
             await newTreatment.save();
-            await checkAndScheduleMedications(patient.uid, agenda);
 
             await PatientUser.findByIdAndUpdate(patient._id, { is_treatment_running: true });
             await DoctorUser.findByIdAndUpdate(doctor._id, { $addToSet: { total_treatments: patient._id.toString() } });
