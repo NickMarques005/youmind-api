@@ -30,7 +30,7 @@ const handleUpdateTreatment = async (change, io) => {
             await currentDoctor.save();
         }
 
-        const treatmentDoctorInfo = {
+        const treatmentPatientInfo = {
             avatar: currentPatient.avatar,
             name: currentPatient.name,
             email: currentPatient.email,
@@ -42,7 +42,7 @@ const handleUpdateTreatment = async (change, io) => {
             _id: updatedTreatment._id
         };
 
-        const treatmentPatientInfo = {
+        const treatmentDoctorInfo = {
             avatar: currentDoctor.avatar,
             name: currentDoctor.name,
             email: currentDoctor.email,
@@ -56,8 +56,8 @@ const handleUpdateTreatment = async (change, io) => {
 
         console.log("Tratamento atualizado para ativo: ", updatedTreatment);
         console.log("Emitir socket...");
-        await emitEventToUser(io, patientId, 'treatmentUpdate', { treatment: treatmentPatientInfo });
-        await emitEventToUser(io, doctorId, 'treatmentUpdate', { treatment: treatmentDoctorInfo });
+        await emitEventToUser(io, patientId, 'treatmentUpdate', { treatment: treatmentDoctorInfo });
+        await emitEventToUser(io, doctorId, 'treatmentUpdate', { treatment: treatmentPatientInfo });
 
         if (updatedTreatment.wasCompleted) {
             // Mandar todos os dados anteriores do tratamento (histórico do paciente, etc)
