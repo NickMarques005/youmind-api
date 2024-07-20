@@ -4,7 +4,6 @@ const handleDeleteTreatment = async (change, io) => {
     console.log("TRATAMENTO DELETADO!");
     console.log(treatmentId);
 
-    // io.to(treatmentId).emit('treatmentDelete', { data: treatmentId });
 };
 
 module.exports = handleDeleteTreatment;

@@ -52,6 +52,7 @@ exports.initializeTreatment = async (req, res) => {
                 await checkAndScheduleMedications(patient.uid, agenda);
                 existingTreatment.status = 'active';
                 await existingTreatment.save();
+                await PatientUser.findByIdAndUpdate(patient._id, { is_treatment_running: true });
                 return HandleSuccess(res, 201, undefined, undefined, MessageTypes.SUCCESS);
             }
             else if (existingTreatment.status === 'completed') {

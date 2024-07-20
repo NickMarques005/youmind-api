@@ -19,6 +19,7 @@ const sendDailyQuestionnaires = async job => {
         if(questionnaireHistories) console.log("Historicos atualizados!");
 
         const patients = await PatientUser.find({ is_treatment_running: true });
+        if(patients.length === 0 ) return console.log("Nenhum usuário para mandar questionário");
 
         const template = await QuestionnaireTemplate.findOne({});
         if (!template) {
