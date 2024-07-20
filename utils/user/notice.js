@@ -1,6 +1,4 @@
-const MessageTypes = require("../response/typeResponse");
-
-const createNotice = ({ message, type, icon = MessageTypes.INFO, dontshow = undefined, acceptText = "OK", declineText = "Cancelar" } = {}) => {
+const createNotice = ({ message, type, icon, dontshow = undefined, acceptText = "OK", declineText = "Cancelar" } = {}) => {
     if (!message || !type) {
         return undefined;
     }

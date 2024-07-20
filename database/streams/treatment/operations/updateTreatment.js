@@ -77,6 +77,9 @@ const handleUpdateTreatment = async (change, io) => {
         }
         console.log("Tratamento e Notice mandado...");
     }
+    else if (updatedFields.status === 'completed') {
+        
+    }
 };
 
 module.exports = handleUpdateTreatment;
