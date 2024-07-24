@@ -7,14 +7,14 @@ const { handleDataText } = require('../../utils/text/textUtils');
 const fetchUsers = async (type, searchData) => {
     const convertedData = handleDataText(searchData);
     const modelUser = type === 'patient' ? DoctorUser : PatientUser;
-    const searchField = type === 'patient' ? { total_treatments: 1 } : { is_treatment_running: 1 };
+    const searchField = type === 'patient' ? { total_treatments: 1 } : type === 'doctor' ? { is_treatment_running: 1 } : {};
 
     const users = await modelUser.find(
         {
             name: { $regex: new RegExp(`${convertedData}`, 'i') },
             verified: true
         },
-        { _id: 1, name: 1, email: 1, phone: 1, type: 1, avatar: 1, birth: 1, gender: 1, ...searchField }
+        { _id: 1, uid: 1, name: 1, email: 1, phone: 1, type: 1, avatar: 1, birth: 1, gender: 1, ...searchField }
 
     ).limit(30);
 
@@ -46,6 +46,7 @@ const fetchUsers = async (type, searchData) => {
         return updatedUsers;
     }
     else {
+
         const updatedUsers = await Promise.all(users.map(async user => {
             const newUser = {
                 _id: user._id,
@@ -55,12 +56,15 @@ const fetchUsers = async (type, searchData) => {
                 type: user.type,
                 avatar: user.avatar,
                 birth: user.birth,
-                gender: user.gender
+                gender: user.gender,
+                is_treatment_running: user.is_treatment_running
             };
-            
+
             if (user.is_treatment_running) {
+                console.log("Treatment Running");
                 const currentTreatment = await Treatment.findOne({ patientId: user.uid, status: "active" });
                 if (currentTreatment) {
+                    console.log("Salvar dados do doutor");
                     const doctor = await DoctorUser.findOne({ uid: currentTreatment.doctorId }, { name: 1, avatar: 1, email: 1 });
                     newUser.doctor = doctor ? { name: doctor.name, avatar: doctor.avatar, email: doctor.email } : null;
                 }
