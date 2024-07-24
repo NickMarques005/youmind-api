@@ -10,5 +10,7 @@ router.get('/', tokenMiddleware.verifyUidToken, treatment_controller.getTreatmen
 router.post('/end', tokenMiddleware.verifyUidToken, treatment_controller.endTreatment);
 router.post('/welcome', tokenMiddleware.verifyUidToken, treatment_controller.welcomeTreatment);
 router.post('/removeWelcome', tokenMiddleware.verifyUidToken, treatment_controller.removeWelcomeTreatment);
+router.get('/verify/initialization/:treatmentId', tokenMiddleware.verifyUidToken, treatment_controller.verifyTreatmentInitialization);
+router.get('/verify/completion/:treatmentId', tokenMiddleware.verifyUidToken, treatment_controller.verifyTreatmentCompletion);
 
 module.exports = router;

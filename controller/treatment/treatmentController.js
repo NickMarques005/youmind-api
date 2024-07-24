@@ -194,22 +194,7 @@ exports.endTreatment = async (req, res) => {
         treatmentToUpdate.wasCompleted = true;
         await treatmentToUpdate.save();
 
-        const patient = await PatientUser.findOne({ uid: treatmentToUpdate.patientId });
-        if (!patient) return HandleError(res, 404, "Paciente ou médico não encontrado");
-
-        const treatment = {
-            name: patient.name,
-            email: patient.email,
-            avatar: patient.avatar,
-            phone: patient.phone,
-            birth: patient.birth,
-            gender: patient.gender,
-            uid: patient.uid,
-            online: patient.online,
-            _id: treatmentToUpdate._id
-        }
-
-        return HandleSuccess(res, 200, "Tratamento encerrado com sucesso", { treatmentToUpdate: treatment }, MessageTypes.SUCCESS);
+        return HandleSuccess(res, 200, undefined, undefined, MessageTypes.SUCCESS);
     }
     catch (err) {
         console.error('Erro ao encerrar o tratamento:', err);
@@ -300,3 +285,46 @@ exports.removeWelcomeTreatment = async (req, res) => {
         return HandleError(res, 500, "Erro ao remover mensagem de boas-vindas");
     }
 }
+
+exports.verifyTreatmentInitialization = async (req, res) => {
+    try{
+        const { uid } = req.user;
+        const { treatmentId } = req.params;
+
+        if (!uid) return HandleError(res, 401, "Usuário não autorizado");
+        
+        const treatment = await Treatment.findById(treatmentId);
+        if (!treatment) return HandleError(res, 404, "Tratamento não encontrado");
+        
+        if(treatment.status !== 'active') return HandleError(res, 400, "O tratamento não foi iniciado");
+
+        return HandleSuccess(res, 200);
+    }
+    catch (err)
+    {
+        console.error('Erro ao verificar tratamento:', err);
+        return HandleError(res, 500, `Erro ao verificar inicialização tratamento: ${err}`);
+    }
+}
+
+exports.verifyTreatmentCompletion = async (req, res) => {
+    try{
+        const { uid } = req.user;
+        const { treatmentId } = req.params;
+
+        if (!uid) return HandleError(res, 401, "Usuário não autorizado");
+        
+        const treatment = await Treatment.findById(treatmentId);
+        if (!treatment) return HandleError(res, 404, "Tratamento não encontrado");
+        
+        if(treatment.status !== 'completed') return HandleError(res, 400, "O tratamento não foi encerrado");
+
+        return HandleSuccess(res, 200);
+    }
+    catch (err)
+    {
+        console.error('Erro ao verificar tratamento:', err);
+        return HandleError(res, 500, `Erro ao verificar encerramento do tratamento: ${err}`);
+    }
+}
+
