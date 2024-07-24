@@ -85,7 +85,6 @@ exports.createTreatmentSolicitation = async (req, res) => {
                 await existingTreatment.save();
             }
         } else {
-        
             const treatment = new Treatment({
                 [fieldRequesterId]: requester.uid,
                 [fieldReceiverId]: receiver.uid,

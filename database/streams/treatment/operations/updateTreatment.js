@@ -66,8 +66,8 @@ const handleUpdateTreatment = async (change, io) => {
         const noticePatient = createNotice({ message: messagePatient, type: "welcome", dontshow: true, acceptText: "Sim", declineText: "Não, Obrigado" });
         const noticeDoctor = createNotice({ message: messageDoctor, type: "welcome", dontshow: true, acceptText: "Sim", declineText: "Não, Obrigado" });
 
-        await emitEventToUser(io, patientId, 'treatmentInitiate', { treatment: updatedTreatment, notice: noticePatient });
-        await emitEventToUser(io, doctorId, 'treatmentInitiate', { treatment: updatedTreatment, notice: noticeDoctor });
+        await emitEventToUser(io, patientId, 'treatmentInitiate', { treatment: treatmentDoctorInfo, notice: noticePatient });
+        await emitEventToUser(io, doctorId, 'treatmentInitiate', { treatment: treatmentPatientInfo, notice: noticeDoctor });
 
         console.log("Tratamento e Notice mandado...");
     }
@@ -125,8 +125,8 @@ const handleUpdateTreatment = async (change, io) => {
         const noticePatient = createNotice({ message: messagePatient, type: "treatment_end", dontshow: true, acceptText: "Ok" });
         const noticeDoctor = createNotice({ message: messageDoctor, type: "treatment_end", dontshow: true, acceptText: "Ok" });
 
-        await emitEventToUser(io, patientId, 'treatmentComplete', { treatment: updatedTreatment, notice: noticePatient });
-        await emitEventToUser(io, doctorId, 'treatmentComplete', { treatment: updatedTreatment, notice: noticeDoctor });
+        await emitEventToUser(io, patientId, 'treatmentComplete', { treatment: treatmentDoctorInfo, notice: noticePatient });
+        await emitEventToUser(io, doctorId, 'treatmentComplete', { treatment: treatmentPatientInfo, notice: noticeDoctor });
 
         console.log("Tratamento concluído e Notice enviado...");
     }
