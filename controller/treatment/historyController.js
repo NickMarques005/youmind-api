@@ -28,7 +28,7 @@ exports.getAllHistory = async (req, res) => {
         const medicationHistory = await PatientMedicationHistory.find({ patientId: { $in: patientIds } });
         const questionnaireHistory = await PatientQuestionnaireHistory.find({ patientId: { $in: patientIds } });
 
-        const aggregatedHistory = patientIds.map(async (patientId) => {
+        const aggregatedHistoryPromises = patientIds.map(async (patientId) => {
             const treatmentId = treatmentLookup[patientId] || null;
             const patientMedications = medicationHistory.filter(hist => hist.patientId === patientId);
             const patientQuestionnaires = questionnaireHistory.filter(hist => hist.patientId === patientId);
@@ -71,6 +71,8 @@ exports.getAllHistory = async (req, res) => {
                 lastWeekTaken: lastWeekTaken
             };
         });
+
+        const aggregatedHistory = await Promise.all(aggregatedHistoryPromises);
 
         return HandleSuccess(res, 200, "Histórico de todos os pacientes", aggregatedHistory);
     } catch (err) {
