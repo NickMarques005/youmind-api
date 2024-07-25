@@ -1,8 +1,12 @@
 const notificationModel = require('../../models/notification');
+const { Expo } = require('expo-server-sdk');
+const expo = new Expo({
+    useFcmV1: true
+});
+
 
 exports.sendPushNotification = async (notification, _id, pushToken) => {
-    const { Expo } = require('expo-server-sdk');
-    const expo = new Expo();
+
     console.log("Notification Data: ", notification, " \n// pushToken: ", pushToken, "\n // message Id: ", _id);
     try {
         const notificationToSend = {
@@ -13,7 +17,7 @@ exports.sendPushNotification = async (notification, _id, pushToken) => {
             sound: 'default',
             icon: notification.icon ? notification.icon : ''
         }
-
+        console.log("\n---> SEND PUSH NOTIFICATION SERVICE!!\n");
         let receipts = await expo.sendPushNotificationsAsync([notificationToSend]);
         console.log("Notificação enviada: ", receipts);
         return true;
@@ -30,7 +34,7 @@ exports.createNotification = async (notificationData, userId) => {
         console.log("Houve um erro! Usuário não fornecido");
         return;
     }
-    
+
     try {
 
         const newNotification = new notificationModel({

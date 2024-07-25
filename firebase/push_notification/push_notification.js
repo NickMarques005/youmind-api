@@ -45,6 +45,7 @@ const getTokenFromFirebase = async (uid, pushToken = null) => {
 }
 
 const sendPushNotification = async (token, message) => {
+    console.log("\n---> SEND PUSH NOTIFICATION SERVICE!!\n");
     const messagePayload = {
         notification: {
             title: message.title,
