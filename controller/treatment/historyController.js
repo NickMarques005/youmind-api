@@ -28,7 +28,7 @@ exports.getAllHistory = async (req, res) => {
         const medicationHistory = await PatientMedicationHistory.find({ patientId: { $in: patientIds } });
         const questionnaireHistory = await PatientQuestionnaireHistory.find({ patientId: { $in: patientIds } });
 
-        const aggregatedHistory = patientIds.map((patientId) => {
+        const aggregatedHistory = patientIds.map(async (patientId) => {
             const treatmentId = treatmentLookup[patientId] || null;
             const patientMedications = medicationHistory.filter(hist => hist.patientId === patientId);
             const patientQuestionnaires = questionnaireHistory.filter(hist => hist.patientId === patientId);
@@ -46,11 +46,15 @@ exports.getAllHistory = async (req, res) => {
             oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
             const lastWeekTaken = patientMedications.filter(med => !med.medication.taken && new Date(med.medication.consumeDate) >= oneWeekAgo).length;
 
+            const patient = await PatientUser.findOne({ uid: patientId }).lean();
             console.log(treatmentId);
 
             return {
                 patientId,
                 treatmentId,
+                patientName: patient?.name || "Usuário",
+                patientEmail: patient?.email,
+                patientAvatar: patient?.avatar,
                 medicationHistory: {
                     total: patientMedications.length,
                     taken: takenMedications,
