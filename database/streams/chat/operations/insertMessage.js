@@ -49,9 +49,9 @@ const handleInsertMessage = async (change) => {
                     redirect_params: {
                         screen: ScreenTypes.CHAT,
                         menu_option: MenuTypes.TRATAMENTO
-                    }
+                    },
+                    icon: senderIcon
                 },
-                icon: senderIcon
             };
 
             console.log(notificationData);

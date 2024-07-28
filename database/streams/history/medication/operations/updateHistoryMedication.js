@@ -65,8 +65,8 @@ const handleUpdateHistoryMedication = async (change, io) => {
                         menu_option: MenuTypes.SAÚDE,
                         page: PageTypes.SAÚDE.MEDICAMENTOS
                     },
+                    icon: MessageTypes.INFO
                 },
-                icon: MessageTypes.INFO
             };
 
             const notificationSended = await notificationService.sendNotificationToAllDevices(patientId, notificationData);
@@ -123,8 +123,8 @@ const handleUpdateHistoryMedication = async (change, io) => {
                     menu_option: MenuTypes.SAÚDE,
                     page: PageTypes.SAÚDE.MEDICAMENTOS
                 },
+                icon: MessageTypes.WARNING
             },
-            icon: MessageTypes.WARNING
         };
 
         const notificationSended = await notificationService.sendNotificationToAllDevices(patientId, notificationData);

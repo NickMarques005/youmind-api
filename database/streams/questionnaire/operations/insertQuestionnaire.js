@@ -25,8 +25,8 @@ const handleInsertQuestionnaire = async (change, io) => {
                 menu_option: MenuTypes.SAÚDE,
                 page: PageTypes.SAÚDE.QUESTIONARIOS
             },
+            icon: MessageTypes.QUESTIONNAIRE
         },
-        icon: MessageTypes.QUESTIONNAIRE
     };
 
     const notificationSended = await notificationService.sendNotificationToAllDevices(patientId, notificationData);

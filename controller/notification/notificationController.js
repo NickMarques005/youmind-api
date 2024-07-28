@@ -110,8 +110,8 @@ exports.createTreatmentSolicitation = async (req, res) => {
                     avatar: requester.avatar
                 },
                 show_modal: true,
+                icon: MessageTypes.TREATMENT
             },
-            icon: MessageTypes.TREATMENT
         };
 
         const notificationsService = await notificationService.sendNotificationToAllDevices(receiver.uid, notificationData);
