@@ -29,6 +29,22 @@ const notificationSchema = new mongoose.Schema({
     { timestamps: true }
 );
 
+// Adição da data de criação para notificação
+notificationSchema.pre('save', function (next) {
+    const now = new Date();
+    if (!this.data.createdAt) {
+        this.data.createdAt = now;
+    }
+    this.data.updatedAt = now;
+    next();
+});
+
+//Adição da data de atualização para notificação
+notificationSchema.pre('findOneAndUpdate', function (next) {
+    this._update['data.updatedAt'] = new Date();
+    next();
+});
+
 notificationSchema.index({ expiresAt: 1 }, { sparse: true, expireAfterSeconds: 0 });
 
 const Notification = mongoose.model('Notification', notificationSchema, 'notification_data');
