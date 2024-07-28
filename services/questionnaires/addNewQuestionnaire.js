@@ -9,6 +9,7 @@ const hasAlreadyAddedQuestionnaires = async (patientId, questionnaireTemplateId)
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(currentDate);
     endOfDay.setHours(23, 59, 59, 999);
+    console.log(`Comparação de StartDay e EndDay para verificar se há questionários: ${startOfDay} / ${endOfDay}`);
 
     const addedQuestionnaires = await Questionnaire.find({
         patientId,
@@ -21,7 +22,6 @@ const hasAlreadyAddedQuestionnaires = async (patientId, questionnaireTemplateId)
 
     return addedQuestionnaires.length > 0;
 }
-
 
 const addNewQuestionnaire = async (patientId, questionnaireTemplateId) => {
 

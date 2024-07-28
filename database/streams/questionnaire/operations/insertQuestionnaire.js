@@ -1,5 +1,6 @@
 const { PatientUser } = require('../../../../models/users');
 const notificationService = require('../../../../services/notifications/notificationService');
+const { emitNewQuestionnaire } = require('../../../../services/questionnaires/questionnaireService');
 const { ScreenTypes, MenuTypes, PageTypes } = require('../../../../utils/app/screenMenuTypes');
 const MessageTypes = require('../../../../utils/response/typeResponse');
 
@@ -29,15 +30,10 @@ const handleInsertQuestionnaire = async (change, io) => {
         },
     };
 
+    await emitNewQuestionnaire(io, patientId, newQuestionnaire, "addNewQuestionnaire");
+
     const notificationSended = await notificationService.sendNotificationToAllDevices(patientId, notificationData);
-    if (!notificationSended) return;
-
-    const questionnaireItem = {
-        currentQuestionnaire: newQuestionnaire
-    };
-
-    io.to(patientId).emit('newQuestionnaire', questionnaireItem);
-    console.log(`Notificação enviada para o paciente ${patientId}`);
+    if(!notificationSended) console.log("Notificação do novo questionário não enviada");
 };
 
 module.exports = handleInsertQuestionnaire;

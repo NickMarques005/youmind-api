@@ -75,8 +75,6 @@ const fetchUsers = async (type, searchData) => {
 
         return updatedUsers;
     }
-
-
 };
 
 module.exports = { fetchUsers };

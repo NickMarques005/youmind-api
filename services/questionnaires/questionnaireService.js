@@ -71,4 +71,14 @@ const createNewQuestionnaire = async (patientId, templateId) => {
     }
 }
 
-module.exports = { validateQuestions, createNewQuestionnaire };
+const emitNewQuestionnaire = async (io, patientId, newQuestionnaire, event) => {
+    try {
+        if (await emitEventToUser(io, patientId, event, { questionnaire: newQuestionnaire })) {
+            console.log(`Novo questionário emitido para o paciente ${patientId}`);
+        }
+    } catch (error) {
+        console.error('Erro ao emitir novo questionário:', error);
+    }
+}
+
+module.exports = { validateQuestions, createNewQuestionnaire, emitNewQuestionnaire };

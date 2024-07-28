@@ -7,7 +7,7 @@ const { getAgenda } = require('../../../../../agenda/agenda_manager');
 const notificationService = require('../../../../../services/notifications/notificationService');
 const { ScreenTypes, MenuTypes, PageTypes } = require('../../../../../utils/app/screenMenuTypes');
 const MessageTypes = require('../../../../../utils/response/typeResponse');
-const { emitUpdateHistory } = require('../../../../../services/history/historyService');
+const { emitUpdateHistory, emitHistoryMedicationUpdate } = require('../../../../../services/history/historyService');
 const { getNextScheduleTime } = require('../../../../../utils/date/timeZones');
 const { endMedication } = require('../../../../../services/medications/medicationService');
 
@@ -133,7 +133,6 @@ const handleUpdateHistoryMedication = async (change, io) => {
             console.log(`Notificação enviada para o paciente ${patientId}`);
         }
 
-
         const treatment = await Treatment.findOne({ patientId: patientId });
         if (!treatment) {
             console.log("Tratamento não encontrado");
@@ -143,6 +142,7 @@ const handleUpdateHistoryMedication = async (change, io) => {
         const doctorId = treatment.doctorId;
 
         await emitUpdateHistory(io, doctorId, patientId);
+        await emitHistoryMedicationUpdate(io, doctorId, medicationHistory, "updateLatestMedication");
     }
     else if (updatedFields['medication.taken'] === true) {
         console.log("MEDICATION TAKEN EVENT");
@@ -163,6 +163,7 @@ const handleUpdateHistoryMedication = async (change, io) => {
         const doctorId = treatment.doctorId;
 
         await emitUpdateHistory(io, doctorId, patientId);
+        await emitHistoryMedicationUpdate(io, doctorId, medicationHistory, "updateLatestMedication");
     }
     return;
 }

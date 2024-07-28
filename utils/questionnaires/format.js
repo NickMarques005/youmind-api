@@ -1,5 +1,7 @@
+const { getCurrentDateInBrazilTime } = require("../date/timeZones");
+
 const getFormattedQuestionnaireName = () => {
-    const currentDate = new Date();
+    const currentDate = getCurrentDateInBrazilTime();
 
     const formattedDate = currentDate.toLocaleDateString('pt-BR', {
         weekday: 'long',

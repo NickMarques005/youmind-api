@@ -1,11 +1,11 @@
-const isUserConnected = (io, userId) => {
-    const sockets = io.of("/").adapter.rooms.get(userId);
+const isUserConnected = (io, room) => {
+    const sockets = io.of("/").adapter.rooms.get(room);
     return sockets && sockets.size > 0;
 };
 
 const emitEventToUser = async (io, room, socketEvent, data) => {
     if (isUserConnected(io, room)) {
-        console.log(`Usuário está conectado na sala ${room}. Emitindo evento.`);
+        console.log(`Usuário está conectado na sala ${room}. Emitindo evento...`);
         io.to(room).emit(socketEvent, data);
         return true;
     }

@@ -1,13 +1,15 @@
 const { PatientUser } = require('../../../../../models/users');
 const Treatment = require('../../../../../models/treatment');
-const { emitUpdateHistory } = require('../../../../../services/history/historyService');
+const { emitUpdateHistory, emitHistoryQuestionnaireUpdate } = require('../../../../../services/history/historyService');
 const { PatientQuestionnaireHistory } = require('../../../../../models/patient_history');
 
 const handleUpdateHistoryQuestionnaire = async (change, io) => {
     const updatedFields = change.updateDescription.updatedFields;
-    if (updatedFields && (updatedFields['questionnaire.answered'] === false || updatedFields['questionnaire.answered'] === true)) {
+
+    if (updatedFields) {
         const questionnaireId = change.documentKey._id;
         const questionnaireHistory = await PatientQuestionnaireHistory.findById(questionnaireId);
+
         if (!questionnaireHistory) {
             console.error(`Questionário não foi encontrado no histórico: ${questionnaireId}`);
             return;
@@ -28,9 +30,20 @@ const handleUpdateHistoryQuestionnaire = async (change, io) => {
 
         const doctorId = treatment.doctorId;
 
-        await emitUpdateHistory(io, doctorId, patientId);
+        if (updatedFields['questionnaire.pending'] === false) {
+            if (updatedFields['questionnaire.answered'] === true) {
+                console.log("Questionário respondido");
+                // Enviar notificação
+            }
+            else if (updatedFields['questionnaire.answered'] === false) {
+                console.log("Questionário não respondido");
+                // Enviar notificação
+            }
+
+            await emitUpdateHistory(io, doctorId, patientId);
+            await emitHistoryQuestionnaireUpdate(io, doctorId, questionnaireHistory, "updateLatestQuestionnaire");
+        }
     }
-    return;
 }
 
 module.exports = handleUpdateHistoryQuestionnaire;

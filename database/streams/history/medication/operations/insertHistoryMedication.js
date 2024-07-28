@@ -1,6 +1,6 @@
 const { PatientMedicationHistory } = require('../../../../../models/patient_history');
 const Treatment = require('../../../../../models/treatment');
-const { emitUpdateHistory } = require('../../../../../services/history/historyService');
+const { emitUpdateHistory, emitHistoryMedicationUpdate } = require('../../../../../services/history/historyService');
 
 const handleInsertHistoryMedication = async (change, io) => {
 
@@ -24,6 +24,8 @@ const handleInsertHistoryMedication = async (change, io) => {
     const doctorId = treatment.doctorId;
 
     await emitUpdateHistory(io, doctorId, patientId);
+    await emitHistoryMedicationUpdate(io, doctorId, medicationHistory, "updateLatestMedication");
+
 }
 
 module.exports = handleInsertHistoryMedication;
