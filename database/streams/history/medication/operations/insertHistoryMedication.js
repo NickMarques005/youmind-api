@@ -24,8 +24,6 @@ const handleInsertHistoryMedication = async (change, io) => {
     const doctorId = treatment.doctorId;
 
     await emitUpdateHistory(io, doctorId, patientId);
-    await emitHistoryMedicationUpdate(io, doctorId, medicationHistory, "updateLatestMedication");
-
 }
 
 module.exports = handleInsertHistoryMedication;

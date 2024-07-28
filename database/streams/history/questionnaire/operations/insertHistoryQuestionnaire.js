@@ -28,7 +28,6 @@ const handleInsertHistoryQuestionnaire = async (change, io) => {
     const doctorId = treatment.doctorId;
 
     await emitUpdateHistory(io, doctorId, patientId);
-    await emitHistoryQuestionnaireUpdate(io, doctorId, questionnaireHistory, "updateLatestQuestionnaire");
 }
 
 module.exports = handleInsertHistoryQuestionnaire;
