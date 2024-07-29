@@ -1,6 +1,7 @@
 const { PatientMedicationHistory } = require('../../../../../models/patient_history');
 const Treatment = require('../../../../../models/treatment');
 const { emitHistoryMedicationUpdate, emitUpdateHistory } = require('../../../../../services/history/historyService');
+const { formatLatestMedication } = require('../../../../../utils/history/formatHistory');
 
 const handleDeleteHistoryMedication = async (change, io) => {
     const medicationHistoryId = change.documentKey._id;
@@ -22,8 +23,10 @@ const handleDeleteHistoryMedication = async (change, io) => {
 
     const doctorId = treatment.doctorId;
 
+    const latestMedication = await formatLatestMedication(medicationHistory);
+
     await emitUpdateHistory(io, doctorId, patientId);
-    await emitHistoryMedicationUpdate(io, doctorId, medicationHistory, "deleteLatestMedication");
+    await emitHistoryMedicationUpdate(io, doctorId, { latestMedication }, "deleteLatestMedication");
 }
 
 module.exports = handleDeleteHistoryMedication;

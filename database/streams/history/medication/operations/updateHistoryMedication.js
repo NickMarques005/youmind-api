@@ -10,6 +10,7 @@ const MessageTypes = require('../../../../../utils/response/typeResponse');
 const { emitUpdateHistory, emitHistoryMedicationUpdate } = require('../../../../../services/history/historyService');
 const { getNextScheduleTime } = require('../../../../../utils/date/timeZones');
 const { endMedication } = require('../../../../../services/medications/medicationService');
+const { formatLatestMedication } = require('../../../../../utils/history/formatHistory');
 
 const handleUpdateHistoryMedication = async (change, io) => {
     const agenda = getAgenda();
@@ -141,8 +142,10 @@ const handleUpdateHistoryMedication = async (change, io) => {
 
         const doctorId = treatment.doctorId;
 
+        const latestMedication = await formatLatestMedication(medicationHistory);
+
         await emitUpdateHistory(io, doctorId, patientId);
-        await emitHistoryMedicationUpdate(io, doctorId, medicationHistory, "updateLatestMedication");
+        await emitHistoryMedicationUpdate(io, doctorId, { latestMedication }, "updateLatestMedication");
     }
     else if (updatedFields['medication.taken'] === true) {
         console.log("MEDICATION TAKEN EVENT");
@@ -162,8 +165,10 @@ const handleUpdateHistoryMedication = async (change, io) => {
 
         const doctorId = treatment.doctorId;
 
+        const latestMedication = await formatLatestMedication(medicationHistory);
+
         await emitUpdateHistory(io, doctorId, patientId);
-        await emitHistoryMedicationUpdate(io, doctorId, medicationHistory, "updateLatestMedication");
+        await emitHistoryMedicationUpdate(io, doctorId, { latestMedication }, "updateLatestMedication");
     }
     return;
 }

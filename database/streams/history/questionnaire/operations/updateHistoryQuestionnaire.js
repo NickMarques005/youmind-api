@@ -2,6 +2,8 @@ const { PatientUser } = require('../../../../../models/users');
 const Treatment = require('../../../../../models/treatment');
 const { emitUpdateHistory, emitHistoryQuestionnaireUpdate } = require('../../../../../services/history/historyService');
 const { PatientQuestionnaireHistory } = require('../../../../../models/patient_history');
+const QuestionnaireTemplate = require('../../../../../models/questionnaire_template');
+const { formatLatestQuestionnaire } = require('../../../../../utils/history/formatHistory');
 
 const handleUpdateHistoryQuestionnaire = async (change, io) => {
     const updatedFields = change.updateDescription.updatedFields;
@@ -11,21 +13,23 @@ const handleUpdateHistoryQuestionnaire = async (change, io) => {
         const questionnaireHistory = await PatientQuestionnaireHistory.findById(questionnaireId);
 
         if (!questionnaireHistory) {
-            console.error(`Questionário não foi encontrado no histórico: ${questionnaireId}`);
-            return;
+            throw new Error(`Questionário não foi encontrado no histórico: ${questionnaireId}`);
+        }
+
+        const questionnaireTemplate = await QuestionnaireTemplate.findById(templateId);
+        if (!questionnaireTemplate) {
+            throw new Error("Template de questionário não encontrado");
         }
 
         const patientId = questionnaireHistory.patientId;
         const patient = await PatientUser.findOne({ uid: patientId });
         if (!patient) {
-            console.error(`Paciente não encontrado: ${patientId}`);
-            return;
+            throw new Error(`Paciente não encontrado: ${patientId}`);
         }
 
         const treatment = await Treatment.findOne({ patientId: patientId });
         if (!treatment) {
-            console.log("Tratamento não encontrado");
-            return;
+            throw new Error("Tratamento não encontrado");
         }
 
         const doctorId = treatment.doctorId;
@@ -40,8 +44,10 @@ const handleUpdateHistoryQuestionnaire = async (change, io) => {
                 // Enviar notificação
             }
 
+            const latestQuestionnaire = await formatLatestQuestionnaire(questionnaireHistory);
+
             await emitUpdateHistory(io, doctorId, patientId);
-            await emitHistoryQuestionnaireUpdate(io, doctorId, questionnaireHistory, "updateLatestQuestionnaire");
+            await emitHistoryQuestionnaireUpdate(io, doctorId, { latestQuestionnaire }, "updateLatestQuestionnaire");
         }
     }
 }

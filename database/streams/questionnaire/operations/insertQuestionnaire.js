@@ -30,7 +30,11 @@ const handleInsertQuestionnaire = async (change, io) => {
         },
     };
 
-    await emitNewQuestionnaire(io, patientId, newQuestionnaire, "addNewQuestionnaire");
+    const questionnaireData = {
+        currentQuestionnaire: newQuestionnaire
+    }
+
+    await emitNewQuestionnaire(io, patientId, questionnaireData, "addNewQuestionnaire");
 
     const notificationSended = await notificationService.sendNotificationToAllDevices(patientId, notificationData);
     if(!notificationSended) console.log("Notificação do novo questionário não enviada");
