@@ -10,7 +10,7 @@ const defineAgendaTasks = (agenda) => {
     });
     agenda.define('medication not taken', async (job) => {
         await medicationNotTaken(job, agenda);
-    })
+    });
 };
 
 module.exports = defineAgendaTasks;
