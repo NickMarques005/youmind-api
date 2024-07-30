@@ -22,7 +22,7 @@ exports.getQuestionnaires = async (req, res) => {
             .sort({ createdAt: -1 })
             .limit(7);
 
-        if (!questionnaires || questionnaires.length === 0) return HandleError(res, 404, "Nenhum questionário encontrado");
+        if (!questionnaires || questionnaires.length === 0) return HandleSuccess(res, 200, "Nenhum questionário encontrado");
 
         const result = await Promise.all(questionnaires.map(async (questionnaire) => {
             if (questionnaire.answers && questionnaire.checked) {
