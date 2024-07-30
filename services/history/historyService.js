@@ -65,6 +65,7 @@ const emitUpdateHistory = async (io, doctorId, patientId) => {
 
 const emitHistoryMedicationUpdate = async (io, doctorId, latestMedication, event) => {
     try {
+        console.log("Latest Medication: ", latestMedication);
         if (await emitEventToUser(io, doctorId, event, { latestMedication })) {
             console.log(`Histórico de medicamentos emitido para a sala ${doctorId}`);
         }
@@ -75,6 +76,7 @@ const emitHistoryMedicationUpdate = async (io, doctorId, latestMedication, event
 
 const emitHistoryQuestionnaireUpdate = async (io, doctorId, latestQuestionnaire, event) => {
     try {
+        console.log(latestQuestionnaire);
         if (await emitEventToUser(io, doctorId, event, { latestQuestionnaire })) {
             console.log(`Histórico de questionários emitido para a sala ${doctorId}`);
         }
