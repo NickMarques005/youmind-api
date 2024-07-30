@@ -21,6 +21,11 @@ const questionTemplateSchema = new mongoose.Schema(
 const questionnaireTemplateSchema = new mongoose.Schema(
     {
         questions: [questionTemplateSchema],
+        time: {
+            type: String,
+            enum: ['matutino', 'noturno'],
+            required: true
+        },
     },
     { timestamps: true });
 

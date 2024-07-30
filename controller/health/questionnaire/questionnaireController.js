@@ -94,6 +94,7 @@ exports.SendAnswers = async (req, res) => {
         }
 
         const currentDate = new Date();
+        console.log(currentDate);
         if (currentDate > questionnaire.expiredAt) {
             return HandleError(res, 400, "Seu tempo para responder o questionário infelizmente expirou.");
         }

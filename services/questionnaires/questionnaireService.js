@@ -28,7 +28,7 @@ const validateQuestions = (questions) => {
     return true;
 };
 
-const createNewQuestionnaire = async (patientId, templateId) => {
+const createNewQuestionnaire = async (patientId, templateId, timeSlot) => {
     console.log("Criando novo questionário para o usuário ", patientId);
     try {
         const treatment = await Treatment.findOne({ patientId: patientId, status: "active" });
@@ -41,9 +41,20 @@ const createNewQuestionnaire = async (patientId, templateId) => {
         }
 
         const currentDate = getCurrentDateInBrazilTime();
-        const name = getFormattedQuestionnaireName();
+        const name = getFormattedQuestionnaireName(timeSlot);
 
-        const expirationDate = getExpirationDateInUTC(currentDate, 'America/Sao_Paulo', 1, 4);
+        let expirationDate;
+        switch (timeSlot) {
+            case 'matutino':
+                expirationDate = getExpirationDateInUTC(currentDate, 'America/Sao_Paulo', 0, 20);
+                break;
+            case 'noturno':
+                expirationDate = getExpirationDateInUTC(currentDate, 'America/Sao_Paulo', 1, 6);
+                break;
+            default:
+                expirationDate = getExpirationDateInUTC(currentDate, 'America/Sao_Paulo', 1, 6);
+                break;
+        }
 
         const newQuestionnaire = new Questionnaire({
             patientId,

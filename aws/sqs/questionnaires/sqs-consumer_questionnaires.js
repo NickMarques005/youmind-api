@@ -5,9 +5,9 @@ const { createNewQuestionnaire } = require('../../../services/questionnaires/que
 
 const processQuestionnaireMessage = async (message) => {
     console.log(message);
-    const { patientId, questionnaireTemplateId } = JSON.parse(message.Body);
+    const { patientId, questionnaireTemplateId, timeSlot } = JSON.parse(message.Body);
 
-    if (!patientId || !questionnaireTemplateId) {
+    if (!patientId || !questionnaireTemplateId || !timeSlot) {
         console.error('Mensagem inválida recebida:', message.Body);
         return;
     }
@@ -19,7 +19,7 @@ const processQuestionnaireMessage = async (message) => {
             return;
         }
 
-        const questionnaire = await createNewQuestionnaire(patientId, questionnaireTemplateId);
+        const questionnaire = await createNewQuestionnaire(patientId, questionnaireTemplateId, timeSlot);
 
         if (questionnaire) {
             console.log(`Questionário criado e notificação enviada para o paciente ${patientId}`);

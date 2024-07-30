@@ -6,22 +6,21 @@ const { questionnairesQueueUrl } = require('../../aws/sqs/sqs_queues');
 const { PatientQuestionnaireHistory } = require('../../models/patient_history');
 const { getCurrentDateInBrazilTime, convertToBrazilTime } = require('../../utils/date/timeZones');
 
-const sendDailyQuestionnaires = async job => {
-    console.log("\nIniciando tarefa de envio de questionário diário...");
+const sendDailyQuestionnaires = async (timeSlot) => {
+    console.log(`Iniciando tarefa de envio de questionário diário (${timeSlot})...`);
 
     try {
-        console.log("Atualização PatientHistory questionários não respondidos...");
-        const questionnaireHistories = await PatientQuestionnaireHistory.updateMany(
+        // Atualiza históricos de questionários não respondidos no horário especifico de timeSlot
+        await PatientQuestionnaireHistory.updateMany(
             { 'questionnaire.pending': true },
             { $set: { 'questionnaire.pending': false, 'questionnaire.answered': false } }
         );
 
-        if(questionnaireHistories) console.log("Historicos atualizados!");
-
         const patients = await PatientUser.find({ is_treatment_running: true });
-        if(patients.length === 0 ) return console.log("Nenhum usuário para mandar questionário");
+        if (patients.length === 0) return console.log("Nenhum usuário para mandar questionário");
 
-        const template = await QuestionnaireTemplate.findOne({});
+        // Mandar template especifico para matutino ou noturno dependendo do timeSlot
+        const template =await QuestionnaireTemplate.findOne({ time: timeSlot });
         if (!template) {
             console.log('Nenhum template de questionário encontrado.');
             return;
@@ -36,8 +35,10 @@ const sendDailyQuestionnaires = async job => {
                 continue;
             }
 
+            // Verifica se o questionário para o horário já foi enviado
             const lastQuestionnaire = await Questionnaire.findOne({
-                patientId: patient.uid
+                patientId: patient.uid,
+                name: { $regex: timeSlot, $options: 'i' } // Nome contém "matutino" ou "noturno"
             }).sort({ createdAt: -1 });
 
             if (lastQuestionnaire) {
@@ -45,24 +46,32 @@ const sendDailyQuestionnaires = async job => {
                 lastSentDay.setHours(0, 0, 0, 0);
 
                 if (lastSentDay.getTime() === today.getTime()) {
-                    console.log(`Questionário já enviado para o paciente ${patient._id} hoje.`);
+                    console.log(`Questionário (${timeSlot}) já enviado para o paciente ${patient._id} hoje.`);
                     continue;
                 }
             }
 
             const messageBody = {
                 patientId: patient.uid,
-                questionnaireTemplateId: template._id
+                questionnaireTemplateId: template._id,
+                timeSlot
             };
 
             await sendMessage(questionnairesQueueUrl, messageBody);
         }
 
         console.log("Mensagens enviadas para a fila SQS Questionnaires!");
-    }
-    catch (err) {
+    } catch (error) {
         console.error('Erro ao enviar questionários:', error);
     }
-}
+};
 
-module.exports = { sendDailyQuestionnaires };
+const sendDailyQuestionnairesMorning = async () => {
+    await sendDailyQuestionnaires('matutino');
+};
+
+const sendDailyQuestionnairesEvening = async () => {
+    await sendDailyQuestionnaires('noturno');
+};
+
+module.exports = { sendDailyQuestionnairesMorning, sendDailyQuestionnairesEvening };

@@ -1,6 +1,6 @@
 const { getCurrentDateInBrazilTime } = require("../date/timeZones");
 
-const getFormattedQuestionnaireName = () => {
+const getFormattedQuestionnaireName = (timeSlot) => {
     const currentDate = getCurrentDateInBrazilTime();
 
     const formattedDate = currentDate.toLocaleDateString('pt-BR', {
@@ -9,7 +9,7 @@ const getFormattedQuestionnaireName = () => {
         month: 'long'
     });
 
-    return `Questionário de ${formattedDate}`;
+    return `Questionário ${timeSlot} de ${formattedDate}`;
 };
 
 module.exports = { getFormattedQuestionnaireName };
