@@ -46,7 +46,7 @@ const createNewQuestionnaire = async (patientId, templateId, timeSlot) => {
         let expirationDate;
         switch (timeSlot) {
             case 'matutino':
-                expirationDate = getExpirationDateInUTC(currentDate, 'America/Sao_Paulo', 0, 20);
+                expirationDate = getExpirationDateInUTC(currentDate, 'America/Sao_Paulo', 0, 12);
                 break;
             case 'noturno':
                 expirationDate = getExpirationDateInUTC(currentDate, 'America/Sao_Paulo', 1, 6);
