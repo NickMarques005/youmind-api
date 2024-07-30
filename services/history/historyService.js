@@ -1,5 +1,6 @@
 const { PatientMedicationHistory, PatientQuestionnaireHistory } = require("../../models/patient_history");
 const Treatment = require("../../models/treatment");
+const { PatientUser } = require("../../models/users");
 const { calculateQuestionnairePerformance } = require("../../utils/questionnaires/performance");
 const { emitEventToUser } = require("../../utils/socket/connection");
 
@@ -26,8 +27,13 @@ const getPatientHistoryById = async (patientId) => {
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
     const lastWeekTaken = medicationHistory.filter(med => !med.medication.taken && new Date(med.medication.consumeDate) >= oneWeekAgo).length;
 
+    const patient = await PatientUser.findOne({ uid: patientId }).lean();
+
     return {
         patientId,
+        patientName: patient?.name || "Usuário",
+        patientEmail: patient?.email,
+        patientAvatar: patient?.avatar,
         treatmentId: treatment._id,
         medicationHistory: {
             total: totalMedications,
