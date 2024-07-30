@@ -33,7 +33,7 @@ const handleDeleteHistoryQuestionnaire = async (change, io) => {
     const latestQuestionnaire = await formatLatestQuestionnaire(questionnaireHistory);
 
     await emitUpdateHistory(io, doctorId, patientId);
-    await emitHistoryQuestionnaireUpdate(io, doctorId, { latestQuestionnaire }, "deleteLatestQuestionnaire");
+    await emitHistoryQuestionnaireUpdate(io, doctorId, latestQuestionnaire, "deleteLatestQuestionnaire");
 }
 
 module.exports = handleDeleteHistoryQuestionnaire;

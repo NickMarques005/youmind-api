@@ -26,7 +26,7 @@ const handleDeleteHistoryMedication = async (change, io) => {
     const latestMedication = await formatLatestMedication(medicationHistory);
 
     await emitUpdateHistory(io, doctorId, patientId);
-    await emitHistoryMedicationUpdate(io, doctorId, { latestMedication }, "deleteLatestMedication");
+    await emitHistoryMedicationUpdate(io, doctorId, latestMedication, "deleteLatestMedication");
 }
 
 module.exports = handleDeleteHistoryMedication;

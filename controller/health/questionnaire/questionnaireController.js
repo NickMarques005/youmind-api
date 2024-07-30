@@ -20,7 +20,7 @@ exports.getQuestionnaires = async (req, res) => {
 
         const questionnaires = await Questionnaire.find({ patientId: treatment.patientId })
             .sort({ createdAt: -1 })
-            .limit(7);
+            .limit(14);
 
         if (!questionnaires || questionnaires.length === 0) return HandleSuccess(res, 200, "Nenhum questionário encontrado");
 

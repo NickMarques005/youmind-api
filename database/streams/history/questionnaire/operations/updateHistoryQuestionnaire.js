@@ -47,7 +47,7 @@ const handleUpdateHistoryQuestionnaire = async (change, io) => {
             const latestQuestionnaire = await formatLatestQuestionnaire(questionnaireHistory);
 
             await emitUpdateHistory(io, doctorId, patientId);
-            await emitHistoryQuestionnaireUpdate(io, doctorId, { latestQuestionnaire }, "updateLatestQuestionnaire");
+            await emitHistoryQuestionnaireUpdate(io, doctorId, latestQuestionnaire, "updateLatestQuestionnaire");
         }
     }
 }
