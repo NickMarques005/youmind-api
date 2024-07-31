@@ -8,6 +8,7 @@ const { getAgenda } = require('../../agenda/agenda_manager');
 const { cancelMedicationSchedules } = require('../../services/medications/medicationScheduler');
 const MessageTypes = require('../../utils/response/typeResponse');
 const { createNotice } = require('../../utils/user/notice');
+const { getInitialChatData } = require('../../services/chat/chatServices');
 
 exports.initializeTreatment = async (req, res) => {
     try {
@@ -96,6 +97,9 @@ exports.getTreatment = async (req, res) => {
             const doctor = await DoctorUser.findOne({ uid: singleTreatment.doctorId });
             if (!doctor) return HandleError(res, 404, "médico do tratamento não encontrado");
 
+            // serviço de buscar os dados básicos de chat
+            const chatData = getInitialChatData(singleTreatment._id, uid);
+
             const treatmentInfo = [
                 {
                     name: doctor.name,
@@ -106,7 +110,8 @@ exports.getTreatment = async (req, res) => {
                     gender: doctor.gender,
                     uid: doctor.uid,
                     online: doctor.online,
-                    _id: singleTreatment._id
+                    _id: singleTreatment._id,
+                    chat: chatData
                 }
             ];
 
@@ -118,6 +123,9 @@ exports.getTreatment = async (req, res) => {
             const treatmentPatients = await Promise.all(userTreatments.map(async (treatment) => {
                 const patient = await PatientUser.findOne({ uid: treatment.patientId });
                 if (!patient) return null;
+
+                const chatData = getInitialChatData(treatment._id, uid);
+
                 return {
                     name: patient.name,
                     email: patient.email,
@@ -127,7 +135,8 @@ exports.getTreatment = async (req, res) => {
                     gender: patient.gender,
                     uid: patient.uid,
                     online: patient.online,
-                    _id: treatment._id
+                    _id: treatment._id,
+                    chat: chatData
                 };
             }));
 
