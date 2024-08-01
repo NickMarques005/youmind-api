@@ -34,8 +34,8 @@ const handleInsertMessage = async (change, io) => {
             const updatedInitialChatSender = await getInitialChatData(treatmentId, senderId);
             const updatedInitialChatReceiver = await getInitialChatData(treatmentId, receiverId);
 
-            await emitInitialChatUpdate(io, senderId, updatedInitialChatSender, "updateInitialChat");
-            await emitInitialChatUpdate(io, receiverId, updatedInitialChatReceiver, "updateInitialChat");
+            await emitInitialChatUpdate(io, senderId, { chat: updatedInitialChatSender, treatmentId }, "updateInitialChat");
+            await emitInitialChatUpdate(io, receiverId, { chat: updatedInitialChatReceiver, treatmentId }, "updateInitialChat");
 
             const notificationData = {
                 title: `${senderMessage.type === 'doctor' ? 'Dr. ' : ''}${senderMessage.name}`,
