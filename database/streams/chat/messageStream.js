@@ -7,10 +7,10 @@ const handleMessageChange = async (io, change) => {
 
     switch (change.operationType) {
         case 'insert':
-            await handleInsertMessage(change);
+            await handleInsertMessage(change, io);
             break;
         case 'update':
-            await handleUpdateMessage(change);
+            await handleUpdateMessage(change, io);
             break;
         default:
             console.error('Tipo de operação não configurado: ', change.operationType);

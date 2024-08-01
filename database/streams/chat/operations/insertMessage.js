@@ -2,8 +2,9 @@ const notificationService = require('../../../../services/notifications/notifica
 const { findSender, handleSenderIcon } = require('../../../../utils/chat/chat');
 const Treatment = require('../../../../models/treatment');
 const { ScreenTypes, MenuTypes } = require('../../../../utils/app/screenMenuTypes');
+const { getInitialChatData, emitInitialChatUpdate } = require('../../../../services/chat/chatServices');
 
-const handleInsertMessage = async (change) => {
+const handleInsertMessage = async (change, io) => {
     const newMessage = change.fullDocument;
     const senderId = newMessage.sender;
     const conversation = newMessage.conversationId;
@@ -12,11 +13,12 @@ const handleInsertMessage = async (change) => {
     console.log("ASSOCIATED TREATMENT", associatedTreatment);
 
     if (associatedTreatment) {
-        const otherUserId = associatedTreatment.patientId === senderId ? associatedTreatment.doctorId : associatedTreatment.patientId;
-        console.log(otherUserId);
+        const receiverId = associatedTreatment.patientId === senderId ? associatedTreatment.doctorId : associatedTreatment.patientId;
+        console.log("Suposto outro usuário: ", receiverId);
 
-        if (otherUserId !== senderId) {
-            console.log("Send to: ", otherUserId);
+        if (receiverId !== senderId) {
+            const treatmentId = associatedTreatment._id;
+            console.log("Send to: ", receiverId);
 
             const senderMessage = await findSender(senderId);
 
@@ -28,6 +30,12 @@ const handleInsertMessage = async (change) => {
             console.log(senderMessage);
 
             const senderIcon = senderMessage.avatar || handleSenderIcon(senderMessage.type);
+
+            const updatedInitialChatSender = await getInitialChatData(treatmentId, senderId);
+            const updatedInitialChatReceiver = await getInitialChatData(treatmentId, receiverId);
+
+            await emitInitialChatUpdate(io, senderId, updatedInitialChatSender, "updateInitialChat");
+            await emitInitialChatUpdate(io, receiverId, updatedInitialChatReceiver, "updateInitialChat");
 
             const notificationData = {
                 title: `${senderMessage.type === 'doctor' ? 'Dr. ' : ''}${senderMessage.name}`,
@@ -56,7 +64,7 @@ const handleInsertMessage = async (change) => {
 
             console.log(notificationData);
 
-            const notificationsService = await notificationService.sendNotificationToAllDevices(otherUserId, notificationData);
+            const notificationsService = await notificationService.sendNotificationToAllDevices(receiverId, notificationData);
             console.log("Notificação mandada: ", notificationsService);
         }
     }
