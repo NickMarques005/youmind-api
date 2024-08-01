@@ -97,8 +97,7 @@ exports.getTreatment = async (req, res) => {
             const doctor = await DoctorUser.findOne({ uid: singleTreatment.doctorId });
             if (!doctor) return HandleError(res, 404, "médico do tratamento não encontrado");
 
-            // serviço de buscar os dados básicos de chat
-            const chatData = getInitialChatData(singleTreatment._id, uid);
+            const chatData = await getInitialChatData(singleTreatment._id, uid);
 
             const treatmentInfo = [
                 {
@@ -111,11 +110,9 @@ exports.getTreatment = async (req, res) => {
                     uid: doctor.uid,
                     online: doctor.online,
                     _id: singleTreatment._id,
-                    chat: chatData
+                    chat: chatData || undefined
                 }
             ];
-
-            console.log(treatmentInfo);
 
             return HandleSuccess(res, 200, "Tratamento em andamento", treatmentInfo);
         }
@@ -124,7 +121,7 @@ exports.getTreatment = async (req, res) => {
                 const patient = await PatientUser.findOne({ uid: treatment.patientId });
                 if (!patient) return null;
 
-                const chatData = getInitialChatData(treatment._id, uid);
+                const chatData = await getInitialChatData(treatment._id, uid);
 
                 return {
                     name: patient.name,

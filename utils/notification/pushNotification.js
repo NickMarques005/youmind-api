@@ -15,7 +15,7 @@ exports.sendPushNotification = async (notification, _id, pushToken) => {
             body: notification.body,
             data: { ...notification.data, _id },
             sound: 'default',
-            icon: notification.icon ? notification.icon : ''
+            ...(notification.pushIcon && { icon: notification.pushIcon })
         }
         console.log("\n---> SEND PUSH NOTIFICATION SERVICE!!\n");
         let receipts = await expo.sendPushNotificationsAsync([notificationToSend]);
