@@ -9,9 +9,11 @@ const initializeAgenda = async (dbURI) => {
     defineAgendaTasks(agenda);
 
     await agenda.start();
-    await agenda.every(cronIntervals['diariamente às 6h da manhã'], 'send daily questionnaires morning', {}, { timezone: 'America/Sao_Paulo' });
-    await agenda.every(cronIntervals['diariamente às 8h da noite'], 'send daily questionnaires evening', {}, { timezone: 'America/Sao_Paulo' });
 
+    //Agendamento de questionários matutinos:
+    //await agenda.every(cronIntervals['diariamente às 6h da manhã'], 'send daily questionnaires morning', {}, { timezone: 'America/Sao_Paulo' });
+    //Agendamento de questionários noturnos:
+    await agenda.every(cronIntervals['diariamente às 8h da noite'], 'send daily questionnaires evening', {}, { timezone: 'America/Sao_Paulo' });
 
     process.on('SIGTERM', async () => {
         await finishAgenda();

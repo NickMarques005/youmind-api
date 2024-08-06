@@ -4,6 +4,7 @@ const answerSchema = new mongoose.Schema(
     {
         answer: { type: String, required: true },
         type: { type: String, enum: ['precisa_melhorar', 'ruim', 'bom', 'ótimo', 'excelente'], required: true },
+        hasMetadata: { type: Boolean, required: false }
     }
     , { _id: false });
 
@@ -15,8 +16,10 @@ const questionTemplateSchema = new mongoose.Schema(
             type: [{ type: String, required: true }],
             required: false
         },
+        responsePeriod: { type: Number, required: false },
+        responseTime: { type: "dias" | "meses", required: false }
     },
-    { _id: false });
+    { _id: true });
 
 const questionnaireTemplateSchema = new mongoose.Schema(
     {

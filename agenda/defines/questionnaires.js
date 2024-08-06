@@ -20,7 +20,7 @@ const sendDailyQuestionnaires = async (timeSlot) => {
         if (patients.length === 0) return console.log("Nenhum usuário para mandar questionário");
 
         // Mandar template especifico para matutino ou noturno dependendo do timeSlot
-        const template =await QuestionnaireTemplate.findOne({ time: timeSlot });
+        const template = await QuestionnaireTemplate.findOne({ time: timeSlot });
         if (!template) {
             console.log('Nenhum template de questionário encontrado.');
             return;

@@ -5,6 +5,7 @@ const { PatientUser } = require('../../../models/users');
 const Treatment = require('../../../models/treatment');
 const MessageTypes = require('../../../utils/response/typeResponse');
 const { PatientQuestionnaireHistory, addAnsweredField } = require('../../../models/patient_history');
+const { filteringQuestionnaireTemplate } = require('../../../services/questionnaires/questionnaireService');
 
 exports.getQuestionnaires = async (req, res) => {
     try {
@@ -67,7 +68,9 @@ exports.getQuestionnaireTemplateById = async (req, res) => {
             return HandleError(res, 404, "Questões do questionário não foram encontradas");
         }
 
-        return HandleSuccess(res, 200, "Questionário template achado", template);
+        const filteredTemplate = filteringQuestionnaireTemplate(template, patient);
+
+        return HandleSuccess(res, 200, "Questionário template achado", filteredTemplate);
     } catch (err) {
         console.log("Erro no servidor: ", err.message);
         return HandleError(res, 500, "Erro interno no servidor ao buscar Template");

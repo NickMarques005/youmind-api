@@ -2,14 +2,17 @@ const mongoose = require('mongoose');
 const { getDefaultExpirationDate } = require('../utils/db/db_helpers');
 
 const answerSchema = new mongoose.Schema({
-    answer: { type: String},
-    type: { type: String }
-})
-
-const formattedAnswerSchema = new mongoose.Schema({
     answer: { type: String },
     type: { type: String },
-    subAnswers: { type: [answerSchema] }
+    metadata: { type: String, required: false }
+});
+
+const formattedAnswerSchema = new mongoose.Schema({
+    questionId: { type: String, required: true },
+    answer: { type: String },
+    type: { type: String },
+    subAnswers: { type: [answerSchema] },
+    metadata: { type: String, required: false },
 }, { _id: false });
 
 const questionnaireSchema = new mongoose.Schema({

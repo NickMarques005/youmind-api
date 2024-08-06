@@ -49,10 +49,10 @@ const createNewQuestionnaire = async (patientId, templateId, timeSlot) => {
                 expirationDate = getExpirationDateInUTC(currentDate, 'America/Sao_Paulo', 0, 12);
                 break;
             case 'noturno':
-                expirationDate = getExpirationDateInUTC(currentDate, 'America/Sao_Paulo', 1, 6);
+                expirationDate = getExpirationDateInUTC(currentDate, 'America/Sao_Paulo', 1, 2);
                 break;
             default:
-                expirationDate = getExpirationDateInUTC(currentDate, 'America/Sao_Paulo', 1, 6);
+                expirationDate = getExpirationDateInUTC(currentDate, 'America/Sao_Paulo', 1, 2);
                 break;
         }
 
@@ -82,6 +82,44 @@ const createNewQuestionnaire = async (patientId, templateId, timeSlot) => {
     }
 }
 
+const filteringQuestionnaireTemplate = async (template, patient) => {
+    let filteredQuestions = [];
+
+    for (const question of template.questions) {
+
+        if (question.responsePeriod && question.responseTime) {
+            const currentDate = new Date();
+            let responsePeriodEnd = new Date(currentDate);
+
+            if (question.responseTime === "dias") {
+                responsePeriodEnd.setDate(responsePeriodEnd.getDate() - question.responsePeriod);
+            } else if (question.responseTime === "meses") {
+                responsePeriodEnd.setMonth(responsePeriodEnd.getMonth() - question.responsePeriod);
+            }
+
+            console.log(`Periodo da pergunta "${question.title}": `, responsePeriodEnd);
+
+            // Buscar questionários que contenham esta pergunta dentro do período especificado
+            const recentQuestionnaires = await Questionnaire.find({
+                patientId: patient._id,
+                "answers.questionId": question._id.toString(),
+                createdAt: { $gte: responsePeriodEnd }
+            });
+
+            if (recentQuestionnaires.length === 0) {
+                filteredQuestions.push(question);
+            }
+        } else {
+            filteredQuestions.push(question);
+        }
+    }
+
+    return {
+        ...template,
+        questions: filteredQuestions
+    };
+};
+
 const emitNewQuestionnaire = async (io, patientId, newQuestionnaire, event) => {
     try {
         if (await emitEventToUser(io, patientId, event, { questionnaire: newQuestionnaire })) {
@@ -92,4 +130,9 @@ const emitNewQuestionnaire = async (io, patientId, newQuestionnaire, event) => {
     }
 }
 
-module.exports = { validateQuestions, createNewQuestionnaire, emitNewQuestionnaire };
+module.exports = {
+    validateQuestions,
+    createNewQuestionnaire,
+    filteringQuestionnaireTemplate,
+    emitNewQuestionnaire
+};
