@@ -17,7 +17,7 @@ const questionTemplateSchema = new mongoose.Schema(
             required: false
         },
         responsePeriod: { type: Number, required: false },
-        responseTime: { type: "dias" | "meses", required: false }
+        responseTime: { type: String, enum: ['dias', 'meses'], required: false }
     },
     { _id: true });
 
