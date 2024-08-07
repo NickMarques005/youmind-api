@@ -70,7 +70,10 @@ exports.getQuestionnaireTemplateById = async (req, res) => {
             return HandleError(res, 404, "Questões do questionário não foram encontradas");
         }
 
-        const filteredTemplate = filterTemplateQuestionsByResponsePeriod(template, patient);
+        const filteredTemplate = await filterTemplateQuestionsByResponsePeriod(template, patient);
+        if (!filteredTemplate) {
+            return HandleError(res, 404, "Filtragem das questões retornou inválida");
+        }
 
         return HandleSuccess(res, 200, "Questionário template achado", filteredTemplate);
     } catch (err) {

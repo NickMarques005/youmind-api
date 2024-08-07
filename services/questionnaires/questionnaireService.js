@@ -85,41 +85,47 @@ const createNewQuestionnaire = async (patientId, templateId, timeSlot) => {
 
 // Filtra as questões do template com base no período de resposta
 const filterTemplateQuestionsByResponsePeriod = async (template, patient) => {
-    let filteredQuestions = [];
+    try{
+        let filteredQuestions = [];
 
-    for (const question of template.questions) {
+        for (const question of template.questions) {
 
-        if (question.responsePeriod && question.responseTime) {
-            const currentDate = new Date();
-            let responsePeriodEnd = new Date(currentDate);
-
-            if (question.responseTime === "dias") {
-                responsePeriodEnd.setDate(responsePeriodEnd.getDate() - question.responsePeriod);
-            } else if (question.responseTime === "meses") {
-                responsePeriodEnd.setMonth(responsePeriodEnd.getMonth() - question.responsePeriod);
-            }
-
-            console.log(`Periodo da pergunta "${question.title}": `, responsePeriodEnd);
-
-            // Buscar questionários que contenham esta pergunta dentro do período especificado
-            const recentQuestionnaires = await Questionnaire.find({
-                patientId: patient._id,
-                "answers.questionId": question._id.toString(),
-                createdAt: { $gte: responsePeriodEnd }
-            });
-
-            if (recentQuestionnaires.length === 0) {
+            if (question.responsePeriod && question.responseTime) {
+                const currentDate = new Date();
+                let responsePeriodEnd = new Date(currentDate);
+    
+                if (question.responseTime === "dias") {
+                    responsePeriodEnd.setDate(responsePeriodEnd.getDate() - question.responsePeriod);
+                } else if (question.responseTime === "meses") {
+                    responsePeriodEnd.setMonth(responsePeriodEnd.getMonth() - question.responsePeriod);
+                }
+    
+                console.log(`Periodo da pergunta "${question.title}": `, responsePeriodEnd);
+    
+                // Buscar questionários que contenham esta pergunta dentro do período especificado
+                const recentQuestionnaires = await Questionnaire.find({
+                    patientId: patient._id,
+                    "answers.questionId": question._id.toString(),
+                    createdAt: { $gte: responsePeriodEnd }
+                });
+    
+                if (recentQuestionnaires.length === 0) {
+                    filteredQuestions.push(question);
+                }
+            } else {
                 filteredQuestions.push(question);
             }
-        } else {
-            filteredQuestions.push(question);
         }
+    
+        return {
+            ...template,
+            questions: filteredQuestions
+        };
     }
-
-    return {
-        ...template,
-        questions: filteredQuestions
-    };
+    catch (err)
+    {
+        console.error(err);
+    }
 };
 
 //Filtra as questões de template com base nas respostas feitas no questionário
