@@ -13,11 +13,6 @@ const handleInsertHistoryQuestionnaire = async (change, io) => {
         throw new Error(`Questionário não foi encontrado no histórico: ${questionnaireId}`);
     }
 
-    const questionnaireTemplate = await QuestionnaireTemplate.findById(templateId);
-    if (!questionnaireTemplate) {
-        throw new Error("Template de questionário não encontrado");
-    }
-
     const patientId = questionnaireHistory.patientId;
     const patient = await PatientUser.findOne({ uid: patientId });
     if (!patient) {

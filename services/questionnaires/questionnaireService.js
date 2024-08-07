@@ -4,6 +4,7 @@ const { getFormattedQuestionnaireName } = require('../../utils/questionnaires/fo
 const { PatientQuestionnaireHistory } = require('../../models/patient_history');
 const Treatment = require('../../models/treatment');
 const { getCurrentDateInBrazilTime, getExpirationDateInUTC } = require('../../utils/date/timeZones');
+const { emitEventToUser } = require('../../utils/socket/connection');
 
 const validateQuestions = (questions) => {
     if (!Array.isArray(questions)) return false;
