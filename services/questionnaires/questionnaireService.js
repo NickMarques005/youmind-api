@@ -83,7 +83,8 @@ const createNewQuestionnaire = async (patientId, templateId, timeSlot) => {
     }
 }
 
-const filteringQuestionnaireTemplate = async (template, patient) => {
+// Filtra as questões do template com base no período de resposta
+const filterTemplateQuestionsByResponsePeriod = async (template, patient) => {
     let filteredQuestions = [];
 
     for (const question of template.questions) {
@@ -121,6 +122,20 @@ const filteringQuestionnaireTemplate = async (template, patient) => {
     };
 };
 
+//Filtra as questões de template com base nas respostas feitas no questionário
+const filterTemplateQuestionsByAnswers = (template, answers) => {
+    const answerIds = answers.map(answer => answer.questionId);
+    const filteredQuestions = template.questions.filter(question => 
+        answerIds.includes(question._id.toString())
+    );
+
+    return {
+        ...template,
+        questions: filteredQuestions
+    };
+};
+
+
 const emitNewQuestionnaire = async (io, patientId, newQuestionnaire, event) => {
     try {
         if (await emitEventToUser(io, patientId, event, { questionnaire: newQuestionnaire })) {
@@ -134,6 +149,7 @@ const emitNewQuestionnaire = async (io, patientId, newQuestionnaire, event) => {
 module.exports = {
     validateQuestions,
     createNewQuestionnaire,
-    filteringQuestionnaireTemplate,
-    emitNewQuestionnaire
+    filterTemplateQuestionsByResponsePeriod,
+    emitNewQuestionnaire,
+    filterTemplateQuestionsByAnswers
 };

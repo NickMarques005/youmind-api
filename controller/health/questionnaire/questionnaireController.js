@@ -5,7 +5,7 @@ const { PatientUser } = require('../../../models/users');
 const Treatment = require('../../../models/treatment');
 const MessageTypes = require('../../../utils/response/typeResponse');
 const { PatientQuestionnaireHistory, addAnsweredField } = require('../../../models/patient_history');
-const { filteringQuestionnaireTemplate } = require('../../../services/questionnaires/questionnaireService');
+const { filterTemplateQuestionsByResponsePeriod, filterTemplateQuestionsByAnswers } = require('../../../services/questionnaires/questionnaireService');
 
 exports.getQuestionnaires = async (req, res) => {
     try {
@@ -28,9 +28,11 @@ exports.getQuestionnaires = async (req, res) => {
         const result = await Promise.all(questionnaires.map(async (questionnaire) => {
             if (questionnaire.answers && questionnaire.checked) {
                 const template = await QuestionnaireTemplate.findOne({ _id: questionnaire.questionnaireTemplateId });
+                const filteredTemplate = filterTemplateQuestionsByAnswers(template, questionnaire.answers);
+
                 return {
                     currentQuestionnaire: questionnaire,
-                    template
+                    template: filteredTemplate
                 };
             }
             return { currentQuestionnaire: questionnaire };
@@ -68,7 +70,7 @@ exports.getQuestionnaireTemplateById = async (req, res) => {
             return HandleError(res, 404, "Questões do questionário não foram encontradas");
         }
 
-        const filteredTemplate = filteringQuestionnaireTemplate(template, patient);
+        const filteredTemplate = filterTemplateQuestionsByResponsePeriod(template, patient);
 
         return HandleSuccess(res, 200, "Questionário template achado", filteredTemplate);
     } catch (err) {
@@ -133,10 +135,15 @@ exports.SendAnswers = async (req, res) => {
         );
 
         const template = await QuestionnaireTemplate.findOne({ _id: updatedQuestionnaire.questionnaireTemplateId });
+        if (!template) {
+            return HandleError(res, 404, "Questões do questionário não foram encontradas");
+        }
+
+        const filteredTemplate = filterTemplateQuestionsByAnswers(template, answers);
 
         const result = {
             currentQuestionnaire: updatedQuestionnaire,
-            template
+            template: filteredTemplate
         };
 
         return HandleSuccess(res, 200, "Parabéns! Suas respostas foram salvas com sucesso.", result, MessageTypes.SUCCESS);
