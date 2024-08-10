@@ -107,7 +107,7 @@ exports.updateUserDetails = async (req, res) => {
         if (phone) user.phone = phone;
         if (gender) user.gender = gender;
         if (birth) {
-            const birthDate = convertToBrazilTime(new Date(birth));
+            const birthDate = new Date(birth);
             if (!isNaN(birthDate.getTime())) {
                 user.birth = birthDate;
             } else {
