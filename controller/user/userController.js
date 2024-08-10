@@ -4,6 +4,7 @@ const { fetchUsers } = require('../../services/user/userService');
 const { getUserModel } = require("../../utils/db/model");
 const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
 const MessageTypes = require('../../utils/response/typeResponse');
+const { convertToBrazilTime } = require('../../utils/date/timeZones'); 
 
 exports.filterUsers = async (req, res) => {
 
@@ -106,7 +107,7 @@ exports.updateUserDetails = async (req, res) => {
         if (phone) user.phone = phone;
         if (gender) user.gender = gender;
         if (birth) {
-            const birthDate = new Date(birth);
+            const birthDate = convertToBrazilTime(new Date(birth));
             if (!isNaN(birthDate.getTime())) {
                 user.birth = birthDate;
             } else {
