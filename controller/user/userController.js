@@ -108,6 +108,7 @@ exports.updateUserDetails = async (req, res) => {
         if (gender) user.gender = gender;
         if (birth) {
             const birthDate = new Date(birth);
+            console.log("Data de nascimento atualizado", birthDate);
             if (!isNaN(birthDate.getTime())) {
                 user.birth = birthDate;
             } else {
