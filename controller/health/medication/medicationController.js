@@ -6,7 +6,7 @@ const MessageTypes = require('../../../utils/response/typeResponse');
 const { getAgenda } = require('../../../agenda/agenda_manager');
 const { scheduleMedicationTask } = require('../../../agenda/defines/medications');
 const Treatment = require('../../../models/treatment');
-const { getNextScheduleTime } = require('../../../utils/date/timeZones');
+const { getNextScheduleTime, convertToBrazilTime, getStartOfTheDay, getEndOfTheDay } = require('../../../utils/date/timeZones');
 
 
 exports.getMedications = async (req, res) => {
@@ -297,11 +297,14 @@ exports.getMedicationsTakenOnDate = async (req, res) => {
         const patient = await PatientUser.findOne({ uid: uid });
         if (!patient) return HandleError("Você não é um paciente");
 
-        const startOfDay = new Date(selectedDate);
-        startOfDay.setHours(0, 0, 0, 0);
+        console.log(new Date(selectedDate));
+        const convertedTime = convertToBrazilTime(new Date(selectedDate));
 
-        const endOfDay = new Date(selectedDate);
-        endOfDay.setHours(23, 59, 59, 999);
+        const startOfDay = getStartOfTheDay(convertedTime);
+        const endOfDay = getEndOfTheDay(convertedTime);
+
+        console.log('Data inicial do dia:', startOfDay);
+        console.log('Data final do dia:', endOfDay);
 
         const medicationsTaken = await PatientMedicationHistory.find({
             patientId: uid,

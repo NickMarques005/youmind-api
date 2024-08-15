@@ -5,17 +5,16 @@ const getCurrentDateInBrazilTime = () => {
 };
 
 const convertToBrazilTime = (date) => {
-    
-    const momentDate = moment(date).tz('America/Sao_Paulo');
-    console.log("Data antes da conversão em fuso horário America/Sao_Paulo: ", date);
-    console.log("Data convertida: ", momentDate);
-
-    const formattedDate = momentDate.format('YYYY-MM-DDTHH:mm:ss.SSS');
-    const adjustedDate = new Date(formattedDate);
-
-    console.log("Data ajustada: ", adjustedDate);
-    return adjustedDate;
+    return moment(date).tz('America/Sao_Paulo').toDate();
 };
+
+const getStartOfTheDay = (date) => {
+    return moment(date).startOf('day').toDate();
+}
+
+const getEndOfTheDay = (date) => {
+    return moment(date).endOf('day').toDate();
+}
 
 const convertToUTC = (date) => {
     console.log("Data antes da conversão em UTC: ", date);
@@ -63,5 +62,7 @@ module.exports = {
     convertToBrazilTime,
     convertToUTC,
     getExpirationDateInUTC,
-    getNextScheduleTime
+    getNextScheduleTime,
+    getStartOfTheDay,
+    getEndOfTheDay
 };
