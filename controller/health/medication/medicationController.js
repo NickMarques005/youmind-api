@@ -299,7 +299,11 @@ exports.getMedicationsTakenOnDate = async (req, res) => {
 
         const convertedTime = convertToBrazilTime(new Date(selectedDate));
 
+        console.log(convertedTime);
+
         const test = formatMomentToISO(convertedTime);
+
+        console.log(test)
         const test2 = formatISOToHours(test);
 
         console.log("TEST HOURS: ", test2);

@@ -6,7 +6,7 @@ const getCurrentDateInBrazilTime = () => {
 
 const convertToBrazilTime = (date) => {
     const utcDate = moment.utc(date);
-    const brazilTime = utcDate.tz('America/Sao_Paulo', true);
+    const brazilTime = utcDate.tz('America/Sao_Paulo');
     console.log("Data convertido para Brazil Time <Moment>: ", brazilTime);
 
     return brazilTime;
