@@ -7,7 +7,7 @@ const getCurrentDateInBrazilTime = () => {
 const convertToBrazilTime = (date) => {
     const utcDate = moment.utc(date);
     console.log("Utc Date do currentSchedule: ", utcDate);
-    const brazilTime = utcDate.tz('America/Sao_Paulo');
+    const brazilTime = utcDate.clone().tz('America/Sao_Paulo', true);
     console.log("Fuso horário ajustado para BR:", brazilTime);
 
     const convertedDate = brazilTime.toDate();
