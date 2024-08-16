@@ -39,8 +39,9 @@ const rescheduleMedication = async (job, agenda) => {
 
     const nextScheduleTime = getNextScheduleTime(medication.schedules, medication.start, medication.frequency, 'America/Sao_Paulo');
 
-    if (medication.expiresAt && new Date(medication.expiresAt) < nextScheduleTime) {
-        return;
+    //Verificação do último dia de agendamento
+    if (medication.expiresAt && medication.expiresAt < nextScheduleTime) {
+        return console.log(`A medicação ${medication.name} chegou ao seu último agendamento e foi encerrado:\n Encerramento: ${medication.expiresAt} / Suposto próximo agendamento: ${nextScheduleTime}`);
     }
 
     if (nextScheduleTime) {

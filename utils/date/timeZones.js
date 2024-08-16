@@ -5,7 +5,14 @@ const getCurrentDateInBrazilTime = () => {
 };
 
 const convertToBrazilTime = (date) => {
-    return moment(date).tz('America/Sao_Paulo').toDate();
+    const utcDate = moment.utc(date);
+    console.log("Utc Date do currentSchedule: ", utcDate);
+    const brazilTime = utcDate.tz('America/Sao_Paulo');
+    console.log("Fuso horário ajustado para BR:", brazilTime);
+
+    const convertedDate = brazilTime.toDate();
+    console.log("Data convertida: ", convertedDate);
+    return convertedDate;
 };
 
 const getStartOfTheDay = (date) => {
