@@ -44,13 +44,14 @@ const formatTimeLeft = (milliseconds) => {
 }
 
 const formatMomentToISO = (date) => {
-    const formattedDate = date.format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+    const brazilTime = moment.tz(date, 'America/Sao_Paulo');
+    const formattedDate = brazilTime.format('YYYY-MM-DDTHH:mm:ss.SSSZ');
     return formattedDate;
 }
 
 const formatISOToHours = (dateIso) => {
-    const momentDate = moment(dateIso);
-    const formattedTime = momentDate.format('HH:mm');
+    const brazilTime = moment.tz(dateIso, 'America/Sao_Paulo');
+    const formattedTime = brazilTime.format('HH:mm');
     return formattedTime;
 }
 
