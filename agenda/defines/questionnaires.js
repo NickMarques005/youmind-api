@@ -4,7 +4,7 @@ const Questionnaire = require('../../models/questionnaire');
 const { sendMessage } = require('../../aws/services/sqs_service');
 const { questionnairesQueueUrl } = require('../../aws/sqs/sqs_queues');
 const { PatientQuestionnaireHistory } = require('../../models/patient_history');
-const { getCurrentDateInBrazilTime, convertToBrazilTime } = require('../../utils/date/timeZones');
+const { getCurrentDateInBrazilTime, convertDateToBrazilDate } = require('../../utils/date/timeZones');
 
 const sendDailyQuestionnaires = async (timeSlot) => {
     console.log(`Iniciando tarefa de envio de questionário diário (${timeSlot})...`);
@@ -42,7 +42,7 @@ const sendDailyQuestionnaires = async (timeSlot) => {
             }).sort({ createdAt: -1 });
 
             if (lastQuestionnaire) {
-                const lastSentDay = convertToBrazilTime(lastQuestionnaire.createdAt);
+                const lastSentDay = convertDateToBrazilDate(lastQuestionnaire.createdAt);
                 lastSentDay.setHours(0, 0, 0, 0);
 
                 if (lastSentDay.getTime() === today.getTime()) {

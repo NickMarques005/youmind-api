@@ -1,4 +1,4 @@
-const moment = require('moment-timezone');
+const { DateTime } = require('luxon');
 
 const formatDateRelative = (date) => {
     const dateNow = new Date();
@@ -43,17 +43,17 @@ const formatTimeLeft = (milliseconds) => {
     }
 }
 
-const formatMomentToISO = (date) => {
-    const brazilTime = moment.tz(date, 'America/Sao_Paulo');
-    const formattedDate = brazilTime.format('YYYY-MM-DDTHH:mm:ss.SSSZ');
-    return formattedDate;
-}
+// Função para formatar a data em ISO considerando o fuso horário do Brasil
+const formatDateToISO = (date) => {
+    const brazilTime = DateTime.fromJSDate(date).setZone('America/Sao_Paulo');
+    return brazilTime.toISO();
+};
 
+// Função para formatar uma data ISO para horas no fuso horário do Brasil
 const formatISOToHours = (dateIso) => {
-    const brazilTime = moment.tz(dateIso, 'America/Sao_Paulo');
-    const formattedTime = brazilTime.format('HH:mm');
-    return formattedTime;
-}
+    const brazilTime = DateTime.fromISO(dateIso).setZone('America/Sao_Paulo');
+    return brazilTime.toFormat('HH:mm');
+};
 
 
-module.exports = { formatDateRelative, formatTimeLeft, formatMomentToISO, formatISOToHours };
+module.exports = { formatDateRelative, formatTimeLeft, formatDateToISO, formatISOToHours };

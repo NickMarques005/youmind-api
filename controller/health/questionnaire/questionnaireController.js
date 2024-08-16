@@ -4,7 +4,7 @@ const { HandleError, HandleSuccess } = require('../../../utils/response/handleRe
 const { PatientUser } = require('../../../models/users');
 const Treatment = require('../../../models/treatment');
 const MessageTypes = require('../../../utils/response/typeResponse');
-const { PatientQuestionnaireHistory, addAnsweredField } = require('../../../models/patient_history');
+const { PatientQuestionnaireHistory } = require('../../../models/patient_history');
 const { filterTemplateQuestionsByResponsePeriod, filterTemplateQuestionsByAnswers } = require('../../../services/questionnaires/questionnaireService');
 
 exports.getQuestionnaires = async (req, res) => {

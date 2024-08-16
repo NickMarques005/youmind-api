@@ -6,8 +6,8 @@ const MessageTypes = require('../../../utils/response/typeResponse');
 const { getAgenda } = require('../../../agenda/agenda_manager');
 const { scheduleMedicationTask } = require('../../../agenda/defines/medications');
 const Treatment = require('../../../models/treatment');
-const { getNextScheduleTime, convertToBrazilTime, getStartOfTheDay, getEndOfTheDay } = require('../../../utils/date/timeZones');
-const { formatMomentToISO, formatISOToHours } = require('../../../utils/date/formatDate');
+const { getNextScheduleTime, getStartOfTheDay, getEndOfTheDay, convertDateToBrazilDate } = require('../../../utils/date/timeZones');
+const { formatISOToHours, formatDateToISO } = require('../../../utils/date/formatDate');
 
 exports.getMedications = async (req, res) => {
     try {
@@ -297,16 +297,9 @@ exports.getMedicationsTakenOnDate = async (req, res) => {
         const patient = await PatientUser.findOne({ uid: uid });
         if (!patient) return HandleError("Você não é um paciente");
 
-        const convertedTime = convertToBrazilTime(new Date(selectedDate));
+        const convertedTime = convertDateToBrazilDate(new Date(selectedDate));
 
         console.log(convertedTime);
-
-        const test = formatMomentToISO(convertedTime);
-
-        console.log(test)
-        const test2 = formatISOToHours(test);
-
-        console.log("TEST HOURS: ", test2);
 
         const startOfDay = getStartOfTheDay(convertedTime);
         const endOfDay = getEndOfTheDay(convertedTime);

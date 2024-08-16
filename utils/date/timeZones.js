@@ -1,69 +1,101 @@
-const moment = require('moment-timezone');
+const { DateTime } = require('luxon');
 
+// Função para obter a data atual no fuso horário do Brasil
 const getCurrentDateInBrazilTime = () => {
-    return moment().tz('America/Sao_Paulo').toDate();
+    return DateTime.now().setZone('America/Sao_Paulo').toJSDate();
 };
 
-const convertToBrazilTime = (date) => {
-    const utcDate = moment.utc(date);
-    const brazilTime = utcDate.tz('America/Sao_Paulo');
-    console.log("Data convertido para Brazil Time <Moment>: ", brazilTime);
-
-    return brazilTime;
+// Função para converter uma data para o horário do Brasil
+const convertDateToBrazilDate = (date) => {
+    const dateToConvert = DateTime.fromJSDate(new Date(date)).setZone('America/Sao_Paulo');
+    
+    if (!dateToConvert.isValid) {
+        console.error("Data inválida:", dateToConvert.invalidExplanation);
+        return null;
+    }
+    
+    console.log("Data convertida para horário do Brasil <Luxon>: ", dateToConvert.toISO());
+    return dateToConvert.toJSDate();
 };
 
+// Função para obter o início do dia
 const getStartOfTheDay = (date) => {
-    return moment(date).startOf('day').toDate();
-}
+    const startOfDay = DateTime.fromJSDate(new Date(date)).startOf('day').toJSDate();
+    if (!startOfDay) {
+        console.error("Data inválida para início do dia");
+        return null;
+    }
+    return startOfDay;
+};
 
+// Função para obter o final do dia
 const getEndOfTheDay = (date) => {
-    return moment(date).endOf('day').toDate();
-}
+    const endOfDay = DateTime.fromJSDate(new Date(date)).endOf('day').toJSDate();
+    if (!endOfDay) {
+        console.error("Data inválida para final do dia");
+        return null;
+    }
+    return endOfDay;
+};
 
+// Função para converter uma data para UTC
 const convertToUTC = (date) => {
-    console.log("Data antes da conversão em UTC: ", date);
-    return moment(date).utc().toDate();
+    const utcDate = DateTime.fromJSDate(new Date(date)).toUTC().toJSDate();
+    if (!utcDate) {
+        console.error("Data inválida para conversão UTC");
+        return null;
+    }
+    console.log("Data da conversão em UTC: ", utcDate);
+    return utcDate;
 };
 
+// Função para obter a data de expiração em UTC
 const getExpirationDateInUTC = (date, timezone = 'America/Sao_Paulo', addDays, targetHour) => {
-    const expirationDate = moment.tz(date, timezone)
-        .add(addDays, 'days')
+    const expirationDate = DateTime.fromJSDate(new Date(date), { zone: timezone })
+        .plus({ days: addDays })
         .set({ hour: targetHour, minute: 0, second: 0, millisecond: 0 });
-    return convertToUTC(expirationDate);
+
+    if (!expirationDate.isValid) {
+        console.error("Data inválida ao calcular a data de expiração:", expirationDate.invalidExplanation);
+        return null;
+    }
+    
+    return convertToUTC(expirationDate.toJSDate());
 };
 
+// Função para obter o próximo horário agendado
 const getNextScheduleTime = (schedules, startDate, frequency, timezone = 'America/Sao_Paulo') => {
-    const now = moment().tz(timezone);
-    const today = moment(now).startOf('day');
+    const now = DateTime.now().setZone(timezone);
+    const today = now.startOf('day');
     let nextScheduleTime = null;
 
     for (const schedule of schedules) {
         const [hours, minutes] = schedule.split(':').map(Number);
-        const scheduleTimeToday = moment(today).set({ hour: hours, minute: minutes });
+        const scheduleTimeToday = today.set({ hour: hours, minute: minutes });
 
-        if (scheduleTimeToday.isAfter(now)) {
+        if (scheduleTimeToday > now) {
             nextScheduleTime = scheduleTimeToday;
             break;
         }
     }
 
     if (!nextScheduleTime) {
-        nextScheduleTime = moment(startDate).tz(timezone);
-        while (nextScheduleTime.isSameOrBefore(now)) {
-            nextScheduleTime.add(frequency, 'days');
+        nextScheduleTime = DateTime.fromISO(startDate, { zone: timezone });
+        while (nextScheduleTime <= now) {
+            nextScheduleTime = nextScheduleTime.plus({ days: frequency });
         }
 
         const firstSchedule = schedules[0];
         const [hours, minutes] = firstSchedule.split(':').map(Number);
-        nextScheduleTime.set({ hour: hours, minute: minutes, second: 0, millisecond: 0 });
+        nextScheduleTime = nextScheduleTime.set({ hour: hours, minute: minutes, second: 0, millisecond: 0 });
     }
 
-    return convertToUTC(nextScheduleTime);
+    return convertToUTC(nextScheduleTime.toISO());
 };
 
 module.exports = {
     getCurrentDateInBrazilTime,
-    convertToBrazilTime,
+    convertDateToBrazilDate,
     convertToUTC,
     getExpirationDateInUTC,
     getNextScheduleTime,
