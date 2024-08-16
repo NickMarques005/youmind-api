@@ -1,6 +1,7 @@
 const Medication = require('../../models/medication');
 const { PatientMedicationHistory } = require('../../models/patient_history');
 const Treatment = require('../../models/treatment');
+const { formatMomentToISO, formatISOToHours } = require('../../utils/date/formatDate');
 const { convertToBrazilTime } = require('../../utils/date/timeZones');
 
 const createNewMedicationHistory = async (medication, scheduleTime) => {
@@ -13,11 +14,9 @@ const createNewMedicationHistory = async (medication, scheduleTime) => {
         console.log("MedicationHistory Criação: ");
         console.log(scheduleTime);
 
-        const timeZoneScheduleTime = convertToBrazilTime(scheduleTime);
-
-        console.log(timeZoneScheduleTime);
-
-        const currentSchedule = timeZoneScheduleTime.toTimeString().slice(0, 5);
+        const timeZoneScheduleMoment = convertToBrazilTime(scheduleTime);
+        const scheduleISO = formatMomentToISO(timeZoneScheduleMoment);
+        const currentSchedule = formatISOToHours(scheduleISO);
 
         const newMedicationHistory = await PatientMedicationHistory.create({
             patientId: patientId,

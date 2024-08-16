@@ -1,3 +1,4 @@
+const moment = require('moment-timezone');
 
 const formatDateRelative = (date) => {
     const dateNow = new Date();
@@ -42,5 +43,16 @@ const formatTimeLeft = (milliseconds) => {
     }
 }
 
+const formatMomentToISO = (date) => {
+    const formattedDate = date.format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+    return formattedDate;
+}
 
-module.exports = { formatDateRelative, formatTimeLeft };
+const formatISOToHours = (dateIso) => {
+    const momentDate = moment(dateIso);
+    const formattedTime = momentDate.format('HH:mm');
+    return formattedTime;
+}
+
+
+module.exports = { formatDateRelative, formatTimeLeft, formatMomentToISO, formatISOToHours };
