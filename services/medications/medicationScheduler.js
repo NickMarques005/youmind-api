@@ -48,6 +48,8 @@ const scheduleMedicationNotTakenTask = async (medicationHistory, medication, age
     }
 
     const notTakenTime = new Date(Date.now() + alarmDuration * 1000);
+
+    console.log(`\n***Schedule Medication Not Taken: ***\n*** notTakenTime: ${notTakenTime} ***\n`);
     const jobId = `medicationNotTaken-${medicationHistory._id}-${notTakenTime}`;
 
     await agenda.schedule(notTakenTime, 'medication not taken', {
