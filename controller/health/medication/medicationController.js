@@ -6,7 +6,7 @@ const MessageTypes = require('../../../utils/response/typeResponse');
 const { getAgenda } = require('../../../agenda/agenda_manager');
 const { scheduleMedicationTask } = require('../../../agenda/defines/medications');
 const Treatment = require('../../../models/treatment');
-const { getNextScheduleTime, getStartOfTheDay, getEndOfTheDay, convertDateToBrazilDate } = require('../../../utils/date/timeZones');
+const { getNextScheduleTime, getStartOfTheDay, getEndOfTheDay, convertDateToBrazilDate, setDateToSpecificTime } = require('../../../utils/date/timeZones');
 const { formatISOToHours, formatDateToISO } = require('../../../utils/date/formatDate');
 
 exports.getMedications = async (req, res) => {
@@ -286,7 +286,7 @@ exports.confirmMedicationAlert = async (req, res) => {
     }
 }
 
-exports.getMedicationsTakenOnDate = async (req, res) => {
+exports.getMedicationsToConsumeOnDate = async (req, res) => {
     try {
         const { uid } = req.user;
         const { selectedDate } = req.query;
@@ -296,6 +296,11 @@ exports.getMedicationsTakenOnDate = async (req, res) => {
 
         const patient = await PatientUser.findOne({ uid: uid });
         if (!patient) return HandleError("Você não é um paciente");
+
+        const treatment = await Treatment.findOne({
+            patientId: patient.uid
+        });
+        if(!treatment) return HandleError("Você não está em tratamento no momento");
 
         const convertedTime = convertDateToBrazilDate(new Date(selectedDate));
 
@@ -307,25 +312,74 @@ exports.getMedicationsTakenOnDate = async (req, res) => {
         console.log('Data inicial do dia:', startOfDay);
         console.log('Data final do dia:', endOfDay);
 
-        const medicationsTaken = await PatientMedicationHistory.find({
-            patientId: uid,
-            'medication.taken': true,
-            $or: [
-                { 'medication.consumeDate': { $gte: startOfDay, $lte: endOfDay } },
-                { 'medication.updatedAt': { $gte: startOfDay, $lte: endOfDay } }
-            ]
+        const today = getStartOfTheDay(convertDateToBrazilDate(new Date()));
+        const isPastDate = convertedTime < today;
+
+        const medications = await Medication.find({
+            patientId: uid
         });
 
-        if (!medicationsTaken || medicationsTaken.length === 0) {
-            return HandleSuccess(res, 200, "Nenhum medicamento tomado encontrado para a data selecionada");
+        let medicationHistories = [];
+
+        if (isPastDate) {
+            const historyRecords = await PatientMedicationHistory.find({
+                patientId: uid,
+                'medication.consumeDate': { $gte: startOfDay, $lte: endOfDay }
+            });
+
+            medicationHistories.push(...historyRecords);
+        }
+        else {
+
+            for (let medication of medications) {
+                const startDate = new Date(medication.start);
+                const expiresAt = new Date(medication.expiresAt);
+                const frequency = medication.frequency;
+
+                if (convertedTime >= startDate && convertedTime <= expiresAt) {
+                    const differenceInMilliseconds = convertedTime.getTime() - startDate.getTime();
+                    const differenceInDays = Math.floor(differenceInMilliseconds / (1000 * 3600 * 24));
+
+                    // Verifica se a data selecionada coincide com a frequência do medicamento
+                    if (differenceInDays % frequency === 0) {
+                        for (let schedule of medication.schedules) {
+                            let history = await PatientMedicationHistory.findOne({
+                                patientId: uid,
+                                'medication.medicationId': medication._id,
+                                'medication.currentSchedule': schedule,
+                                'medication.consumeDate': { $gte: startOfDay, $lte: endOfDay }
+                            });
+
+                            if (!history) {
+                                history = {
+                                    patientId: uid,
+                                    medication: {
+                                        medicationId: medication._id,
+                                        name: medication.name,
+                                        dosage: medication.dosage,
+                                        type: medication.type,
+                                        frequency: medication.frequency,
+                                        start: medication.start,
+                                        expiresAt: medication.expiresAt,
+                                        schedules: medication.schedules,
+                                        alarmDuration: medication.alarmDuration,
+                                        reminderTimes: medication.reminderTimes,
+                                        taken: false,
+                                        pending: false,
+                                        currentSchedule: schedule,
+                                        consumeDate: setDateToSpecificTime(convertedTime, schedule)
+                                    },
+                                    treatmentId: treatment._id.toString()
+                                };
+                            }
+                            medicationHistories.push(history);
+                        }
+                    }
+                }
+            }
         }
 
-        const takenMedications = medicationsTaken.map(medication => ({
-            currentSchedule: medication.medication.currentSchedule,
-            medicationId: medication.medication.medicationId
-        }));
-
-        return HandleSuccess(res, 200, "Medicamentos tomados encontrados", takenMedications);
+        return HandleSuccess(res, 200, "Histórico de medicamentos encontrado", medicationHistories);
     } catch (err) {
         console.error(`Erro ao buscar medicamentos tomados: ${err.message}`);
         return HandleError(res, 500, "Erro interno no servidor ao buscar medicamentos tomados");

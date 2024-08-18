@@ -10,5 +10,5 @@ router.delete('/delete', tokenMiddleware.verifyUidToken, medicationController.de
 router.delete('/delete/many', tokenMiddleware.verifyUidToken, );
 router.get('/pending/', tokenMiddleware.verifyUidToken, medicationController.getMedicationPending);
 router.post('/pending/confirm', tokenMiddleware.verifyUidToken, medicationController.confirmMedicationAlert);
-router.get('/taken', tokenMiddleware.verifyUidToken, medicationController.getMedicationsTakenOnDate);
+router.get('/consume', tokenMiddleware.verifyUidToken, medicationController.getMedicationsToConsumeOnDate);
 module.exports = router;

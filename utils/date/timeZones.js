@@ -93,6 +93,25 @@ const getNextScheduleTime = (schedules, startDate, frequency, timezone = 'Americ
     return convertToUTC(nextScheduleTime.toJSDate());
 };
 
+const setDateToSpecificTime = (date, timeString) => {
+    if (!date || !timeString) {
+        console.error("Data ou horário não fornecido");
+        return null;
+    }
+
+    const startOfDay = DateTime.fromJSDate(date).startOf('day');
+    const [hours, minutes] = timeString.split(':').map(Number);
+
+    const dateWithTime = startOfDay.set({ hour: hours, minute: minutes });
+
+    if (!dateWithTime.isValid) {
+        console.error("Erro ao ajustar a data e hora:", dateWithTime.invalidExplanation);
+        return null;
+    }
+
+    return dateWithTime.toJSDate();
+}
+
 module.exports = {
     getCurrentDateInBrazilTime,
     convertDateToBrazilDate,
@@ -100,5 +119,6 @@ module.exports = {
     getExpirationDateInUTC,
     getNextScheduleTime,
     getStartOfTheDay,
-    getEndOfTheDay
+    getEndOfTheDay,
+    setDateToSpecificTime
 };
