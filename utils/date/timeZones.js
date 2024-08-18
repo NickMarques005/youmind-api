@@ -90,7 +90,7 @@ const getNextScheduleTime = (schedules, startDate, frequency, timezone = 'Americ
         nextScheduleTime = nextScheduleTime.set({ hour: hours, minute: minutes, second: 0, millisecond: 0 });
     }
 
-    return convertToUTC(nextScheduleTime.toISO());
+    return convertToUTC(nextScheduleTime.toJSDate());
 };
 
 module.exports = {
