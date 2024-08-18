@@ -82,11 +82,12 @@ const handleUpdateHistoryMedication = async (change, io) => {
             await scheduleMedicationNotTakenTask(medicationHistory, medication, agenda);
         }
 
+        // Agendamento da próxima medicação:
+
         const nextScheduleTime = getNextScheduleTime(medication.schedules, medication.start, medication.frequency, 'America/Sao_Paulo');
 
-        if (medication.expiresAt && new Date(medication.expiresAt) < nextScheduleTime) {
+        if (medication.expiresAt && medication.expiresAt < nextScheduleTime) {
             endMedication(medication);
-            
         }
     }
     else if (updatedFields['medication.taken'] === false) {

@@ -7,7 +7,7 @@ const getCurrentDateInBrazilTime = () => {
 
 // Função para converter uma data para o horário do Brasil
 const convertDateToBrazilDate = (date) => {
-    const dateToConvert = DateTime.fromJSDate(new Date(date)).setZone('America/Sao_Paulo');
+    const dateToConvert = DateTime.fromJSDate(date).setZone('America/Sao_Paulo');
     
     if (!dateToConvert.isValid) {
         console.error("Data inválida:", dateToConvert.invalidExplanation);
@@ -20,7 +20,7 @@ const convertDateToBrazilDate = (date) => {
 
 // Função para obter o início do dia
 const getStartOfTheDay = (date) => {
-    const startOfDay = DateTime.fromJSDate(new Date(date)).startOf('day').toJSDate();
+    const startOfDay = DateTime.fromJSDate(date).startOf('day').toJSDate();
     if (!startOfDay) {
         console.error("Data inválida para início do dia");
         return null;
@@ -30,7 +30,7 @@ const getStartOfTheDay = (date) => {
 
 // Função para obter o final do dia
 const getEndOfTheDay = (date) => {
-    const endOfDay = DateTime.fromJSDate(new Date(date)).endOf('day').toJSDate();
+    const endOfDay = DateTime.fromJSDate(date).endOf('day').toJSDate();
     if (!endOfDay) {
         console.error("Data inválida para final do dia");
         return null;
@@ -40,7 +40,7 @@ const getEndOfTheDay = (date) => {
 
 // Função para converter uma data para UTC
 const convertToUTC = (date) => {
-    const utcDate = DateTime.fromJSDate(new Date(date)).toUTC().toJSDate();
+    const utcDate = DateTime.fromJSDate(date).toUTC().toJSDate();
     if (!utcDate) {
         console.error("Data inválida para conversão UTC");
         return null;
@@ -51,7 +51,7 @@ const convertToUTC = (date) => {
 
 // Função para obter a data de expiração em UTC
 const getExpirationDateInUTC = (date, timezone = 'America/Sao_Paulo', addDays, targetHour) => {
-    const expirationDate = DateTime.fromJSDate(new Date(date), { zone: timezone })
+    const expirationDate = DateTime.fromJSDate(date, { zone: timezone })
         .plus({ days: addDays })
         .set({ hour: targetHour, minute: 0, second: 0, millisecond: 0 });
 

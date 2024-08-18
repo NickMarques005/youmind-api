@@ -35,6 +35,8 @@ const checkAndScheduleMedications = async (patientId, agenda) => {
 };
 
 const scheduleMedicationNotTakenTask = async (medicationHistory, medication, agenda) => {
+    console.log("\n*****\n");
+    console.log("Medication Not Taken Task: \n");
     if (!agenda) {
         console.warn("Agenda não inicializada, não foi possível verificar o agendamento de medicamentos.");
         return;
@@ -57,9 +59,12 @@ const scheduleMedicationNotTakenTask = async (medicationHistory, medication, age
     }, { jobId });
 
     console.log(`Tarefa medication not taken agendada para ${notTakenTime}`);
+    console.log("\n*****\n");
 };
 
 const cancelMedicationSchedules = async (patientId, agenda) => {
+    console.log("\n*****\n");
+    console.log("Cancelamento dos agendamentos de medicações: \n");
     if (!agenda) {
         console.warn("Agenda não inicializada, não foi possível verificar o agendamento de medicamentos.");
         return;
@@ -90,6 +95,7 @@ const cancelMedicationSchedules = async (patientId, agenda) => {
             }
             medication.isScheduled = false;
             await medication.save();
+            console.log("\n*****\n");
         }
     } catch (err) {
         console.error(`Erro ao cancelar agendamentos de medicamentos: ${err.message}`);
