@@ -7,7 +7,8 @@ const getCurrentDateInBrazilTime = () => {
 
 // Função para converter uma data para o horário do Brasil
 const convertDateToBrazilDate = (date) => {
-    const dateToConvert = DateTime.fromJSDate(date).setZone('America/Sao_Paulo');
+    const dateToConvert = DateTime.fromJSDate(date, { zone: 'utc' })
+        .setZone('America/Sao_Paulo', { keepLocalTime: true });
     
     if (!dateToConvert.isValid) {
         console.error("Data inválida:", dateToConvert.invalidExplanation);
@@ -19,8 +20,11 @@ const convertDateToBrazilDate = (date) => {
 };
 
 // Função para obter o início do dia
-const getStartOfTheDay = (date) => {
-    const startOfDay = DateTime.fromJSDate(date).startOf('day').toJSDate();
+const getStartOfTheDay = (date, timezone = 'America/Sao_Paulo') => {
+    const startOfDay = DateTime.fromJSDate(date, { zone: timezone })
+        .startOf('day')
+        .toJSDate();
+    
     if (!startOfDay) {
         console.error("Data inválida para início do dia");
         return null;
@@ -29,8 +33,11 @@ const getStartOfTheDay = (date) => {
 };
 
 // Função para obter o final do dia
-const getEndOfTheDay = (date) => {
-    const endOfDay = DateTime.fromJSDate(date).endOf('day').toJSDate();
+const getEndOfTheDay = (date, timezone = 'America/Sao_Paulo') => {
+    const endOfDay = DateTime.fromJSDate(date, { zone: timezone })
+        .endOf('day')
+        .toJSDate();
+    
     if (!endOfDay) {
         console.error("Data inválida para final do dia");
         return null;
