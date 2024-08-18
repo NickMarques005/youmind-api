@@ -7,7 +7,7 @@ const getCurrentDateInBrazilTime = () => {
 
 // Função para converter uma data para o horário do Brasil
 const convertDateToBrazilDate = (date) => {
-    const dateToConvert = DateTime.fromJSDate(date, { zone: 'utc' })
+    const dateToConvert = DateTime.fromJSDate(date, { zone: 'America/Sao_Paulo' })
         .setZone('America/Sao_Paulo', { keepLocalTime: true });
     
     if (!dateToConvert.isValid) {

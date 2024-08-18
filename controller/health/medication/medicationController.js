@@ -302,9 +302,9 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
         });
         if(!treatment) return HandleError("Você não está em tratamento no momento");
 
-        const convertedTime = convertDateToBrazilDate(new Date(selectedDate));
+        const convertedTime = new Date(selectedDate);
 
-        console.log(convertedTime);
+        console.log("Data escolhida: ", convertedTime);
 
         const startOfDay = getStartOfTheDay(convertedTime);
         const endOfDay = getEndOfTheDay(convertedTime);
@@ -314,6 +314,8 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
 
         const today = getStartOfTheDay(convertDateToBrazilDate(new Date()));
         const isPastDate = convertedTime < today;
+
+        console.log("HOJE: ", today);
 
         const medications = await Medication.find({
             patientId: uid
