@@ -322,6 +322,7 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
         let medicationHistories = [];
 
         if (isPastDate) {
+            console.log("Data menor que hoje");
             const historyRecords = await PatientMedicationHistory.find({
                 patientId: uid,
                 'medication.consumeDate': { $gte: startOfDay, $lte: endOfDay }
@@ -330,10 +331,11 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
             medicationHistories.push(...historyRecords);
         }
         else {
-
+            console.log("Data igual a hoje ou posterior");
             for (let medication of medications) {
-                const startDate = new Date(medication.start);
-                const expiresAt = new Date(medication.expiresAt);
+                console.log("Medicamento: ", medication.name);
+                const startDate = convertDateToBrazilDate(medication.start);
+                const expiresAt = convertDateToBrazilDate(medication.expiresAt);
                 const frequency = medication.frequency;
 
                 if (convertedTime >= startDate && convertedTime <= expiresAt) {
