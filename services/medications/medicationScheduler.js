@@ -23,7 +23,7 @@ const checkAndScheduleMedications = async (patientId, agenda) => {
         for (const medication of unscheduledMedications) {
             console.log("Medicamento não agendado: ", medication.name);
 
-            const nextScheduleTime = getNextScheduleTime(medication.schedules, medication.start, medication.frequency, 'America/Sao_Paulo');
+            const nextScheduleTime = getNextScheduleTime(medication.schedules, medication.start, medication.frequency);
 
             await scheduleMedicationTask(medication, nextScheduleTime, agenda);
             medication.isScheduled = true;

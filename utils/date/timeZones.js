@@ -117,15 +117,17 @@ const setDateToSpecificTime = (date, timeString) => {
         return null;
     }
 
-    const startOfDay = DateTime.fromJSDate(date).startOf('day');
+    const startOfDay = DateTime.fromJSDate(date).setZone('America/Sao_Paulo').startOf('day');
     const [hours, minutes] = timeString.split(':').map(Number);
 
-    const dateWithTime = startOfDay.set({ hour: hours, minute: minutes });
+    const dateWithTime = startOfDay.set({ hour: hours, minute: minutes, second: 0, millisecond: 0 });
 
     if (!dateWithTime.isValid) {
         console.error("Erro ao ajustar a data e hora:", dateWithTime.invalidExplanation);
         return null;
     }
+
+    console.log("Data especifica: ", dateWithTime);
 
     return dateWithTime.toJSDate();
 }

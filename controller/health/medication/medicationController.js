@@ -7,7 +7,6 @@ const { getAgenda } = require('../../../agenda/agenda_manager');
 const { scheduleMedicationTask } = require('../../../agenda/defines/medications');
 const Treatment = require('../../../models/treatment');
 const { getNextScheduleTime, getStartOfTheDay, getEndOfTheDay, convertDateToBrazilDate, setDateToSpecificTime } = require('../../../utils/date/timeZones');
-const { formatISOToHours, formatDateToISO } = require('../../../utils/date/formatDate');
 
 exports.getMedications = async (req, res) => {
     try {
