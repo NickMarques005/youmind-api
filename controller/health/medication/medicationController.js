@@ -370,7 +370,7 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
                                         schedules: medication.schedules,
                                         alarmDuration: medication.alarmDuration,
                                         reminderTimes: medication.reminderTimes,
-                                        taken: false,
+                                        taken: undefined,
                                         pending: false,
                                         currentSchedule: schedule,
                                         consumeDate: setDateToSpecificTime(convertedTime, schedule)
