@@ -394,7 +394,11 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
         }
 
         // Ordena o histórico de medicamentos por consumeDate
-        medicationHistories.sort((a, b) => new Date(a.medication.consumeDate) - new Date(b.medication.consumeDate));
+        medicationHistories.sort((a, b) => {
+            const dateA = new Date(a.medication.consumeDate);
+            const dateB = new Date(b.medication.consumeDate);
+            return dateA - dateB;  // Ordena em ordem crescente
+        });
 
         const formattedMedicationHistories = await Promise.all(medicationHistories.map(async (history) => {
             const medication = history.medication;
