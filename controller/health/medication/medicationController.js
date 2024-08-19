@@ -380,20 +380,21 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
                                 };
                             }
 
-                            
-
-                            medicationHistories.push(...pastSchedules);
+                            medicationHistories.push(history);
                         }
 
-                        const nextSchedules = schedules.slice(schedules.indexOf(schedule) + 1);
-                            const pastSchedules = historyRecords.filter(record => {
-                                return record.medication.currentSchedule === schedule &&
-                                    nextSchedules.includes(record.medication.currentSchedule);
-                            });
+                        const pastSchedules = historyRecords.filter(record => {
+                                return !medication.schedules.includes(record.medication.currentSchedule);
+                        });
+                        
+                        medicationHistories.push(...pastSchedules);
                     }
                 }
             }
         }
+
+        // Ordena o histórico de medicamentos por consumeDate
+        medicationHistories.sort((a, b) => new Date(a.medication.consumeDate) - new Date(b.medication.consumeDate));
 
         const formattedMedicationHistories = await Promise.all(medicationHistories.map(async (history) => {
             const medication = history.medication;
