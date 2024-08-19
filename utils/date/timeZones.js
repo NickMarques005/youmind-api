@@ -7,8 +7,7 @@ const getCurrentDateInBrazilTime = () => {
 
 // Função para converter uma data para o horário do Brasil
 const convertDateToBrazilDate = (date) => {
-    const dateToConvert = DateTime.fromJSDate(date, { zone: 'America/Sao_Paulo' })
-        .setZone('America/Sao_Paulo', { keepLocalTime: true });
+    const dateToConvert = DateTime.fromJSDate(date, { zone: 'America/Sao_Paulo' });
     
     if (!dateToConvert.isValid) {
         console.error("Data inválida:", dateToConvert.invalidExplanation);
@@ -79,7 +78,8 @@ const getExpirationDateInUTC = (date, timezone = 'America/Sao_Paulo', addDays, t
 
 // Função para obter o próximo horário agendado
 const getNextScheduleTime = (schedules, startDate, frequency) => {
-    const now = DateTime.now();
+    const now = DateTime.now().setZone('America/Sao_Paulo');
+    console.log("Agora: ", now);
     const today = now.startOf('day');
     let nextScheduleTime = null;
 
@@ -90,12 +90,13 @@ const getNextScheduleTime = (schedules, startDate, frequency) => {
         console.log("Verificando scheduleTime para hoje: ", scheduleTimeToday);
         if (scheduleTimeToday > now) {
             nextScheduleTime = scheduleTimeToday;
+            console.log(`ScheduleTime ${scheduleTimeToday} maior que agora ${now}`);
             break;
         }
     }
 
     if (!nextScheduleTime) {
-        nextScheduleTime = DateTime.fromISO(startDate);
+        nextScheduleTime = DateTime.fromJSDate(startDate).setZone('America/Sao_Paulo');
         while (nextScheduleTime <= now) {
             nextScheduleTime = nextScheduleTime.plus({ days: frequency });
         }
@@ -105,7 +106,9 @@ const getNextScheduleTime = (schedules, startDate, frequency) => {
         nextScheduleTime = nextScheduleTime.set({ hour: hours, minute: minutes, second: 0, millisecond: 0 });
     }
 
-    return nextScheduleTime.toJSDate();
+    const nextSchedule = nextScheduleTime.toJSDate();
+    console.log("### NOVA DATA DE SCHEDULE: ", nextSchedule);
+    return nextSchedule;
 };
 
 const setDateToSpecificTime = (date, timeString) => {
