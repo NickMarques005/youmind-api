@@ -47,11 +47,18 @@ const getEndOfTheDay = (date, timezone = 'America/Sao_Paulo') => {
 
 // Função para converter uma data para UTC
 const convertToUTC = (date) => {
-    const utcDate = DateTime.fromJSDate(date).toUTC().toJSDate();
-    if (!utcDate) {
-        console.error("Data inválida para conversão UTC");
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+        console.error("Data inválida fornecida para conversão UTC");
         return null;
     }
+
+    const utcDate = DateTime.fromJSDate(date).toUTC().toJSDate();
+
+    if (!utcDate || isNaN(utcDate.getTime())) {
+        console.error("Erro na conversão para UTC");
+        return null;
+    }
+
     console.log("Data da conversão em UTC: ", utcDate);
     return utcDate;
 };
