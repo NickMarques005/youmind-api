@@ -84,7 +84,7 @@ const handleUpdateHistoryMedication = async (change, io) => {
 
         // Agendamento da próxima medicação:
 
-        const nextScheduleTime = getNextScheduleTime(medication.schedules, medication.start, medication.frequency, 'America/Sao_Paulo');
+        const nextScheduleTime = getNextScheduleTime(medication.schedules, medication.start, medication.frequency);
 
         if (medication.expiresAt && medication.expiresAt < nextScheduleTime) {
             endMedication(medication);

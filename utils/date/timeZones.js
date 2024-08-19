@@ -71,8 +71,8 @@ const getExpirationDateInUTC = (date, timezone = 'America/Sao_Paulo', addDays, t
 };
 
 // Função para obter o próximo horário agendado
-const getNextScheduleTime = (schedules, startDate, frequency, timezone = 'America/Sao_Paulo') => {
-    const now = DateTime.now().setZone(timezone);
+const getNextScheduleTime = (schedules, startDate, frequency) => {
+    const now = DateTime.now();
     const today = now.startOf('day');
     let nextScheduleTime = null;
 
@@ -87,7 +87,7 @@ const getNextScheduleTime = (schedules, startDate, frequency, timezone = 'Americ
     }
 
     if (!nextScheduleTime) {
-        nextScheduleTime = DateTime.fromISO(startDate, { zone: timezone });
+        nextScheduleTime = DateTime.fromISO(startDate);
         while (nextScheduleTime <= now) {
             nextScheduleTime = nextScheduleTime.plus({ days: frequency });
         }
@@ -97,7 +97,7 @@ const getNextScheduleTime = (schedules, startDate, frequency, timezone = 'Americ
         nextScheduleTime = nextScheduleTime.set({ hour: hours, minute: minutes, second: 0, millisecond: 0 });
     }
 
-    return convertToUTC(nextScheduleTime.toJSDate());
+    return nextScheduleTime;
 };
 
 const setDateToSpecificTime = (date, timeString) => {
