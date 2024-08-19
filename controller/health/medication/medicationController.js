@@ -194,7 +194,7 @@ exports.deleteMedication = async (req, res) => {
         else {
             console.warn("Agenda não inicializada, não foi possível reagendar a tarefa.");
         }
-        
+
         return HandleSuccess(res, 200, "Medicamento deletado com sucesso", { id: medication.id }, MessageTypes.SUCCESS);
     } catch (err) {
         console.error(`Erro ao deletar medicamento: ${err.message}`);
@@ -300,7 +300,7 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
         const treatment = await Treatment.findOne({
             patientId: patient.uid
         });
-        if(!treatment) return HandleError("Você não está em tratamento no momento");
+        if (!treatment) return HandleError("Você não está em tratamento no momento");
 
         const convertedTime = new Date(selectedDate);
 
@@ -327,7 +327,7 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
         });
 
         let medicationHistories = [];
-        
+
         if (isPastDate) {
             console.log("Data menor que hoje");
 
@@ -377,7 +377,14 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
                                     treatmentId: treatment._id.toString()
                                 };
                             }
-                            medicationHistories.push(history);
+
+                            const nextSchedules = schedules.slice(schedules.indexOf(schedule) + 1);
+                            const pastSchedules = historyRecords.filter(record => {
+                                return record.medication.currentSchedule === schedule &&
+                                    nextSchedules.includes(record.medication.currentSchedule);
+                            });
+
+                            medicationHistories.push(...pastSchedules);
                         }
                     }
                 }
@@ -401,7 +408,7 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
                 createdAt: medication.createdAt,
                 updatedAt: medication.updatedAt,
             };
-            
+
             return {
                 _id: history._id,
                 patientId: history.patientId,
