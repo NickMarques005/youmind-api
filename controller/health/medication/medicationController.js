@@ -143,7 +143,7 @@ exports.updateMedication = async (req, res) => {
                     console.log("Nenhum agendamento not taken foi cancelado.");
                 }
 
-                const nextScheduleTime = getNextScheduleTime(updatedMedication.schedules, updatedMedication.start, updatedMedication.frequency, 'America/Sao_Paulo');
+                const nextScheduleTime = getNextScheduleTime(updatedMedication.schedules, updatedMedication.start, updatedMedication.frequency);
                 await scheduleMedicationTask(updatedMedication, nextScheduleTime, agenda);
             }
             else {
@@ -321,14 +321,15 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
             patientId: uid
         });
 
-        let medicationHistories = [];
+        const historyRecords = await PatientMedicationHistory.find({
+            patientId: uid,
+            'medication.consumeDate': { $gte: startOfDay, $lte: endOfDay }
+        });
 
+        let medicationHistories = [];
+        
         if (isPastDate) {
             console.log("Data menor que hoje");
-            const historyRecords = await PatientMedicationHistory.find({
-                patientId: uid,
-                'medication.consumeDate': { $gte: startOfDay, $lte: endOfDay }
-            });
 
             medicationHistories.push(...historyRecords);
         }

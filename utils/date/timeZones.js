@@ -87,6 +87,7 @@ const getNextScheduleTime = (schedules, startDate, frequency) => {
         const [hours, minutes] = schedule.split(':').map(Number);
         const scheduleTimeToday = today.set({ hour: hours, minute: minutes });
 
+        console.log("Verificando scheduleTime para hoje: ", scheduleTimeToday);
         if (scheduleTimeToday > now) {
             nextScheduleTime = scheduleTimeToday;
             break;
@@ -104,7 +105,7 @@ const getNextScheduleTime = (schedules, startDate, frequency) => {
         nextScheduleTime = nextScheduleTime.set({ hour: hours, minute: minutes, second: 0, millisecond: 0 });
     }
 
-    return nextScheduleTime;
+    return nextScheduleTime.toJSDate();
 };
 
 const setDateToSpecificTime = (date, timeString) => {
