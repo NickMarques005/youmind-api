@@ -400,6 +400,10 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
             return dateA - dateB;  // Ordena em ordem crescente
         });
 
+        medicationHistories.forEach(history => {
+            console.log('consumeDate:', history.medication.consumeDate, 'parsedDate:', new Date(history.medication.consumeDate));
+        });
+
         const formattedMedicationHistories = await Promise.all(medicationHistories.map(async (history) => {
             const medication = history.medication;
             const currentMedication = {
