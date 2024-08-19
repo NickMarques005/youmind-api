@@ -347,7 +347,9 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
 
                     // Verifica se a data selecionada coincide com a frequência do medicamento
                     if (differenceInDays % frequency === 0) {
-                        for (let schedule of medication.schedules) {
+                        const schedules = medication.schedules;
+
+                        for (let schedule of schedules) {
                             let history = await PatientMedicationHistory.findOne({
                                 patientId: uid,
                                 'medication.medicationId': medication._id,
@@ -378,14 +380,16 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
                                 };
                             }
 
-                            const nextSchedules = schedules.slice(schedules.indexOf(schedule) + 1);
+                            
+
+                            medicationHistories.push(...pastSchedules);
+                        }
+
+                        const nextSchedules = schedules.slice(schedules.indexOf(schedule) + 1);
                             const pastSchedules = historyRecords.filter(record => {
                                 return record.medication.currentSchedule === schedule &&
                                     nextSchedules.includes(record.medication.currentSchedule);
                             });
-
-                            medicationHistories.push(...pastSchedules);
-                        }
                     }
                 }
             }
