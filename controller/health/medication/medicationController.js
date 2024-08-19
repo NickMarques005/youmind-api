@@ -383,7 +383,38 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
             }
         }
 
-        return HandleSuccess(res, 200, "Histórico de medicamentos encontrado", medicationHistories);
+        const formattedMedicationHistories = await Promise.all(medicationHistories.map(async (history) => {
+            const medication = history.medication;
+            const currentMedication = {
+                _id: medication.medicationId,
+                name: medication.name,
+                dosage: medication.dosage,
+                type: medication.type,
+                expiresAt: medication.expiresAt,
+                frequency: medication.frequency,
+                schedules: medication.schedules,
+                start: medication.start,
+                alarmDuration: medication.alarmDuration,
+                reminderTimes: medication.reminderTimes,
+                patientId: history.patientId,
+                createdAt: medication.createdAt,
+                updatedAt: medication.updatedAt,
+            };
+            
+            return {
+                _id: history._id,
+                patientId: history.patientId,
+                currentMedication: currentMedication,
+                currentSchedule: history.medication.currentSchedule,
+                pending: history.medication.pending,
+                alert: history.medication.alert,
+                taken: history.medication.taken,
+                consumeDate: history.medication.consumeDate,
+                updatedAt: history.medication.updatedAt
+            };
+        }));
+
+        return HandleSuccess(res, 200, "Histórico de medicamentos encontrado", formattedMedicationHistories);
     } catch (err) {
         console.error(`Erro ao buscar medicamentos tomados: ${err.message}`);
         return HandleError(res, 500, "Erro interno no servidor ao buscar medicamentos tomados");
