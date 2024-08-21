@@ -299,6 +299,7 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
 
                     // Verifica se a data selecionada coincide com a frequência do medicamento
                     if (differenceInDays % frequency === 0) {
+                        console.log(`#getMedicationOnConsumeDate# Tem medicação ${medication.name} hoje!`);
                         const schedules = medication.schedules;
 
                         for (let schedule of schedules) {
@@ -332,14 +333,30 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
                                 };
                             }
 
-                            medicationHistories.push(history);
+                            const alreadyExists = medicationHistories.some(existingHistory => 
+                                existingHistory.medication.medicationId.toString() === history.medication.medicationId.toString() &&
+                                existingHistory.medication.currentSchedule === history.medication.currentSchedule &&
+                                existingHistory.medication.consumeDate.getTime() === history.medication.consumeDate.getTime()
+                            );
+                            
+                            if (!alreadyExists) {
+                                medicationHistories.push(history);
+                            }
                         }
 
                         const pastSchedules = historyRecords.filter(record => {
                             return !medication.schedules.includes(record.medication.currentSchedule);
                         });
 
-                        medicationHistories.push(...pastSchedules);
+                        const uniquePastSchedules = pastSchedules.filter(pastSchedule => 
+                            !medicationHistories.some(existingHistory =>
+                                existingHistory.medication.medicationId.toString() === pastSchedule.medication.medicationId.toString() &&
+                                existingHistory.medication.currentSchedule === pastSchedule.medication.currentSchedule &&
+                                existingHistory.medication.consumeDate.getTime() === pastSchedule.medication.consumeDate.getTime()
+                            )
+                        );
+                        
+                        medicationHistories.push(...uniquePastSchedules);
                     }
                 }
             }
@@ -351,6 +368,10 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
             const dateB = new Date(b.medication.consumeDate);
             return dateA - dateB;  // Ordena em ordem crescente
         });
+
+        medicationHistories.forEach((history, index) => {
+            console.log(`#getMedicationOnConsumeDate# Histórico ${index + 1}: `, history.medication.currentSchedule);
+        })
 
         const formattedMedicationHistories = await Promise.all(medicationHistories.map(async (history) => {
             const medication = history.medication;
