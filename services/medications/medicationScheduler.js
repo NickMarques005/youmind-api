@@ -35,7 +35,7 @@ const initializeMedicationScheduleProcess = async (medication, agenda) => {
     /*
     ### Agendamento do último dia do medicamento
     */
-    await initializeScheduleLastDayReminder(newMedication, agenda);
+    await initializeScheduleLastDayReminder(medication, agenda);
 }
 
 const checkAndScheduleMedications = async (patientId, agenda) => {
