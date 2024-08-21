@@ -5,7 +5,7 @@ const { HandleError, HandleSuccess } = require('../../../utils/response/handleRe
 const MessageTypes = require('../../../utils/response/typeResponse');
 const Treatment = require('../../../models/treatment');
 const { getNextScheduleTime, getStartOfTheDay, getEndOfTheDay, convertDateToBrazilDate, setDateToSpecificTime } = require('../../../utils/date/timeZones');
-const { scheduleMedicationTask, cancelSpecificMedicationSchedules } = require('../../../services/medications/medicationScheduler');
+const { scheduleMedicationTask, cancelSpecificMedicationSchedules, cancelSpecificMedicationNotTakenSchedule } = require('../../../services/medications/medicationScheduler');
 const { getAgenda } = require('../../../agenda/agenda_manager');
 
 exports.getMedications = async (req, res) => {
@@ -129,7 +129,7 @@ exports.updateMedication = async (req, res) => {
             /*
             ### Cancelamento de todos os agendamentos relacionados a esse medicamento sendo excluído
             */
-            await cancelSpecificMedicationSchedules(updatedMedication._id);
+            await cancelSpecificMedicationSchedules(updatedMedication._id, agenda);
 
             const nextScheduleTime = getNextScheduleTime(updateMedication.schedules, updatedMedication.start, updatedMedication.frequency);
             await scheduleMedicationTask(updatedMedication, nextScheduleTime, agenda);
@@ -144,6 +144,7 @@ exports.updateMedication = async (req, res) => {
 
 exports.deleteMedication = async (req, res) => {
     try {
+        const agenda = getAgenda();
         const { uid } = req.user;
         const { id } = req.body;
 
@@ -159,7 +160,7 @@ exports.deleteMedication = async (req, res) => {
         /*
         ### Cancelamento de todos os agendamentos relacionados a esse medicamento sendo excluído
         */
-        await cancelSpecificMedicationSchedules(medication._id);
+        await cancelSpecificMedicationSchedules(medication._id, agenda);
 
         return HandleSuccess(res, 200, "Medicamento deletado com sucesso", { id: medication.id }, MessageTypes.SUCCESS);
     } catch (err) {
@@ -222,8 +223,6 @@ exports.confirmMedicationAlert = async (req, res) => {
         const patient = await PatientUser.findOne({ uid: uid });
         if (!patient) return HandleError(res, 404, "Paciente não encontrado");
 
-        console.log("Medication History Id: ", medicationHistoryId);
-
         const medicationHistory = await PatientMedicationHistory.findById(medicationHistoryId)
 
         if (!medicationHistory) return HandleError(res, 404, "Histórico de medicação não encontrado ou alerta não está ativo");
@@ -232,18 +231,9 @@ exports.confirmMedicationAlert = async (req, res) => {
         medicationHistory.medication.pending = false;
         medicationHistory.medication.alert = false;
 
-        console.log("MedicationHistory atualizado: ", medicationHistory);
-
         await medicationHistory.save();
 
-        const canceledNotTaken = await agenda.cancel({ name: 'medication not taken', 'data.medicationHistoryId': medicationHistory._id });
-
-        if (canceledNotTaken > 0) {
-            console.log("Agendamentos not taken cancelados!");
-        }
-        else {
-            console.log("Nenhum agendamento not taken foi cancelado.");
-        }
+        await cancelSpecificMedicationNotTakenSchedule(medicationHistory._id);
 
         return HandleSuccess(res, 200, "Parabéns! Você confirmou seu alarme e tomou o medicamento no horário certo. Continue cuidando de si mesmo, você está no caminho certo!", MessageTypes.SUCCESS);
     } catch (err) {
@@ -270,18 +260,11 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
 
         const convertedTime = new Date(selectedDate);
 
-        console.log("Data escolhida: ", convertedTime);
-
         const startOfDay = getStartOfTheDay(convertedTime);
         const endOfDay = getEndOfTheDay(convertedTime);
 
-        console.log('Data inicial do dia:', startOfDay);
-        console.log('Data final do dia:', endOfDay);
-
         const today = getStartOfTheDay(convertDateToBrazilDate(new Date()));
         const isPastDate = convertedTime < today;
-
-        console.log("HOJE: ", today);
 
         const medications = await Medication.find({
             patientId: uid
@@ -295,14 +278,10 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
         let medicationHistories = [];
 
         if (isPastDate) {
-            console.log("Data menor que hoje");
-
             medicationHistories.push(...historyRecords);
         }
         else {
-            console.log("Data igual a hoje ou posterior");
             for (let medication of medications) {
-                console.log("Medicamento: ", medication.name);
                 const startDate = convertDateToBrazilDate(medication.start);
                 const expiresAt = convertDateToBrazilDate(medication.expiresAt);
                 const frequency = medication.frequency;
@@ -364,10 +343,6 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
             const dateA = new Date(a.medication.consumeDate);
             const dateB = new Date(b.medication.consumeDate);
             return dateA - dateB;  // Ordena em ordem crescente
-        });
-
-        medicationHistories.forEach(history => {
-            console.log('consumeDate:', history.medication.consumeDate, 'parsedDate:', new Date(history.medication.consumeDate));
         });
 
         const formattedMedicationHistories = await Promise.all(medicationHistories.map(async (history) => {

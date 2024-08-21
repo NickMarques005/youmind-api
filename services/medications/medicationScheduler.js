@@ -114,6 +114,17 @@ const cancelSpecificMedicationSchedules = async (medicationId, agenda) => {
     return { canceledAlerts, canceledNotTaken, canceledLastDay, canceledReminders };
 }
 
+const cancelSpecificMedicationNotTakenSchedule = async (medicationHistoryId) => {
+    const canceledNotTaken = await agenda.cancel({ name: agendaDefines.SEND_MEDICATION_NOT_TAKEN, 'data.medicationHistoryId': medicationHistoryId });
+
+    if (canceledNotTaken > 0) {
+        console.log("Agendamentos not taken cancelados!");
+    }
+    else {
+        console.log("Nenhum agendamento not taken foi cancelado.");
+    }
+}
+
 const cancelAllMedicationSchedules = async (patientId, agenda) => {
     console.log("\n*****\n");
     console.log("Cancelamento dos agendamentos de medicações: \n");
@@ -203,5 +214,6 @@ module.exports = {
     scheduleMedicationNotTakenTask,
     cancelAllMedicationSchedules,
     cancelSpecificMedicationSchedules,
+    cancelSpecificMedicationNotTakenSchedule,
     initializeScheduleLastDayReminder
 }
