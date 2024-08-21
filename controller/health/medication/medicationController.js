@@ -240,7 +240,7 @@ exports.confirmMedicationAlert = async (req, res) => {
 
         await medicationHistory.save();
 
-        await cancelSpecificMedicationNotTakenSchedule(medicationHistory._id);
+        await cancelSpecificMedicationNotTakenSchedule(medicationHistory._id, agenda);
 
         return HandleSuccess(res, 200, "Parabéns! Você confirmou seu alarme e tomou o medicamento no horário certo. Continue cuidando de si mesmo, você está no caminho certo!", MessageTypes.SUCCESS);
     } catch (err) {

@@ -115,7 +115,11 @@ const cancelSpecificMedicationSchedules = async (medicationId, agenda) => {
     return { canceledAlerts, canceledNotTaken, canceledLastDay, canceledReminders };
 }
 
-const cancelSpecificMedicationNotTakenSchedule = async (medicationHistoryId) => {
+const cancelSpecificMedicationNotTakenSchedule = async (medicationHistoryId, agenda) => {
+    if (!agenda) {
+        console.warn("Agenda não inicializada, não foi possível verificar o cancelamento do agendamento not Taken");
+        return;
+    }
     const canceledNotTaken = await agenda.cancel({ name: agendaDefines.SEND_MEDICATION_NOT_TAKEN, 'data.medicationHistoryId': medicationHistoryId });
 
     if (canceledNotTaken > 0) {
