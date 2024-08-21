@@ -92,8 +92,8 @@ const cancelSpecificMedicationSchedules = async (medicationId, agenda) => {
 
     const canceledAlerts = await agenda.cancel({ name: agendaDefines.SEND_MEDICATION_ALERT, 'data.medicationId': medicationId });
     const canceledNotTaken = await agenda.cancel({ name: agendaDefines.SEND_MEDICATION_NOT_TAKEN, 'data.medicationId': medicationId });
-    const canceledLastDay = await agenda.cancel({ name: agendaDefines.LAST_DAY_MEDICATION_REMINDER, 'data.medicationId': medication._id });
-    const canceledReminders = await agenda.cancel({ name: agendaDefines.SEND_MESSAGE_REMINDER, 'data.medicationId': medication._id });
+    const canceledLastDay = await agenda.cancel({ name: agendaDefines.LAST_DAY_MEDICATION_REMINDER, 'data.medicationId': medicationId });
+    const canceledReminders = await agenda.cancel({ name: agendaDefines.SEND_MESSAGE_REMINDER, 'data.medicationId': medicationId });
     console.log("Agendamentos cancelados!");
 
     canceledAlerts > 0 ?
