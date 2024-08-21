@@ -282,12 +282,23 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
             'medication.consumeDate': { $gte: startOfDay, $lte: endOfDay }
         });
 
+        console.log(historyRecords);
+
         let medicationHistories = [];
 
+        /*
+        ### Se a data é anterior ao dia de hoje, então apenas retorne os históricos
+        */
         if (isPastDate) {
             medicationHistories.push(...historyRecords);
         }
+        /*
+        ### Se não, filtrar os históricos de cada medicamento de acordo com o dia selecionado
+        */
         else {
+            /*
+            ### Filtragem dos históricos que possuem medicamento registrado
+            */
             for (let medication of medications) {
                 const startDate = convertDateToBrazilDate(medication.start);
                 const expiresAt = convertDateToBrazilDate(medication.expiresAt);
@@ -303,6 +314,7 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
                         const schedules = medication.schedules;
 
                         for (let schedule of schedules) {
+                            // Busca o histórico para esse horário
                             let history = await PatientMedicationHistory.findOne({
                                 patientId: uid,
                                 'medication.medicationId': medication._id,
@@ -310,6 +322,7 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
                                 'medication.consumeDate': { $gte: startOfDay, $lte: endOfDay }
                             });
 
+                            //Caso não ache, significa que ele não foi adicionado ainda, portanto é necessário criar um histórico temporário para visualização do usuário
                             if (!history) {
                                 history = {
                                     patientId: uid,
@@ -333,6 +346,7 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
                                 };
                             }
 
+                            // Verificação dos históricos que podem já estar dentro da lista dos históricos que serão retornados ao usuário (Evita duplicatas)
                             const alreadyExists = medicationHistories.some(existingHistory => 
                                 existingHistory.medication.medicationId.toString() === history.medication.medicationId.toString() &&
                                 existingHistory.medication.currentSchedule === history.medication.currentSchedule &&
@@ -344,10 +358,12 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
                             }
                         }
 
+                        // Busca históricos passados que não estão registrados mais nos horários do medicamento
                         const pastSchedules = historyRecords.filter(record => {
                             return !medication.schedules.includes(record.medication.currentSchedule);
                         });
 
+                        // Garantia paraque não haja históricos de medicamento duplicados
                         const uniquePastSchedules = pastSchedules.filter(pastSchedule => 
                             !medicationHistories.some(existingHistory =>
                                 existingHistory.medication.medicationId.toString() === pastSchedule.medication.medicationId.toString() &&
@@ -360,6 +376,19 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
                     }
                 }
             }
+
+            /*
+            ### Filtragem dos históricos que não possuem mais medicamento registrado
+            */
+            const unlinkedHistories = historyRecords.filter(record => 
+                !medicationHistories.some(existingHistory => 
+                    existingHistory.medication.medicationId.toString() === record.medication.medicationId.toString() &&
+                    existingHistory.medication.currentSchedule === record.medication.currentSchedule &&
+                    existingHistory.medication.consumeDate.getTime() === record.medication.consumeDate.getTime()
+                )
+            );
+
+            medicationHistories.push(...unlinkedHistories);
         }
 
         // Ordena o histórico de medicamentos por consumeDate
@@ -373,6 +402,9 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
             console.log(`#getMedicationOnConsumeDate# Histórico ${index + 1}: `, history.medication.currentSchedule);
         })
 
+        /*
+        ### Formatação dos históricos do medicamento para serem recebidos e tratados corretamente
+        */
         const formattedMedicationHistories = await Promise.all(medicationHistories.map(async (history) => {
             const medication = history.medication;
             const currentMedication = {
