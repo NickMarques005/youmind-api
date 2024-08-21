@@ -108,7 +108,11 @@ const patientQuestionnaireHistorySchema = new mongoose.Schema({
     treatmentId: {
         type: String,
         required: true
-    }
+    },
+    delete: { 
+        type: Boolean, 
+        default: false
+    },
 });
 
 const patientMedicationHistorySchema = new mongoose.Schema({
@@ -120,7 +124,11 @@ const patientMedicationHistorySchema = new mongoose.Schema({
     treatmentId: {
         type: String,
         required: true
-    }
+    },
+    delete: { 
+        type: Boolean, 
+        default: false
+    },
 });
 
 

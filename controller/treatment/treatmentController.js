@@ -175,11 +175,19 @@ exports.endTreatment = async (req, res) => {
 
         await cancelMedicationSchedules(treatmentToUpdate.patientId, agenda);
 
-        await PatientMedicationHistory.deleteMany({
-            patientId: treatmentToUpdate.patientId,
-            'medication.pending': true
-        });
+        /*
+        ### Atualizar todos os históricos da medicação que estiverem pending true para delete true
+        */
+        const medicationUpdateResult = await PatientMedicationHistory.updateMany(
+            { patientId: treatmentToUpdate.patientId, 'medication.pending': true },
+            { $set: { delete: true } }
+        );
 
+        console.log(`Total de ${medicationUpdateResult.nModified} patient medication history atualizados para delete: true`);
+
+        /*
+        ### Excluir questionários do paciente que estiverem pendentes
+        */
         const patientHistoryQuestionnaires = await PatientQuestionnaireHistory.find({
             patientId: treatmentToUpdate.patientId,
             'questionnaire.pending': true
@@ -189,10 +197,16 @@ exports.endTreatment = async (req, res) => {
 
         await Questionnaire.deleteMany({ _id: { $in: questionnaireIds } });
 
-        await PatientQuestionnaireHistory.deleteMany({
-            patientId: treatmentToUpdate.patientId,
-            'questionnaire.pending': true
-        });
+        /*
+        ### Atualizar históricos relacionados a esse paciente para tipo delete
+        */
+        const questionnaireUpdateResult = await PatientQuestionnaireHistory.updateMany(
+            { _id: { $in: questionnaireIds } },
+            { $set: { delete: true } }
+        );
+
+        console.log(`Total de ${questionnaireUpdateResult.nModified} patient questionnaire history atualizados para delete: true`);
+
 
         await PatientUser.findOneAndUpdate({ uid: treatmentToUpdate.patientId }, { is_treatment_running: false });
 

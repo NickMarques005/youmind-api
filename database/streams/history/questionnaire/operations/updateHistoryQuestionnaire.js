@@ -9,11 +9,11 @@ const handleUpdateHistoryQuestionnaire = async (change, io) => {
     const updatedFields = change.updateDescription.updatedFields;
 
     if (updatedFields) {
-        const questionnaireId = change.documentKey._id;
-        const questionnaireHistory = await PatientQuestionnaireHistory.findById(questionnaireId);
+        const questionnaireHistoryId = change.documentKey._id;
+        const questionnaireHistory = await PatientQuestionnaireHistory.findById(questionnaireHistoryId);
 
         if (!questionnaireHistory) {
-            throw new Error(`Questionário não foi encontrado no histórico: ${questionnaireId}`);
+            throw new Error(`Questionário não foi encontrado no histórico: ${questionnaireHistoryId}`);
         }
 
         const patientId = questionnaireHistory.patientId;
@@ -43,6 +43,16 @@ const handleUpdateHistoryQuestionnaire = async (change, io) => {
 
             await emitUpdateHistory(io, doctorId, patientId);
             await emitHistoryQuestionnaireUpdate(io, doctorId, latestQuestionnaire, "updateLatestQuestionnaire");
+        }
+        else if (updatedFields['delete'] === true) {
+
+            //Excluir histórico de questionário
+            await PatientQuestionnaireHistory.deleteOne({ _id: questionnaireHistoryId });
+
+            const latestQuestionnaire = await formatLatestQuestionnaire(questionnaireHistory);
+
+            await emitUpdateHistory(io, doctorId, patientId);
+            await emitHistoryQuestionnaireUpdate(io, doctorId, latestQuestionnaire, "deleteLatestQuestionnaire");
         }
     }
 }

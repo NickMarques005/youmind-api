@@ -5,19 +5,19 @@ const scheduleNewReminderTask = async (scheduleReminderData, agenda) => {
         console.warn("Agenda não inicializada, não foi possível verificar o agendamento de lembrete do medicamento.");
         return;
     }
-    const {medicationId, patientId, scheduleTime, nextReminderDates } = scheduleReminderData;
+    const { medicationId, patientId, scheduleTime, nextReminderDates } = scheduleReminderData;
 
     if (nextReminderDates.length > 0) {
         const reminderTime = nextReminderDates.shift();
 
         if (reminderTime) {
 
-            const jobId = `reminder-${scheduleReminderData.medicationId}-${reminderTime}`;
+            const jobId = `reminder-${medicationId}-${reminderTime}`;
             await agenda.schedule(reminderTime, agendaDefines.SEND_MESSAGE_REMINDER, {
                 medicationId,
                 patientId,
                 scheduleTime,
-                nextReminderDates: nextReminders.length !== 0 ? nextReminders : []
+                nextReminderDates: nextReminderDates.length !== 0 ? nextReminderDates : []
             }, { jobId });
             return;
         }

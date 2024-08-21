@@ -28,6 +28,7 @@ const handleReminderSchedule = async (job, agenda) => {
             await scheduleNewReminderTask({
                 medicationId,
                 patientId,
+                scheduleTime,
                 nextReminderDates: newReminderDates,
             }, agenda);
         }

@@ -114,18 +114,19 @@ exports.updateMedication = async (req, res) => {
 
         if (!updatedMedication) return HandleError(res, 404, "Medicamento não encontrado");
 
-        const result = await PatientMedicationHistory.deleteMany({
-            'medication.medicationId': updatedMedication._id,
-            'medication.pending': true
-        });
-
-        console.log(`Total de ${result.deletedCount} patient medication history deletados`);
-
-        //CANCELAMENTO E REAGENDAMENTO DE MEDICAMENTO APÓS ATUALIZAÇÃO
         const patient = await PatientUser.findOne({ uid });
         const treatment = await Treatment.findOne({ patientId: uid, status: 'active' });
         if (patient && treatment) {
             const agenda = getAgenda();
+            /*
+            ### Atualizar históricos da medicação que estiverem pending true para delete true
+            */
+            const result = await PatientMedicationHistory.updateMany(
+                { 'medication.medicationId': updatedMedication._id, 'medication.pending': true },
+                { $set: { delete: true } }
+            );
+            console.log(`Total de ${result.modifiedCount} patient medication history atualizados para delete: true`);
+            
             /*
             ### Cancelamento de todos os agendamentos relacionados a esse medicamento sendo excluído
             */
@@ -152,13 +153,19 @@ exports.deleteMedication = async (req, res) => {
         if (!id) return HandleError(res, 400, "Id do medicamento não especificado");
 
         const medication = await Medication.findOneAndDelete({ _id: id, patientId: uid });
-
         if (!medication) return HandleError(res, 404, "Medicamento não encontrado");
 
-        await PatientMedicationHistory.deleteMany({ 'medication.medicationId': id, 'medication.pending': true });
+        /*
+        ### Atualizar históricos da medicação que estiverem pending true para delete true
+        */
+        const result = await PatientMedicationHistory.updateMany(
+            { 'medication.medicationId': medication._id, 'medication.pending': true },
+            { $set: { delete: true } }
+        );
+        console.log(`Total de ${result.modifiedCount} patient medication history atualizados para delete: true`);
 
         /*
-        ### Cancelamento de todos os agendamentos relacionados a esse medicamento sendo excluído
+        ### Cancelamento de todos os agendamentos relacionados a esse medicamento
         */
         await cancelSpecificMedicationSchedules(medication._id, agenda);
 

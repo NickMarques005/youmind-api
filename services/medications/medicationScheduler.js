@@ -84,6 +84,7 @@ const scheduleMedicationNotTakenTask = async (medicationHistory, medication, age
 };
 
 const cancelSpecificMedicationSchedules = async (medicationId, agenda) => {
+    console.log("Cancelamento de todos os agendamentos do medicamento");
     if (!agenda) {
         console.warn("Agenda não inicializada, não foi possível verificar o cancelamento dos agendamentos de medicamento");
         return;
