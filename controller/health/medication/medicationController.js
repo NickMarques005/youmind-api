@@ -132,7 +132,7 @@ exports.updateMedication = async (req, res) => {
             */
             await cancelSpecificMedicationSchedules(updatedMedication._id, agenda);
 
-            const nextScheduleTime = getNextScheduleTime(updateMedication.schedules, updatedMedication.start, updatedMedication.frequency);
+            const nextScheduleTime = getNextScheduleTime(updatedMedication.schedules, updatedMedication.start, updatedMedication.frequency);
             await scheduleMedicationTask(updatedMedication, nextScheduleTime, agenda);
         }
 
