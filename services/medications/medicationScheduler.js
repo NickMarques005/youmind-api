@@ -25,6 +25,19 @@ const scheduleMedicationTask = async (medication, scheduleTime, agenda) => {
     await initializeScheduleReminders(medication, scheduleTime, agenda);
 }
 
+const initializeMedicationScheduleProcess = async (medication, agenda) => {
+    /*
+    ### Primeiro agendamento do medicamento
+    */
+    const firstScheduleTime = getNextScheduleTime(medication.schedules, medication.start, medication.frequency);
+    await scheduleMedicationTask(medication, firstScheduleTime, agenda);
+
+    /*
+    ### Agendamento do último dia do medicamento
+    */
+    await initializeScheduleLastDayReminder(newMedication, agenda);
+}
+
 const checkAndScheduleMedications = async (patientId, agenda) => {
     if (!agenda) {
         console.warn("Agenda não inicializada, não foi possível verificar o agendamento de medicamentos.");
@@ -220,5 +233,6 @@ module.exports = {
     cancelAllMedicationSchedules,
     cancelSpecificMedicationSchedules,
     cancelSpecificMedicationNotTakenSchedule,
-    initializeScheduleLastDayReminder
+    initializeScheduleLastDayReminder,
+    initializeMedicationScheduleProcess
 }

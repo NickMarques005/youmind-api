@@ -5,7 +5,7 @@ const { HandleError, HandleSuccess } = require('../../../utils/response/handleRe
 const MessageTypes = require('../../../utils/response/typeResponse');
 const Treatment = require('../../../models/treatment');
 const { getNextScheduleTime, getStartOfTheDay, getEndOfTheDay, convertDateToBrazilDate, setDateToSpecificTime } = require('../../../utils/date/timeZones');
-const { scheduleMedicationTask, cancelSpecificMedicationSchedules, cancelSpecificMedicationNotTakenSchedule } = require('../../../services/medications/medicationScheduler');
+const { scheduleMedicationTask, cancelSpecificMedicationSchedules, cancelSpecificMedicationNotTakenSchedule, initializeMedicationScheduleProcess } = require('../../../services/medications/medicationScheduler');
 const { getAgenda } = require('../../../agenda/agenda_manager');
 
 exports.getMedications = async (req, res) => {
@@ -132,8 +132,10 @@ exports.updateMedication = async (req, res) => {
             */
             await cancelSpecificMedicationSchedules(updatedMedication._id, agenda);
 
-            const nextScheduleTime = getNextScheduleTime(updatedMedication.schedules, updatedMedication.start, updatedMedication.frequency);
-            await scheduleMedicationTask(updatedMedication, nextScheduleTime, agenda);
+            /*
+            ### Reagendamento do medicamento atualizado
+            */
+            await initializeMedicationScheduleProcess(updatedMedication, agenda);
         }
 
         return HandleSuccess(res, 200, "Medicamento atualizado com sucesso", updatedMedication, MessageTypes.MEDICATION);

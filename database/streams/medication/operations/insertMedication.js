@@ -2,7 +2,7 @@ const { PatientUser } = require('../../../../models/users');
 const Medication = require('../../../../models/medication');
 const Treatment = require('../../../../models/treatment');
 const { getNextScheduleTime } = require('../../../../utils/date/timeZones');
-const { scheduleMedicationTask, initializeScheduleLastDayReminder } = require('../../../../services/medications/medicationScheduler');
+const { scheduleMedicationTask, initializeScheduleLastDayReminder, initializeMedicationScheduleProcess } = require('../../../../services/medications/medicationScheduler');
 const { getAgenda } = require('../../../../agenda/agenda_manager');
 
 const handleInsertMedication = async (change) => {
@@ -25,14 +25,7 @@ const handleInsertMedication = async (change) => {
     /*
     ### Início do agendamento do medicamento
     */
-    const firstScheduleTime = getNextScheduleTime(newMedication.schedules, newMedication.start, newMedication.frequency, 'America/Sao_Paulo');
-    await scheduleMedicationTask(newMedication, firstScheduleTime, agenda);
-
-    /*
-    ### Agendamento do último dia do medicamento
-    */
-    await initializeScheduleLastDayReminder(newMedication, agenda);
-
+    await initializeMedicationScheduleProcess(newMedication, agenda);
 
     const existingMedication = await Medication.findOne({ _id: newMedication._id });
     if (!existingMedication) {
