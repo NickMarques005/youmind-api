@@ -79,11 +79,27 @@ const getExpirationDateInUTC = (date, timezone = 'America/Sao_Paulo', addDays, t
 // Função para obter o próximo horário agendado
 const getNextScheduleTime = (schedules, startDate, frequency) => {
     const now = DateTime.now().setZone('America/Sao_Paulo');
-    console.log("Agora: ", now);
     const today = now.startOf('day');
+    const startOfSchedule = DateTime.fromJSDate(startDate).setZone('America/Sao_Paulo');
     let nextScheduleTime = null;
 
+    /*
+    ### Verifica se hoje é menor que a data de início do agendamento
+    */
+    if (now < startOfSchedule) {
+        // Se for, retorna o primeiro horário do dia de início do agendamento
+        const [hours, minutes] = schedules[0].split(':').map(Number);
+        nextScheduleTime = startOfSchedule.set({ hour: hours, minute: minutes, second: 0, millisecond: 0 });
+        const firstSchedule = nextScheduleTime.toJSDate();
+        console.log("### Próximo agendamento no futuro (startDate): ", firstSchedule);
+        return firstSchedule;
+    }
+
+    /*
+    ### Se hoje é maior ou igual à data de início, continua a lógica para calcular o próximo agendamento
+    */
     for (const schedule of schedules) {
+
         const [hours, minutes] = schedule.split(':').map(Number);
         const scheduleTimeToday = today.set({ hour: hours, minute: minutes });
 
@@ -95,8 +111,11 @@ const getNextScheduleTime = (schedules, startDate, frequency) => {
         }
     }
 
+    /*
+    ### Se não há mais horários hoje, calcula o próximo agendamento para a próxima data
+    */
     if (!nextScheduleTime) {
-        nextScheduleTime = DateTime.fromJSDate(startDate).setZone('America/Sao_Paulo');
+        nextScheduleTime = startOfSchedule;
         while (nextScheduleTime <= now) {
             nextScheduleTime = nextScheduleTime.plus({ days: frequency });
         }
