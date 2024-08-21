@@ -3,10 +3,10 @@ const { PatientMedicationHistory } = require('../../../models/patient_history');
 const { PatientUser } = require('../../../models/users');
 const { HandleError, HandleSuccess } = require('../../../utils/response/handleResponse');
 const MessageTypes = require('../../../utils/response/typeResponse');
-const { getAgenda } = require('../../../agenda/agenda_manager');
-const { scheduleMedicationTask } = require('../../../agenda/defines/medications');
 const Treatment = require('../../../models/treatment');
 const { getNextScheduleTime, getStartOfTheDay, getEndOfTheDay, convertDateToBrazilDate, setDateToSpecificTime } = require('../../../utils/date/timeZones');
+const { scheduleMedicationTask, cancelSpecificMedicationSchedules } = require('../../../services/medications/medicationScheduler');
+const { getAgenda } = require('../../../agenda/agenda_manager');
 
 exports.getMedications = async (req, res) => {
     try {
@@ -121,33 +121,18 @@ exports.updateMedication = async (req, res) => {
 
         console.log(`Total de ${result.deletedCount} patient medication history deletados`);
 
+        //CANCELAMENTO E REAGENDAMENTO DE MEDICAMENTO APÓS ATUALIZAÇÃO
         const patient = await PatientUser.findOne({ uid });
         const treatment = await Treatment.findOne({ patientId: uid, status: 'active' });
         if (patient && treatment) {
             const agenda = getAgenda();
-            if (agenda) {
-                console.log("Logica de Reagendamento!!");
-                const canceledAlerts = await agenda.cancel({ name: 'send medication alert', 'data.medicationId': updatedMedication._id });
-                const canceledNotTaken = await agenda.cancel({ name: 'medication not taken', 'data.medicationId': updatedMedication._id });
-                console.log("Agendamentos cancelados!");
+            /*
+            ### Cancelamento de todos os agendamentos relacionados a esse medicamento sendo excluído
+            */
+            await cancelSpecificMedicationSchedules(updatedMedication._id);
 
-                if (canceledAlerts > 0) {
-                    console.log("Agendamentos alerta cancelados!");
-                } else {
-                    console.warn("Nenhum agendamento alerta foi cancelado.");
-                }
-                if (canceledNotTaken > 0) {
-                    console.log("Agendamentos not taken cancelados!");
-                } else {
-                    console.log("Nenhum agendamento not taken foi cancelado.");
-                }
-
-                const nextScheduleTime = getNextScheduleTime(updatedMedication.schedules, updatedMedication.start, updatedMedication.frequency);
-                await scheduleMedicationTask(updatedMedication, nextScheduleTime, agenda);
-            }
-            else {
-                console.warn("Agenda não inicializada, não foi possível reagendar a tarefa.");
-            }
+            const nextScheduleTime = getNextScheduleTime(updateMedication.schedules, updatedMedication.start, updatedMedication.frequency);
+            await scheduleMedicationTask(updatedMedication, nextScheduleTime, agenda);
         }
 
         return HandleSuccess(res, 200, "Medicamento atualizado com sucesso", updatedMedication, MessageTypes.MEDICATION);
@@ -171,28 +156,10 @@ exports.deleteMedication = async (req, res) => {
 
         await PatientMedicationHistory.deleteMany({ 'medication.medicationId': id, 'medication.pending': true });
 
-        const agenda = getAgenda();
-        if (agenda) {
-            //Logica de cancelamento de agendamento
-            const canceledAlerts = await agenda.cancel({ name: 'send medication alert', 'data.medicationId': medication._id });
-            const canceledNotTaken = await agenda.cancel({ name: 'medication not taken', 'data.medicationId': medication._id });
-            console.log("Agendamentos cancelados!");
-
-            if (canceledAlerts > 0) {
-                console.log("Agendamentos alerta cancelados!");
-            } else {
-                console.warn("Nenhum agendamento alerta foi cancelado.");
-            }
-            if (canceledNotTaken > 0) {
-                console.log("Agendamentos not taken cancelados!");
-            }
-            else {
-                console.log("Nenhum agendamento not taken foi cancelado.");
-            }
-        }
-        else {
-            console.warn("Agenda não inicializada, não foi possível reagendar a tarefa.");
-        }
+        /*
+        ### Cancelamento de todos os agendamentos relacionados a esse medicamento sendo excluído
+        */
+        await cancelSpecificMedicationSchedules(medication._id);
 
         return HandleSuccess(res, 200, "Medicamento deletado com sucesso", { id: medication.id }, MessageTypes.SUCCESS);
     } catch (err) {
@@ -383,9 +350,9 @@ exports.getMedicationsToConsumeOnDate = async (req, res) => {
                         }
 
                         const pastSchedules = historyRecords.filter(record => {
-                                return !medication.schedules.includes(record.medication.currentSchedule);
+                            return !medication.schedules.includes(record.medication.currentSchedule);
                         });
-                        
+
                         medicationHistories.push(...pastSchedules);
                     }
                 }

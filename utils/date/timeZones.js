@@ -132,6 +132,12 @@ const setDateToSpecificTime = (date, timeString) => {
     return dateWithTime.toJSDate();
 }
 
+const subtractDaysFromDate = (date, days) => {
+    return DateTime.fromJSDate(date)
+    .minus({ days: days })
+    .toJSDate();
+}
+
 module.exports = {
     getCurrentDateInBrazilTime,
     convertDateToBrazilDate,
@@ -140,5 +146,6 @@ module.exports = {
     getNextScheduleTime,
     getStartOfTheDay,
     getEndOfTheDay,
-    setDateToSpecificTime
+    setDateToSpecificTime,
+    subtractDaysFromDate
 };

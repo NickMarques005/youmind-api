@@ -1,15 +1,23 @@
-const { rescheduleMedication, medicationNotTaken } = require('./medications');
-const { sendDailyQuestionnairesMorning, sendDailyQuestionnairesEvening } = require('./questionnaires');
+const agendaDefines = require('../../utils/agenda/defines');
+const { handleReminderSchedule } = require('./medication_reminders');
+const { handleSendMedicationAlertSchedule, handleMedicationNotTakenSchedule, handleSendLastDayMedicationReminderSchedule } = require('./medications');
+const { handleSendDailyQuestionnairesMorning, handleSendDailyQuestionnairesEvening } = require('./questionnaires');
 
 const defineAgendaTasks = (agenda) => {
 
-    agenda.define('send daily questionnaires morning', sendDailyQuestionnairesMorning);
-    agenda.define('send daily questionnaires evening', sendDailyQuestionnairesEvening);
-    agenda.define('send medication alert', async (job) => {
-        await rescheduleMedication(job, agenda);
+    agenda.define(agendaDefines.SEND_DAILY_QUESTIONNAIRES_MORNING, handleSendDailyQuestionnairesMorning);
+    agenda.define(agendaDefines.SEND_DAILY_QUESTIONNAIRES_EVENING, handleSendDailyQuestionnairesEvening);
+    agenda.define(agendaDefines.SEND_MEDICATION_ALERT, async (job) => {
+        await handleSendMedicationAlertSchedule(job, agenda);
     });
-    agenda.define('medication not taken', async (job) => {
-        await medicationNotTaken(job, agenda);
+    agenda.define(agendaDefines.SEND_MEDICATION_NOT_TAKEN, async (job) => {
+        await handleMedicationNotTakenSchedule(job, agenda);
+    });
+    agenda.define(agendaDefines.SEND_MESSAGE_REMINDER, async (job) => {
+        await handleReminderSchedule(job, agenda);
+    });
+    agenda.define(agendaDefines.LAST_DAY_MEDICATION_REMINDER, async (job) => {
+        await handleSendLastDayMedicationReminderSchedule(job, agenda);
     });
 };
 

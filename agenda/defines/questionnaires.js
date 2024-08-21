@@ -66,12 +66,12 @@ const sendDailyQuestionnaires = async (timeSlot) => {
     }
 };
 
-const sendDailyQuestionnairesMorning = async () => {
+const handleSendDailyQuestionnairesMorning = async () => {
     await sendDailyQuestionnaires('matutino');
 };
 
-const sendDailyQuestionnairesEvening = async () => {
+const handleSendDailyQuestionnairesEvening = async () => {
     await sendDailyQuestionnaires('noturno');
 };
 
-module.exports = { sendDailyQuestionnairesMorning, sendDailyQuestionnairesEvening };
+module.exports = { handleSendDailyQuestionnairesMorning, handleSendDailyQuestionnairesEvening };

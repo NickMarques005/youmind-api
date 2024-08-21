@@ -86,13 +86,13 @@ const createNewQuestionnaire = async (patientId, templateId, timeSlot) => {
 // Filtra as questões do template com base no período de resposta
 const filterTemplateQuestionsByResponsePeriod = async (template, patient) => {
     try{
+        console.log("Filtragem das questões: ");
         let filteredQuestions = [];
 
         for (const question of template.questions) {
-
+            console.log(`Questão "${question.title}"`)
             if (question.responsePeriod && question.responseTime) {
-                const currentDate = new Date();
-                let responsePeriodEnd = new Date(currentDate);
+                let responsePeriodEnd = new Date();
     
                 if (question.responseTime === "dias") {
                     responsePeriodEnd.setDate(responsePeriodEnd.getDate() - question.responsePeriod);
@@ -100,17 +100,26 @@ const filterTemplateQuestionsByResponsePeriod = async (template, patient) => {
                     responsePeriodEnd.setMonth(responsePeriodEnd.getMonth() - question.responsePeriod);
                 }
     
-                console.log(`Periodo da pergunta "${question.title}": `, responsePeriodEnd);
-    
+                console.log(`Periodo da pergunta "${question.title}" (id: ${question._id}): `, responsePeriodEnd);
+                
+
                 // Buscar questionários que contenham esta pergunta dentro do período especificado
                 const recentQuestionnaires = await Questionnaire.find({
-                    patientId: patient._id,
-                    "answers.questionId": question._id.toString(),
+                    patientId: patient.uid,
+                    answers: {
+                        $elemMatch : { 
+                            questionId: question._id 
+                        }
+                    },
                     createdAt: { $gte: responsePeriodEnd }
                 });
     
                 if (recentQuestionnaires.length === 0) {
+                    console.log("Nenhum questionário anterior achado, adiciona questão");
                     filteredQuestions.push(question);
+                }
+                else{
+                    console.log("Há questionários recentes contendo essa questão então não enviar questão");
                 }
             } else {
                 filteredQuestions.push(question);

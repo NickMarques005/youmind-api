@@ -65,4 +65,17 @@ const endMedication = async (medication) => {
         return;
 }
 
-module.exports = { createNewMedicationHistory, updateMedicationHistoryToAlert, endMedication }
+const sendLastDayMedicationReminder = async (lastDayReminderData) => {
+    const { medicationId, patientId, expiresAt } = lastDayReminderData;
+
+    console.log("\n#UltimoDiaMedicamento# Envio da notificação alertando o último dia da medicação!!\n");
+
+    return;
+}
+
+module.exports = { 
+    createNewMedicationHistory, 
+    updateMedicationHistoryToAlert, 
+    endMedication,
+    sendLastDayMedicationReminder
+}

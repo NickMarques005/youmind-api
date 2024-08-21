@@ -1,6 +1,29 @@
 const Medication = require('../../models/medication');
-const { scheduleMedicationTask } = require('../../agenda/defines/medications');
-const { getNextScheduleTime } = require('../../utils/date/timeZones');
+const { getNextScheduleTime, setDateToSpecificTime, subtractDaysFromDate } = require('../../utils/date/timeZones');
+const agendaDefines = require('../../utils/agenda/defines');
+const { createNewMedicationHistory } = require('./medicationService');
+const { initializeScheduleReminders } = require('./reminderScheduler');
+
+const scheduleMedicationTask = async (medication, scheduleTime, agenda) => {
+    if (!agenda) {
+        console.warn("Agenda não inicializada, não foi possível verificar o agendamento do medicamento");
+        return;
+    }
+    const medicationHistory = await createNewMedicationHistory(medication, scheduleTime);
+
+    const jobId = `medication-${medication._id}-${scheduleTime}`;
+    console.log(`Próximo alerta de medicamento ${medication.name} será em ${scheduleTime}`);
+    await agenda.schedule(scheduleTime, agendaDefines.SEND_MEDICATION_ALERT, {
+        medicationHistoryId: medicationHistory._id,
+        patientId: medication.patientId,
+        medicationId: medication._id
+    }, { jobId });
+
+    /*
+    ### Se o agendamento de send medication alert funcionar, fazer o início do agendamento de lembretes para esse medicamento:
+    */
+    await initializeScheduleReminders(medication, scheduleTime, agenda);
+}
 
 const checkAndScheduleMedications = async (patientId, agenda) => {
     if (!agenda) {
@@ -15,8 +38,7 @@ const checkAndScheduleMedications = async (patientId, agenda) => {
             $or: [{ isScheduled: false }, { isScheduled: { $exists: false } }]
         });
 
-        if(unscheduledMedications.length === 0)
-        {
+        if (unscheduledMedications.length === 0) {
             return console.log("Não há medicamentos para agendar");
         }
 
@@ -38,10 +60,9 @@ const scheduleMedicationNotTakenTask = async (medicationHistory, medication, age
     console.log("\n*****\n");
     console.log("Medication Not Taken Task: \n");
     if (!agenda) {
-        console.warn("Agenda não inicializada, não foi possível verificar o agendamento de medicamentos.");
+        console.warn("Agenda não inicializada, não foi possível verificar o agendamento de medicamento não tomado.");
         return;
     }
-
     const { alarmDuration } = medication;
 
     if (!alarmDuration) {
@@ -54,7 +75,7 @@ const scheduleMedicationNotTakenTask = async (medicationHistory, medication, age
     console.log(`\n***Schedule Medication Not Taken: ***\n*** notTakenTime: ${notTakenTime} ***\n`);
     const jobId = `medicationNotTaken-${medicationHistory._id}-${notTakenTime}`;
 
-    await agenda.schedule(notTakenTime, 'medication not taken', {
+    await agenda.schedule(notTakenTime, agendaDefines.SEND_MEDICATION_NOT_TAKEN, {
         medicationHistoryId: medicationHistory._id,
     }, { jobId });
 
@@ -62,7 +83,38 @@ const scheduleMedicationNotTakenTask = async (medicationHistory, medication, age
     console.log("\n*****\n");
 };
 
-const cancelMedicationSchedules = async (patientId, agenda) => {
+const cancelSpecificMedicationSchedules = async (medicationId, agenda) => {
+    if (!agenda) {
+        console.warn("Agenda não inicializada, não foi possível verificar o cancelamento dos agendamentos de medicamento");
+        return;
+    }
+
+    const canceledAlerts = await agenda.cancel({ name: agendaDefines.SEND_MEDICATION_ALERT, 'data.medicationId': medicationId });
+    const canceledNotTaken = await agenda.cancel({ name: agendaDefines.SEND_MEDICATION_NOT_TAKEN, 'data.medicationId': medicationId });
+    const canceledLastDay = await agenda.cancel({ name: agendaDefines.LAST_DAY_MEDICATION_REMINDER, 'data.medicationId': medication._id });
+    const canceledReminders = await agenda.cancel({ name: agendaDefines.SEND_MESSAGE_REMINDER, 'data.medicationId': medication._id });
+    console.log("Agendamentos cancelados!");
+
+    canceledAlerts > 0 ?
+        console.log("Agendamentos alerta cancelados!") :
+        console.warn("Nenhum agendamento alerta foi cancelado.");
+
+    canceledNotTaken > 0 ?
+        console.log("Agendamentos not taken cancelados!") :
+        console.log("Nenhum agendamento not taken foi cancelado.");
+
+    canceledLastDay > 0 ?
+        console.log("Agendamento de último dia cancelado!") :
+        console.log("Nenhum agendamento de último dia foi cancelado.");
+
+    canceledReminders > 0 ?
+        console.log("Agendamentos de lembretes cancelados!") :
+        console.log("Nenhum agendamento de lembrete foi cancelado.");
+
+    return { canceledAlerts, canceledNotTaken, canceledLastDay, canceledReminders };
+}
+
+const cancelAllMedicationSchedules = async (patientId, agenda) => {
     console.log("\n*****\n");
     console.log("Cancelamento dos agendamentos de medicações: \n");
     if (!agenda) {
@@ -79,20 +131,27 @@ const cancelMedicationSchedules = async (patientId, agenda) => {
         }
 
         for (const medication of medications) {
-            const canceledAlerts = await agenda.cancel({ name: 'send medication alert', 'data.medicationId': medication._id });
-            const canceledNotTaken = await agenda.cancel({ name: 'medication not taken', 'data.medicationId': medication._id });
+            const canceledAlerts = await agenda.cancel({ name: agendaDefines.SEND_MEDICATION_ALERT, 'data.medicationId': medication._id });
+            const canceledNotTaken = await agenda.cancel({ name: agendaDefines.SEND_MEDICATION_NOT_TAKEN, 'data.medicationId': medication._id });
+            const canceledLastDay = await agenda.cancel({ name: agendaDefines.LAST_DAY_MEDICATION_REMINDER, 'data.medicationId': medication._id });
+            const canceledReminders = await agenda.cancel({ name: agendaDefines.SEND_MESSAGE_REMINDER, 'data.medicationId': medication._id });
 
-            if (canceledAlerts > 0) {
-                console.log(`Agendamentos de alertas cancelados para o medicamento: ${medication._id}`);
-            } else {
-                console.warn(`Nenhum agendamento de alerta foi cancelado para o medicamento: ${medication._id}`);
-            }
+            canceledAlerts > 0 ?
+                console.log("Agendamentos alerta cancelados!") :
+                console.warn("Nenhum agendamento alerta foi cancelado.");
 
-            if (canceledNotTaken > 0) {
-                console.log(`Agendamentos de "não tomado" cancelados para o medicamento: ${medication._id}`);
-            } else {
-                console.warn(`Nenhum agendamento de "não tomado" foi cancelado para o medicamento: ${medication._id}`);
-            }
+            canceledNotTaken > 0 ?
+                console.log("Agendamentos not taken cancelados!") :
+                console.log("Nenhum agendamento not taken foi cancelado.");
+
+            canceledLastDay > 0 ?
+                console.log("Agendamento de último dia cancelado!") :
+                console.log("Nenhum agendamento de último dia foi cancelado.");
+
+            canceledReminders > 0 ?
+                console.log("Agendamentos de lembretes cancelados!") :
+                console.log("Nenhum agendamento de lembrete foi cancelado.");
+
             medication.isScheduled = false;
             await medication.save();
             console.log("\n*****\n");
@@ -102,4 +161,47 @@ const cancelMedicationSchedules = async (patientId, agenda) => {
     }
 }
 
-module.exports = { checkAndScheduleMedications, scheduleMedicationNotTakenTask, cancelMedicationSchedules }
+const initializeScheduleLastDayReminder = async (medication, agenda) => {
+    if (!agenda) {
+        console.warn("Agenda não inicializada, não foi possível verificar o agendamento do último dia do medicamento");
+        return;
+    }
+    const { _id, patientId, expiresAt, schedules } = medication;
+
+    const now = new Date();
+    // Hora do último agendamento do dia de expiração
+    const lastScheduleTime = schedules[schedules.length - 1];
+    const lastScheduleOnExpirationDay = setDateToSpecificTime(expiresAt, lastScheduleTime);
+    const timeDifferenceInDays = (lastScheduleOnExpirationDay - now) / (1000 * 60 * 60 * 24);
+
+    /*
+    ### Verifica se a diferença entre a data atual e a data do último medicamento é maior que um dia
+    */
+
+    if (timeDifferenceInDays > 1) {
+        // Subtrai um dia do último agendamento para determinar o horário do lembrete de último dia
+        const reminderLastDayTime = subtractDaysFromDate(lastScheduleOnExpirationDay, 1);
+
+        console.log("#UltimoDiaMedicamento# Schedule em que será enviado o lembrete de último dia: ", reminderLastDayTime);
+
+        const jobId = `last-day-reminder-${_id}`;
+        await agenda.schedule(reminderLastDayTime, agendaDefines.LAST_DAY_MEDICATION_REMINDER, {
+            medicationId: _id,
+            patientId,
+            expiresAt
+        }, { jobId });
+        console.log(`#UltimoDiaMedicamento# Agendado para o último dia do medicamento ${_id}: ${reminderLastDayTime} `);
+    }
+    else {
+        console.log(`#UltimoDiaMedicamento# O lembrete de último dia não foi agendado porque a diferença entre hoje e o último agendamento é menor ou igual a um dia.`);
+    }
+}
+
+module.exports = {
+    scheduleMedicationTask,
+    checkAndScheduleMedications,
+    scheduleMedicationNotTakenTask,
+    cancelAllMedicationSchedules,
+    cancelSpecificMedicationSchedules,
+    initializeScheduleLastDayReminder
+}
