@@ -60,7 +60,7 @@ const updateMedicationHistoryToAlert = async (medicationHistoryId) => {
 }
 
 const endMedication = async (medication) => {
-        console.log(`Medicação ${medication.name} expirou e não será reagendada.`);
+        console.log(`Medicação ${medication.name} expirou, não será reagendada e será excluída.`);
         await Medication.findByIdAndDelete(medication._id);
         return;
 }

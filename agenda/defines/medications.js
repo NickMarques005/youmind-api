@@ -4,7 +4,7 @@ const { sendMessage } = require('../../aws/services/sqs_service');
 const { PatientMedicationHistory } = require('../../models/patient_history');
 const { getNextScheduleTime } = require('../../utils/date/timeZones');
 const { scheduleMedicationTask } = require('../../services/medications/medicationScheduler');
-const { sendLastDayMedicationReminder } = require('../../services/medications/medicationService');
+const { sendLastDayMedicationReminder, endMedication } = require('../../services/medications/medicationService');
 const { cancelSpecificTask } = require('../../utils/agenda/cancel');
 
 const handleSendMedicationAlertSchedule = async (job, agenda) => {

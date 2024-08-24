@@ -89,20 +89,9 @@ const handleUpdateHistoryMedication = async (change, io) => {
                 console.log("Schedule Not Taken Medication!!");
                 await scheduleMedicationNotTakenTask(medicationHistory, medication, agenda);
             }
-
-            /*
-            ### Verificação de último agendamento:
-            */ 
-
-            const nextScheduleTime = getNextScheduleTime(medication.schedules, medication.start, medication.frequency);
-
-            if (medication.expiresAt && medication.expiresAt < nextScheduleTime) {
-                endMedication(medication);
-            }
         }
         else if (updatedFields['medication.taken'] === false) {
             console.log("MEDICATION NOT TAKEN EVENT DETECTED");
-
             const medication = await Medication.findById(medicationHistory.medication.medicationId);
             if (!medication) {
                 console.error("Medicamento de paciente não encontrado");
@@ -135,14 +124,37 @@ const handleUpdateHistoryMedication = async (change, io) => {
 
             await emitUpdateHistory(io, doctorId, patientId);
             await emitHistoryMedicationUpdate(io, doctorId, latestMedication, "updateLatestMedication");
+
+            /*
+            ### Verificação de último agendamento:
+            */
+
+            
+            const nextScheduleTime = getNextScheduleTime(medication.schedules, medication.start, medication.frequency);
+
+            if (medication.expiresAt && medication.expiresAt < nextScheduleTime) {
+                endMedication(medication);
+            }
         }
         else if (updatedFields['medication.taken'] === true) {
             console.log("MEDICATION TAKEN EVENT");
-
+            const medication = await Medication.findById(medicationHistory.medication.medicationId);
+            if (!medication) return console.error("Medicamento de paciente não encontrado");
+            
             const latestMedication = await formatLatestMedication(medicationHistory);
 
             await emitUpdateHistory(io, doctorId, patientId);
             await emitHistoryMedicationUpdate(io, doctorId, latestMedication, "updateLatestMedication");
+
+            /*
+            ### Verificação de último agendamento:
+            */
+
+            const nextScheduleTime = getNextScheduleTime(medication.schedules, medication.start, medication.frequency);
+
+            if (medication.expiresAt && medication.expiresAt < nextScheduleTime) {
+                endMedication(medication);
+            }
         }
         else if (updatedFields['delete'] === true) {
 
