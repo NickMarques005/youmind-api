@@ -254,7 +254,6 @@ exports.endTreatment = async (req, res) => {
 
         treatmentToUpdate.status = 'completed';
         treatmentToUpdate.wasCompleted = true;
-        treatmentToUpdate.doctorId = undefined; // Remove a associação do doutor ao tratamento
 
         await treatmentToUpdate.save();
 

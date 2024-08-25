@@ -88,17 +88,30 @@ const handleUpdateTreatment = async (change, io) => {
         const doctorId = updatedTreatment.doctorId;
 
         const currentPatient = await PatientUser.findOne({ uid: patientId });
+        if(!currentPatient) return console.error("Houve um erro: Usuário paciente não encontrado após tratamento ficar ativo!");
         const currentDoctor = await DoctorUser.findOne({ uid: doctorId });
+        if(!currentDoctor) return console.error("Houve um erro: Usuário médico não encontrado após tratamento ficar ativo!");
+
 
         if (currentPatient) {
             currentPatient.welcomeTreatment = false;
             await currentPatient.save();
         }
         if (currentDoctor) {
+            /*
+            ### Retirar o doctorId do tratamento:
+            */
+            updatedTreatment.doctorId = undefined;
+            await updatedTreatment.save();
+
             currentDoctor.welcomeTreatment = false;
             await currentDoctor.save();
         }
 
+        /*
+        ### Atualização do tratamento para os usuários paciente e doutor:
+        */
+    
         const treatmentPatientInfo = {
             avatar: currentPatient.avatar,
             name: currentPatient.name,
