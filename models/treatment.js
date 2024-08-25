@@ -1,6 +1,32 @@
 
 const mongoose = require('mongoose');
 
+const TreatmentSessionSchema = new mongoose.Schema({
+    engagedDoctor: {
+        _id: { 
+            type: mongoose.Schema.Types.ObjectId,
+            required: true 
+        },
+        name: { 
+            type: String, 
+            required: true 
+        }
+    },
+    period: {
+        start: { 
+            type: Date, 
+            required: true 
+        },
+        end: { 
+            type: Date,
+            required: false
+        }  
+    },
+    finalPerformance: { 
+        type: Number
+    }
+});
+
 const treatmentSchema = new mongoose.Schema({
     patientId: {
         type: String,
@@ -13,12 +39,19 @@ const treatmentSchema = new mongoose.Schema({
     status: {
         type: String,
         default: "pending",
-        enum: ["pending", "active", "declined", "expired", "completed"]
+        enum: ["active", "expired", "completed"]
     },
     wasCompleted: {
         type: Boolean,
         default: false
     },
+    startedAt: {
+        type: Date,
+        required: false,
+    },
+    sessions: [
+        TreatmentSessionSchema
+    ],
     createdAt: {
         type: Date,
         default: Date.now
@@ -26,14 +59,8 @@ const treatmentSchema = new mongoose.Schema({
     updatedAt: {
         type: Date,
         default: Date.now
-    },
-    expiresAt: {
-        type: Date,
-        default: () => new Date(Date.now() + 24*60* 60*1000),
     }
 });
-
-treatmentSchema.index({ expiresAt: 1 }, { sparse: true, expireAfterSeconds: 0 });
 
 const Treatment = mongoose.model('treatment', treatmentSchema, 'treatment_data');
 

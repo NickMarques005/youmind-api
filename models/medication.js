@@ -19,15 +19,15 @@ const medicationSchema = new mongoose.Schema({
     },
     expiresAt: {
         type: Date,
-        required: true
+        required: false
     },
     frequency: {
         type: Number,
-        required: true
+        required: false
     },
     schedules: {
         type: [String],
-        required: true
+        default: []
     },
     isScheduled: {
         type: Boolean,
@@ -36,7 +36,7 @@ const medicationSchema = new mongoose.Schema({
     },
     start: {
         type: Date,
-        required: true
+        required: false
     },
     alarmDuration: {
         type: Number,

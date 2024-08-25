@@ -181,7 +181,12 @@ const cancelAllMedicationSchedules = async (patientId, agenda) => {
                 console.log("Agendamentos de lembretes cancelados!") :
                 console.log("Nenhum agendamento de lembrete foi cancelado.");
 
+            // Atualiza o status do medicamento para refletir o cancelamento do agendamento
             medication.isScheduled = false;
+            medication.expiresAt = undefined;
+            medication.start = undefined;
+            medication.frequency = undefined;
+            medication.schedules = [];
             await medication.save();
             console.log("\n*****\n");
         }

@@ -5,20 +5,19 @@ const QuestionnaireTemplate = require('../../models/questionnaire_template');
 const moment = require('moment-timezone');
 
 const handleAddNewQuestionnaire = async (patientId) => {
-    // Verificar horário atual, se for antes de meio dia então irá buscar template matutino, e se for depois das 8 da noite então irá buscar por template noturno
-    // Se o horário for entre meio dia e 8 da noite então não enviará um questionário, então pode retornar.
+    // Verificar horário atual, se o horário for entre 8 da noite e 2 da manhã então enviará um questionário para o paciente responder
     const now = moment().tz('America/Sao_Paulo');
     const currentHour = now.hour();
-    const morningLimit = 12;
+    //Periodo do questionário noturno:
     const eveningStart = 20;
+    const nightEnd = 2;
 
     let timeSlot;
-    if (currentHour < morningLimit) {
-        timeSlot = 'matutino';
-    } else if (currentHour >= eveningStart) {
+    // Verificar se o horário atual está entre 20:00 e 02:00
+    if (currentHour >= eveningStart || currentHour < nightEnd) {
         timeSlot = 'noturno';
     } else {
-        console.log("Não é o momento de enviar um questionário (entre meio dia e 8 da noite).");
+        console.log("Não é o momento de enviar um questionário (entre 08 da noite e 02 da manhã).");
         return;
     }
 
@@ -38,8 +37,7 @@ const handleCheckAndScheduleMedications = async (patientId) => {
 
 const handleStartPatientTreatmentServices = async (patientId) => {
     await handleAddNewQuestionnaire(patientId);
-    await handleCheckAndScheduleMedications(patientId);
-    console.log("Serviços de questionário e medicamento do paciente ativados");
+    console.log("Serviço de questionário do paciente ativado");
 }
 
 module.exports = {

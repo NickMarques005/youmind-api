@@ -55,6 +55,10 @@ const userStandardFields = {
         type: Boolean,
         default: false,
         required: false
+    },
+    private: {
+        type: Boolean,
+        default: false
     }
 }
 
