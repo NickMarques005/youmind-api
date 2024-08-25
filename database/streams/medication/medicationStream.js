@@ -9,13 +9,13 @@ const handleMedicationChange = async (io, change) => {
     try{
         switch (change.operationType) {
             case 'insert':
-                await handleInsertMedication(change);
+                await handleInsertMedication(change, io);
                 break;
             case 'update':
-                await handleUpdateMedication(change);
+                await handleUpdateMedication(change, io);
                 break;
             case 'delete':
-                await handleDeleteMedication(change);
+                await handleDeleteMedication(change, io);
                 break;
             default:
                 console.error('Tipo de operação não configurado: ', change.operationType);

@@ -1,11 +1,10 @@
 const { PatientUser } = require('../../../../models/users');
 const Medication = require('../../../../models/medication');
 const Treatment = require('../../../../models/treatment');
-const { getNextScheduleTime } = require('../../../../utils/date/timeZones');
-const { scheduleMedicationTask, initializeScheduleLastDayReminder, initializeMedicationScheduleProcess } = require('../../../../services/medications/medicationScheduler');
+const { initializeMedicationScheduleProcess } = require('../../../../services/medications/medicationScheduler');
 const { getAgenda } = require('../../../../agenda/agenda_manager');
 
-const handleInsertMedication = async (change) => {
+const handleInsertMedication = async (change, io) => {
     const agenda = getAgenda();
     const newMedication = change.fullDocument;
     const patientId = newMedication.patientId;

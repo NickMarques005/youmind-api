@@ -128,7 +128,6 @@ const handleUpdateHistoryMedication = async (change, io) => {
             /*
             ### Verificação de último agendamento:
             */
-
             
             const nextScheduleTime = getNextScheduleTime(medication.schedules, medication.start, medication.frequency);
 
@@ -140,7 +139,7 @@ const handleUpdateHistoryMedication = async (change, io) => {
             console.log("MEDICATION TAKEN EVENT");
             const medication = await Medication.findById(medicationHistory.medication.medicationId);
             if (!medication) return console.error("Medicamento de paciente não encontrado");
-            
+
             const latestMedication = await formatLatestMedication(medicationHistory);
 
             await emitUpdateHistory(io, doctorId, patientId);

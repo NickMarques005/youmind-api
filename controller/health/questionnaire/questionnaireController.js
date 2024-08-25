@@ -64,8 +64,7 @@ exports.getQuestionnaireTemplateById = async (req, res) => {
             return HandleError(res, 400, "Seu tempo para responder o questionário infelizmente expirou.", questionnaireSelected);
         }
 
-        const template = await QuestionnaireTemplate.findOne({ _id: questionnaireSelected.questionnaireTemplateId });
-
+        const template = await QuestionnaireTemplate.findOne({ _id: questionnaireSelected.questionnaireTemplateId }).lean();
         if (!template) {
             return HandleError(res, 404, "Questões do questionário não foram encontradas");
         }
