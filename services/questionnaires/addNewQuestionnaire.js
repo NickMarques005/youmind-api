@@ -2,17 +2,15 @@ const Questionnaire = require("../../models/questionnaire");
 const { PatientUser } = require("../../models/users");
 const { getCurrentDateInBrazilTime } = require("../../utils/date/timeZones");
 const { createNewQuestionnaire } = require("./questionnaireService");
+const moment = require('moment-timezone');
 
 const hasAlreadyAddedQuestionnaires = async (patientId, questionnaireTemplateId, timeSlot) => {
     const currentDate = getCurrentDateInBrazilTime();
     let startOfDay, endOfDay;
 
-    if (timeSlot === 'matutino') {
-        startOfDay = moment(currentDate).tz('America/Sao_Paulo').set({ hour: 6, minute: 0, second: 0, millisecond: 0 }).toDate();
-        endOfDay = moment(currentDate).tz('America/Sao_Paulo').set({ hour: 12, minute: 0, second: 0, millisecond: 0 }).toDate();
-    } else if (timeSlot === 'noturno') {
+    if (timeSlot === 'noturno') {
         startOfDay = moment(currentDate).tz('America/Sao_Paulo').set({ hour: 20, minute: 0, second: 0, millisecond: 0 }).toDate();
-        endOfDay = moment(currentDate).tz('America/Sao_Paulo').add(1, 'days').set({ hour: 4, minute: 0, second: 0, millisecond: 0 }).toDate();
+        endOfDay = moment(currentDate).tz('America/Sao_Paulo').add(1, 'days').set({ hour: 2, minute: 0, second: 0, millisecond: 0 }).toDate();
     } else {
         console.error('Time slot inválido');
         return false;
