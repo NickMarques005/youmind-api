@@ -72,7 +72,7 @@ const handleTreatmentSolicitation = async ({
         return HandleError(res, 400, notificationsService.message);
     }
 
-    return HandleSuccess(res, 200, `Solicitação enviada para ${receiver.name}`, undefined, MessageTypes.TREATMENT);
+    return HandleSuccess(res, 200, `Solicitação enviada para ${receiver.name}`, undefined, MessageTypes.SUCCESS);
 };
 
 module.exports = { handleTreatmentSolicitation }

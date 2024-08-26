@@ -1,11 +1,11 @@
 const MessageTypes = {
-    SUCCESS: 'success',
-    EMAIL_SENT: 'email_sent',
-    INFO: 'info',
-    TREATMENT: 'healing',
-    WARNING: 'warning',
-    MEDICATION: 'medication',
-    QUESTIONNAIRE: 'questionnaire',
+    SUCCESS: 'check-circle-outline',
+    EMAIL_SENT: 'email-outline',
+    INFO: 'information-outline',
+    TREATMENT: 'hospital-box-outline',
+    WARNING: 'alert-outline',
+    MEDICATION: 'pill', 
+    QUESTIONNAIRE: 'clipboard-question-outline',
 }
 
 module.exports = MessageTypes;
