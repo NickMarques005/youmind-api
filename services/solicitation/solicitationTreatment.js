@@ -3,14 +3,18 @@ const Treatment = require("../../models/treatment");
 const notificationService = require('../../services/notifications/notificationService');
 const { HandleError, HandleSuccess } = require("../../utils/response/handleResponse");
 const MessageTypes = require("../../utils/response/typeResponse");
+const { solicitationTypes } = require("../../utils/solicitation/solicitation");
 
-const handleTreatmentSolicitation = async ({ 
-    req, 
-    res, 
-    requester, 
-    receiver, 
-    fieldRequesterId, 
-    fieldReceiverId }) => {
+const handleTreatmentSolicitation = async ({
+    req,
+    res,
+    requester,
+    receiver,
+    fieldRequesterId,
+    fieldReceiverId,
+    solicitationType
+}) => {
+
     const existingRequest = await TreatmentRequest.findOne({
         [fieldRequesterId]: requester.uid,
         [fieldReceiverId]: receiver.uid,
@@ -50,12 +54,15 @@ const handleTreatmentSolicitation = async ({
                 button_accept: "Aceitar",
                 button_decline: "Recusar"
             },
-            sender_params: {
+            solicitation_params: {
                 email: requester.email,
                 avatar: requester.avatar,
-                type: requester.type
+                type: requester.type,
+                solicitationId: treatmentRequest._id.toString(),
+                solicitationType: solicitationType
             },
             show_modal: true,
+            has_decline: true,
             icon: MessageTypes.TREATMENT
         },
     };

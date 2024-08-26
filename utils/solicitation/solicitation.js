@@ -1,6 +1,6 @@
 
-const solicitationTypes = [
-    'treatment'
-]
+const solicitationTypes = {
+    TREATMENT: 'treatment'
+}
 
 module.exports = { solicitationTypes };

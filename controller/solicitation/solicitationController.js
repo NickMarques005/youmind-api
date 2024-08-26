@@ -27,13 +27,17 @@ exports.createSolicitation = async (req, res) => {
         if (!receiver) return HandleError(res, 404, "Usuário não encontrado. Envie a solicitação novamente");
 
 
-        if (!solicitationTypes.includes(solicitationType)) {
+        if (!Object.values(solicitationTypes).includes(solicitationType)) {
             return HandleError(res, 400, "Tipo de solicitação inválido");
         }
 
         switch (solicitationType) {
-            case 'treatment':
-                return handleTreatmentSolicitation({ req, res, requester, receiver, fieldRequesterId, fieldReceiverId });
+            case solicitationTypes.TREATMENT:
+                return handleTreatmentSolicitation({ 
+                    req, res, requester, receiver, 
+                    fieldRequesterId, fieldReceiverId,
+                    solicitationType
+                });
             default:
                 return HandleError(res, 400, "Tipo de solicitação não suportado");
         }
@@ -50,7 +54,7 @@ exports.declineSolicitation = async (req, res) => {
 
     try {
 
-        if (!solicitationTypes.includes(solicitationType)) {
+        if (!Object.values(solicitationTypes).includes(solicitationType)) {
             return HandleError(res, 400, "Tipo de solicitação inválido");
         }
 
