@@ -52,7 +52,8 @@ const handleTreatmentSolicitation = async ({
             },
             sender_params: {
                 email: requester.email,
-                avatar: requester.avatar
+                avatar: requester.avatar,
+                type: requester.type
             },
             show_modal: true,
             icon: MessageTypes.TREATMENT

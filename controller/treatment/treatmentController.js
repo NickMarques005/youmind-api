@@ -9,6 +9,8 @@ const { cancelAllMedicationSchedules } = require('../../services/medications/med
 const MessageTypes = require('../../utils/response/typeResponse');
 const { createNotice } = require('../../utils/user/notice');
 const { getInitialChatData } = require('../../services/chat/chatServices');
+const TreatmentRequest = require('../../models/solicitation_treatment');
+const Notification = require('../../models/notification');
 
 exports.initializeTreatment = async (req, res) => {
     try {
@@ -100,6 +102,22 @@ exports.initializeTreatment = async (req, res) => {
         if (!doctorData.total_treatments.includes(patient._id.toString())) {
             await DoctorUser.findByIdAndUpdate(doctor._id, { $addToSet: { total_treatments: patient._id.toString() } });
         }
+
+        /*
+        ### Apaga todas as solicitações entre o paciente e outros doutores:
+        */
+        await TreatmentRequest.deleteMany({
+            patientId: patient.uid
+        });
+
+        /*
+        ### Exclui as notificações relacionadas ao tratamento e solicitações para o paciente
+        */
+        await Notification.deleteMany({
+            user: patient.uid,
+            notify_type: 'treatment',
+            notify_function: 'solicitation'
+        });
 
         return HandleSuccess(res, 201, undefined, undefined, MessageTypes.SUCCESS);
     } catch (err) {
