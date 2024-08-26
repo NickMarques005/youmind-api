@@ -2,6 +2,7 @@ const notificationModel = require('../../models/notification');
 const { PatientUser, DoctorUser } = require('../../models/users');
 const { getTokenFromFirebase, saveTokenOnFirebase } = require('../../firebase/push_notification/push_notification');
 const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
+const TreatmentRequest = require('../../models/solicitation_treatment');
 
 exports.registerPushNotification = async (req, res) => {
     try {
@@ -84,8 +85,31 @@ exports.deleteNotification = async (req, res) => {
             _id: notificationId,
             user: uid,
         });
-
         if (!deletedNotification) return HandleError(res, 404, "Notificação não encontrada");
+
+        /*
+        ### Verificação de tipos de notificação
+        */
+
+        //Verificação de solicitações:
+        const { notify_function, notify_type, solicitation_params } = deletedNotification.data || {};
+
+        if (notify_function === 'solicitation' && notify_type === 'treatment') {
+            const { solicitationId } = solicitation_params || {};
+
+            if (solicitationId) {
+                console.log("Verificando se há solicitações");
+                const existingRequest = await TreatmentRequest.findOne({ _id: solicitationId });
+
+                if (existingRequest) {
+                    await TreatmentRequest.deleteOne({ _id: solicitationId });
+                    console.log("Solicitação deletada com sucesso!!");
+                }
+                else{
+                    console.log("###Não há solicitação para excluir###");
+                }
+            }
+        }
 
         return HandleSuccess(res, 200, "Notificação excluída com sucesso", { notificationId: deletedNotification._id });
     }
