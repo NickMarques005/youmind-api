@@ -1,12 +1,13 @@
 const agendaDefines = require('../../utils/agenda/defines');
 const { handleReminderSchedule } = require('./medication_reminders');
 const { handleSendMedicationAlertSchedule, handleMedicationNotTakenSchedule, handleSendLastDayMedicationReminderSchedule } = require('./medications');
-const { handleSendDailyQuestionnairesMorning, handleSendDailyQuestionnairesEvening } = require('./questionnaires');
+const { handleSendDailyQuestionnairesMorning, handleSendDailyQuestionnairesEvening, handleUpdateQuestionnairesEveningExpiration } = require('./questionnaires');
 
 const defineAgendaTasks = (agenda) => {
 
     agenda.define(agendaDefines.SEND_DAILY_QUESTIONNAIRES_MORNING, handleSendDailyQuestionnairesMorning);
     agenda.define(agendaDefines.SEND_DAILY_QUESTIONNAIRES_EVENING, handleSendDailyQuestionnairesEvening);
+    agenda.define(agendaDefines.UPDATE_QUESTIONNAIRES_EVENING_EXPIRATION, handleUpdateQuestionnairesEveningExpiration);
     agenda.define(agendaDefines.SEND_MEDICATION_ALERT, async (job) => {
         await handleSendMedicationAlertSchedule(job, agenda);
     });

@@ -74,4 +74,24 @@ const handleSendDailyQuestionnairesEvening = async () => {
     await sendDailyQuestionnaires('noturno');
 };
 
-module.exports = { handleSendDailyQuestionnairesMorning, handleSendDailyQuestionnairesEvening };
+const handleUpdateQuestionnairesEveningExpiration = async () => {
+    // Atualiza históricos de questionários não respondidos no horário especifico de timeSlot
+    const result = await PatientQuestionnaireHistory.updateMany(
+        { 'questionnaire.pending': true },
+        { $set: { 'questionnaire.pending': false, 'questionnaire.answered': false } }
+    );
+    if(result.modifiedCount !== 0)
+    {
+        console.log("Questionários que não foram respondidos até o momento foram expirados e portanto setados para não respondido");
+    }
+    else {
+        console.log("Nenhum questionário não respondido encontrado");
+    }
+    
+}
+
+module.exports = {
+    handleSendDailyQuestionnairesMorning,
+    handleSendDailyQuestionnairesEvening,
+    handleUpdateQuestionnairesEveningExpiration
+};

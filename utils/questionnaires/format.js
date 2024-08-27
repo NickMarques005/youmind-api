@@ -1,7 +1,7 @@
-const { getCurrentDateInBrazilTime } = require("../date/timeZones");
+const { DateTime } = require("luxon");
 
 const getFormattedQuestionnaireName = (timeSlot) => {
-    const currentDate = getCurrentDateInBrazilTime();
+    const currentDate = DateTime.now().setZone('America/Sao_Paulo');
 
     const formattedDate = currentDate.toLocaleDateString('pt-BR', {
         weekday: 'long',
