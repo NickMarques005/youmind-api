@@ -3,6 +3,7 @@ const Treatment = require("../../models/treatment");
 const notificationService = require('../../services/notifications/notificationService');
 const { HandleError, HandleSuccess } = require("../../utils/response/handleResponse");
 const MessageTypes = require("../../utils/response/typeResponse");
+const NotificationStructure = require("../notifications/notificationStructure");
 
 const handleTreatmentSolicitation = async ({
     req,
@@ -43,10 +44,13 @@ const handleTreatmentSolicitation = async ({
 
     await treatmentRequest.save();
 
-    const notificationData = {
-        title: `Solicitação para tratamento`,
-        body: `${requester.gender === 'Feminino' ? 'A' : 'O'} ${receiver.type === "patient" ? "especialista" : "paciente"} ${requester.name} enviou uma solicitação para inicializar tratamento. Deseja aceitar a solicitação?`,
-        data: {
+    /*
+    ### Criação e envio da notificação
+    */
+    const notificationData = new NotificationStructure(
+        'Solicitação para tratamento',
+        `${requester.gender === 'Feminino' ? 'A' : 'O'} ${receiver.type === "patient" ? "especialista" : "paciente"} ${requester.name} enviou uma solicitação para inicializar tratamento. Deseja aceitar a solicitação?`,
+        {
             notify_type: 'treatment',
             notify_function: 'solicitation',
             buttons: {
@@ -63,12 +67,12 @@ const handleTreatmentSolicitation = async ({
             show_modal: true,
             has_decline: true,
             icon: MessageTypes.TREATMENT
-        },
-    };
+        }
+    );
 
-    const notificationsService = await notificationService.sendNotificationToAllDevices(receiver.uid, notificationData);
-    if (!notificationsService.success) {
-        return HandleError(res, 400, notificationsService.message);
+    const notificationSent = await notificationData.sendToUser(receiver.uid);
+    if (!notificationSent) {
+        return HandleError(res, 400, "Erro ao enviar a notificação");
     }
 
     return HandleSuccess(res, 200, `Solicitação enviada para ${receiver.name}`, undefined, MessageTypes.SUCCESS);

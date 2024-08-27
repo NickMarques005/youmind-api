@@ -1,6 +1,6 @@
 const notificationService = require('./notificationService');
 
-class Notification {
+class NotificationStructure {
     /**
      * @param {string} title - Título da notificação
      * @param {string} body - Corpo da notificação
@@ -60,4 +60,4 @@ class Notification {
     }
 }
 
-module.exports = Notification;
+module.exports = NotificationStructure;
