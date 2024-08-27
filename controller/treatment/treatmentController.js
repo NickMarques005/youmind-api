@@ -174,24 +174,24 @@ exports.getTreatment = async (req, res) => {
                 currentPerformance: overallPerformance
             }
 
-            return HandleSuccess(res, 200, "Tratamento em andamento", {
-                treatment: {
-                    name: doctor.name,
-                    email: doctor.email,
-                    avatar: doctor.avatar,
-                    phone: doctor.phone,
-                    birth: doctor.birth,
-                    gender: doctor.gender,
-                    uid: doctor.uid,
-                    online: doctor.online,
-                    _id: singleTreatment._id,
-                    chat: chatData || undefined,
-                    startedAt: singleTreatment.startedAt,
-                    status: statusTreatment,
-                    sessions: singleTreatment.sessions || [],
-                    treatmentStatus: singleTreatment.status,
-                }
-            });
+            const patientTreatment = [{
+                name: doctor.name,
+                email: doctor.email,
+                avatar: doctor.avatar,
+                phone: doctor.phone,
+                birth: doctor.birth,
+                gender: doctor.gender,
+                uid: doctor.uid,
+                online: doctor.online,
+                _id: singleTreatment._id,
+                chat: chatData || undefined,
+                startedAt: singleTreatment.startedAt,
+                status: statusTreatment,
+                sessions: singleTreatment.sessions || [],
+                treatmentStatus: singleTreatment.status,
+            }] 
+
+            return HandleSuccess(res, 200, "Tratamento em andamento", patientTreatment);
         } else {
             if (userTreatments.length === 0) return HandleSuccess(res, 200, "Não há tratamentos em andamento");
 
