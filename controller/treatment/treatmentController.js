@@ -178,15 +178,26 @@ exports.getTreatment = async (req, res) => {
             /*
             ### Busca dos avatares dos doutoras nas sessões do tratamento
             */
-            const sessionsWithAvatars = await Promise.all(singleTreatment.sessions.map(async (session) => {
-                if (session.engagedDoctor && session.engagedDoctor._id) {
-                    const engagedDoctor = await DoctorUser.findById(session.engagedDoctor._id);
-                    if (engagedDoctor && engagedDoctor.avatar) {
-                        session.engagedDoctor.avatar = engagedDoctor.avatar;
-                    }
+            const sessionsWithAvatars = await Promise.all(singleTreatment.sessions.map(async (session) =>{
+                const engagedDoctor = await DoctorUser.findById(session.engagedDoctor._id);
+                let engagedDoctorAvatar;
+                if(engagedDoctor && engagedDoctor.avatar) {
+                    engagedDoctorAvatar = engagedDoctor.avatar;
                 }
-                return session;
-            }));
+
+                return  {
+                    engagedDoctor: {
+                        _id: session.engagedDoctor._id,
+                        name: session.engagedDoctor.name,
+                        gender: session.engagedDoctor.gender,
+                        avatar: engagedDoctorAvatar
+                    },
+                    finalPerformance: session.finalPerformance,
+                    period: {
+                        start: session.period.start,
+                        end: session.period.end
+                    }
+            }}));
 
             const patientTreatment = [{
                 name: doctor.name,
@@ -243,19 +254,26 @@ exports.getTreatment = async (req, res) => {
                 /*
                 ### Busca dos avatares dos doutoras nas sessões do tratamento
                 */
-                const sessionsWithAvatars = await Promise.all(treatment.sessions.map(async (session) => {
-                    if (session.engagedDoctor && session.engagedDoctor._id) {
-                        const engagedDoctor = await DoctorUser.findById(session.engagedDoctor._id.toString());
-                        if (engagedDoctor && engagedDoctor.avatar) {
-                            console.log(engagedDoctor.avatar);
-                            session.engagedDoctor.avatar = engagedDoctor.avatar;
-                        }
-                        else{
-                            console.log('Doutor encarregado da sessão não encontrado');
-                        }
+                const sessionsWithAvatars = await Promise.all(treatment.sessions.map(async (session) =>{
+                    const engagedDoctor = await DoctorUser.findById(session.engagedDoctor._id);
+                    let engagedDoctorAvatar;
+                    if(engagedDoctor && engagedDoctor.avatar) {
+                        engagedDoctorAvatar = engagedDoctor.avatar;
                     }
-                    return session;
-                }));
+
+                    return  {
+                        engagedDoctor: {
+                            _id: session.engagedDoctor._id,
+                            name: session.engagedDoctor.name,
+                            gender: session.engagedDoctor.gender,
+                            avatar: engagedDoctorAvatar
+                        },
+                        finalPerformance: session.finalPerformance,
+                        period: {
+                            start: session.period.start,
+                            end: session.period.end
+                        }
+                }}));
 
                 return {
                     name: patient.name,
