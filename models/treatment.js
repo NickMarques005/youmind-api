@@ -47,7 +47,7 @@ const treatmentSchema = new mongoose.Schema({
     },
     startedAt: {
         type: Date,
-        required: false,
+        default: Date.now
     },
     sessions: [
         TreatmentSessionSchema

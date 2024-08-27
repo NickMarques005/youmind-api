@@ -11,6 +11,8 @@ const { createNotice } = require('../../utils/user/notice');
 const { getInitialChatData } = require('../../services/chat/chatServices');
 const TreatmentRequest = require('../../models/solicitation_treatment');
 const Notification = require('../../models/notification');
+const { calculateQuestionnairePerformance } = require('../../utils/questionnaires/performance');
+const { calculateTreatmentOverallPerformance } = require('../../services/treatment/performance/performanceServices');
 
 exports.initializeTreatment = async (req, res) => {
     try {
@@ -84,7 +86,7 @@ exports.initializeTreatment = async (req, res) => {
                     period: {
                         start: new Date(),
                     }
-                }]
+                }],
             });
 
             await newTreatment.save();
@@ -128,7 +130,6 @@ exports.initializeTreatment = async (req, res) => {
 
 exports.getTreatment = async (req, res) => {
     try {
-
         const { uid } = req.user;
         const { type } = req.query;
 
@@ -136,19 +137,45 @@ exports.getTreatment = async (req, res) => {
         if (!type) return HandleError(res, 400, "Tipo de usuário não definido");
 
         const treatmentKey = type === 'patient' ? 'patientId' : 'doctorId';
-        const userTreatments = await Treatment.find({ [treatmentKey]: uid, status: "active" });
-        console.log("GET TREATMENTS");
-        if (userTreatments.length === 0) return HandleSuccess(res, 200, "Não há tratamentos em andamento");
+        const userTreatments = await Treatment.find({ [treatmentKey]: uid, status: { $in: ["active", "completed"] } });
 
         if (type === 'patient') {
+            if (userTreatments.length === 0) return HandleSuccess(res, 200, "Não há tratamentos em andamento");
+
             const singleTreatment = userTreatments[0];
             const doctor = await DoctorUser.findOne({ uid: singleTreatment.doctorId });
-            if (!doctor) return HandleError(res, 404, "médico do tratamento não encontrado");
+            if (!doctor) return HandleError(res, 404, "Médico do tratamento não encontrado");
 
             const chatData = await getInitialChatData(singleTreatment._id, uid);
+            /*
+            ### Buscar históricos de medicações e questionários para o tratamento
+            */
+            const patientMedications = await PatientMedicationHistory.find({ patientId: uid });
+            const patientQuestionnaires = await PatientQuestionnaireHistory.find({ patientId: uid });
 
-            const treatmentInfo = [
-                {
+            /*
+            ### Filtrar medicamentos tomados e questionários respondidos
+            */
+            const takenMedications = patientMedications.filter(history => history.medication.taken === true).length;
+            const answeredQuestionnaires = patientQuestionnaires.filter(history => history.questionnaire.answered === true).length;
+
+            /*
+            ### Buscar o tempo de uso do T-Watch 
+            */
+
+            /*
+            ### Calcular o desempenho atual
+            */
+            const overallPerformance = await calculateTreatmentOverallPerformance(uid);
+
+            const statusTreatment = {
+                medications: takenMedications,
+                questionnaires: answeredQuestionnaires,
+                currentPerformance: overallPerformance
+            }
+
+            return HandleSuccess(res, 200, "Tratamento em andamento", {
+                treatment: {
                     name: doctor.name,
                     email: doctor.email,
                     avatar: doctor.avatar,
@@ -158,18 +185,46 @@ exports.getTreatment = async (req, res) => {
                     uid: doctor.uid,
                     online: doctor.online,
                     _id: singleTreatment._id,
-                    chat: chatData || undefined
+                    chat: chatData || undefined,
+                    startedAt: singleTreatment.startedAt,
+                    status: statusTreatment,
+                    sessions: singleTreatment.sessions || [],
+                    treatmentStatus: singleTreatment.status,
                 }
-            ];
+            });
+        } else {
+            if (userTreatments.length === 0) return HandleSuccess(res, 200, "Não há tratamentos em andamento");
 
-            return HandleSuccess(res, 200, "Tratamento em andamento", treatmentInfo);
-        }
-        else {
             const treatmentPatients = await Promise.all(userTreatments.map(async (treatment) => {
                 const patient = await PatientUser.findOne({ uid: treatment.patientId });
                 if (!patient) return null;
 
                 const chatData = await getInitialChatData(treatment._id, uid);
+
+                // Buscar históricos de medicações e questionários para o tratamento
+                const patientMedications = await PatientMedicationHistory.find({ patientId: treatment.patientId });
+                const patientQuestionnaires = await PatientQuestionnaireHistory.find({ patientId: treatment.patientId });
+
+                /*
+                ### Filtrar medicamentos tomados e questionários respondidos
+                */
+                const takenMedications = patientMedications.filter(med => med.medication.taken).length;
+                const answeredQuestionnaires = patientQuestionnaires.filter(history => history.questionnaire.answered === true).length;
+
+                /*
+                ### Buscar o tempo de uso do T-Watch 
+                */
+
+                /*
+                ### Calcular o desempenho atual
+                */
+                const overallPerformance = await calculateTreatmentOverallPerformance(patient.uid);
+
+                const statusTreatment = {
+                    medications: takenMedications,
+                    questionnaires: answeredQuestionnaires,
+                    currentPerformance: overallPerformance
+                }
 
                 return {
                     name: patient.name,
@@ -181,17 +236,18 @@ exports.getTreatment = async (req, res) => {
                     uid: patient.uid,
                     online: patient.online,
                     _id: treatment._id,
-                    chat: chatData
+                    chat: chatData,
+                    startedAt: treatment.startedAt,
+                    status: statusTreatment,
+                    sessions: treatment.sessions || [],
+                    treatmentStatus: treatment.status
                 };
             }));
-
-            console.log(treatmentPatients);
 
             const filteredPatients = treatmentPatients.filter(patient => patient !== null);
             return HandleSuccess(res, 200, "Tratamento(s) em andamento", filteredPatients);
         }
-    }
-    catch (err) {
+    } catch (err) {
         console.error('Erro ao verificar o tratamento:', err);
         return HandleError(res, 500, "Erro ao buscar tratamento(s)");
     }
@@ -262,17 +318,26 @@ exports.endTreatment = async (req, res) => {
         await PatientUser.findOneAndUpdate({ uid: treatmentToUpdate.patientId }, { is_treatment_running: false });
 
         /*
+        ### Calcular o desempenho final do tratamento
+        */
+        const finalPerformance = await calculateTreatmentOverallPerformance(treatmentToUpdate.patientId);
+
+        /*
         ### Atualizar o tratamento para completo e ajustar a sessão atual
         */
         const lastSessionIndex = treatmentToUpdate.sessions.length - 1;
 
         if (lastSessionIndex >= 0) {
-            treatmentToUpdate.sessions[lastSessionIndex].period.end = new Date();
+            const lastSession = treatmentToUpdate.sessions[lastSessionIndex];
+            lastSession.period.end = new Date();
+            lastSession.finalPerformance = finalPerformance;
+        }
+
+        if (!treatmentToUpdate.wasCompleted) {
+            treatmentToUpdate.wasCompleted = true;
         }
 
         treatmentToUpdate.status = 'completed';
-        treatmentToUpdate.wasCompleted = true;
-
         await treatmentToUpdate.save();
 
         return HandleSuccess(res, 200, undefined, undefined, MessageTypes.SUCCESS);
