@@ -245,9 +245,13 @@ exports.getTreatment = async (req, res) => {
                 */
                 const sessionsWithAvatars = await Promise.all(treatment.sessions.map(async (session) => {
                     if (session.engagedDoctor && session.engagedDoctor._id) {
-                        const engagedDoctor = await DoctorUser.findById(session.engagedDoctor._id);
+                        const engagedDoctor = await DoctorUser.findById(session.engagedDoctor._id.toString());
                         if (engagedDoctor && engagedDoctor.avatar) {
+                            console.log(engagedDoctor.avatar);
                             session.engagedDoctor.avatar = engagedDoctor.avatar;
+                        }
+                        else{
+                            console.log('Doutor encarregado da sessão não encontrado');
                         }
                     }
                     return session;
