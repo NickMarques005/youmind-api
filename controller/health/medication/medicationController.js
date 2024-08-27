@@ -29,50 +29,67 @@ exports.createMedication = async (req, res) => {
         const { name, dosage, type, expiresAt, frequency, schedules, start, alarmDuration, reminderTimes } = req.body;
 
         if (!uid) return HandleError(res, 401, "Não autorizado");
-        if (!name || !dosage || !type || !expiresAt || !frequency || !schedules || !start || !alarmDuration || !reminderTimes) {
+        
+        const patient = await PatientUser.findOne({ uid: uid });
+        if (!patient) return HandleError(res, 404, "Paciente não encontrado");
+        
+        /*
+        ### Verifica os dados obrigatórios para criar medicamento
+        */
+        if (!name || !dosage || !type || !alarmDuration || !reminderTimes) {
             return HandleError(res, 400, "Dados incompletos para criar o medicamento");
         }
 
-        if (new Date(expiresAt) <= Date.now()) {
-            return HandleError(res, 400, "Data de término deve ser posterior à data atual");
-        }
-
+        // Verificação de Campos com Valor Zero
         const zeroFields = [];
-        if (parseInt(frequency) === 0) {
-            zeroFields.push('Frequência');
-        }
+
         if (parseInt(dosage) === 0) {
             zeroFields.push('Dosagem');
         }
 
-        const emptyFields = [];
-        if (schedules.length === 0) {
-            emptyFields.push('Horários');
-        }
-
-        if (zeroFields.length > 0 || emptyFields.length > 0) {
-            let errorMessage = "";
-            if (zeroFields.length > 0) {
-                errorMessage += `Os seguintes campos têm valores zero: ${zeroFields.join(', ')}. `;
-            }
-            if (emptyFields.length > 0) {
-                errorMessage += `Os seguintes campos estão vazios: ${emptyFields.join(', ')}.`;
-            }
-            return HandleError(res, 400, errorMessage);
-        }
-
-        const newMedication = new Medication({
+        let newMedicationData = {
             name,
             dosage,
             type,
-            expiresAt,
-            frequency,
-            schedules,
-            start,
             alarmDuration,
             reminderTimes,
-            patientId: uid
-        });
+            patientId: uid,
+        };
+
+        if (patient.is_treatment_running) {
+            if (!expiresAt || !frequency || !schedules || !start) {
+                return HandleError(res, 400, "Campos necessários para agendamentos não foram fornecidos");
+            }
+
+            // Verificação da Data de Término
+            if (new Date(expiresAt) <= Date.now()) {
+                return HandleError(res, 400, "Data de término deve ser posterior à data atual");
+            }
+
+            if (parseInt(frequency) === 0) {
+                zeroFields.push('Frequência');
+            }
+
+            // Verificação de Campos Vazios
+            if (schedules.length === 0) {
+                return HandleError(res, 400, "Horários não podem estar vazios");
+            }
+
+            newMedicationData = {
+                ...newMedicationData,
+                expiresAt,
+                frequency,
+                schedules,
+                start,
+            };
+        }
+
+        // Se algum campo tiver valor zero, retornar erro
+        if (zeroFields.length > 0) {
+            return HandleError(res, 400, `Os seguintes campos têm valores zero: ${zeroFields.join(', ')}`);
+        }
+
+        const newMedication = new Medication(newMedicationData);
         await newMedication.save();
 
         return HandleSuccess(res, 201, "Medicamento criado com sucesso", newMedication, MessageTypes.MEDICATION);
@@ -94,18 +111,21 @@ exports.updateMedication = async (req, res) => {
         if (name !== undefined) updateFields.name = name;
         if (dosage !== undefined) updateFields.dosage = dosage;
         if (type !== undefined) updateFields.type = type;
-        if (expiresAt !== undefined) {
-            if (new Date(expiresAt) <= Date.now()) {
-                return HandleError(res, 400, "A nova data de término deve ser posterior à data atual");
-            }
-            updateFields.expiresAt = expiresAt;
-        }
-        if (frequency !== undefined) updateFields.frequency = frequency;
-        if (schedules !== undefined) updateFields.schedules = schedules;
-        if (start !== undefined) updateFields.start = start;
         if (alarmDuration !== undefined) updateFields.alarmDuration = alarmDuration;
         if (reminderTimes !== undefined) updateFields.reminderTimes = reminderTimes;
 
+        const patient = await PatientUser.findOne({ uid });
+        if (patient.is_treatment_running) {
+            if (expiresAt !== undefined) {
+                if (new Date(expiresAt) <= Date.now()) {
+                    return HandleError(res, 400, "A nova data de término deve ser posterior à data atual");
+                }
+                updateFields.expiresAt = expiresAt;
+            }
+            if (frequency !== undefined) updateFields.frequency = frequency;
+            if (schedules !== undefined) updateFields.schedules = schedules;
+            if (start !== undefined) updateFields.start = start;
+        }
         const updatedMedication = await Medication.findOneAndUpdate(
             { _id: id, patientId: uid },
             updateFields,
@@ -114,9 +134,10 @@ exports.updateMedication = async (req, res) => {
 
         if (!updatedMedication) return HandleError(res, 404, "Medicamento não encontrado");
 
-        const patient = await PatientUser.findOne({ uid });
+        //Processo de atualização de agendamento
+
         const treatment = await Treatment.findOne({ patientId: uid, status: 'active' });
-        if (patient && treatment) {
+        if (patient.is_treatment_running && treatment) {
             const agenda = getAgenda();
             /*
             ### Atualizar históricos da medicação que estiverem pending true para delete true
