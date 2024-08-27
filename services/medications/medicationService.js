@@ -1,8 +1,11 @@
 const Medication = require('../../models/medication');
 const { PatientMedicationHistory } = require('../../models/patient_history');
 const Treatment = require('../../models/treatment');
+const { PatientUser } = require('../../models/users');
+const { PageTypes, ScreenTypes, MenuTypes } = require('../../utils/app/screenMenuTypes');
 const { formatDateToISO, formatISOToHours } = require('../../utils/date/formatDate');
 const { convertDateToBrazilDate } = require('../../utils/date/timeZones');
+const MessageTypes = require('../../utils/response/typeResponse');
 
 const createNewMedicationHistory = async (medication, scheduleTime) => {
     try {
@@ -70,7 +73,43 @@ const sendLastDayMedicationReminder = async (lastDayReminderData) => {
 
     console.log("\n#UltimoDiaMedicamento# Envio da notificação alertando o último dia da medicação!!\n");
 
-    return;
+    try {
+        const patient = await PatientUser.findOne({ uid: patientId });
+        if (!patient) {
+            console.error(`Paciente não encontrado: ${patientId}`);
+            return;
+        }
+
+        const medication = await Medication.findById(medicationId);
+        if (!medication) {
+            console.error(`Medicação não encontrada: ${medicationId}`);
+            return;
+        }
+
+        const notification = new NotificationStructure(
+            'Atenção! Medicação Próxima do Fim',
+            `Olá ${(patient.name).split(' ')[0]}, sua medicação ${medication.name} está perto de acabar.`,
+            {
+                notify_type: 'treatment',
+                notify_function: 'medication_last_day_alert',
+                show_modal: false,
+                redirect_params: {
+                    screen: ScreenTypes.HEALTH_MEDICATIONS,
+                    menu_option: MenuTypes.SAÚDE,
+                    page: PageTypes.SAÚDE.MEDICAMENTOS
+                },
+                icon: MessageTypes.WARNING
+            }
+        );
+
+        const notificationSended = await notification.sendToPatient(patientId);
+        if (!notificationSended) {
+            console.log("Notificação de último dia de medicação não enviada.");
+        }
+
+    } catch (error) {
+        console.error("Erro ao enviar a notificação do último dia da medicação: ", error);
+    }
 }
 
 module.exports = { 
