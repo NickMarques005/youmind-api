@@ -4,13 +4,13 @@ const Treatment = require('../../../../../models/treatment');
 const Medication = require('../../../../../models/medication');
 const { scheduleMedicationNotTakenTask } = require('../../../../../services/medications/medicationScheduler');
 const { getAgenda } = require('../../../../../agenda/agenda_manager');
-const notificationService = require('../../../../../services/notifications/notificationService');
 const { ScreenTypes, MenuTypes, PageTypes } = require('../../../../../utils/app/screenMenuTypes');
 const MessageTypes = require('../../../../../utils/response/typeResponse');
 const { emitUpdateHistory, emitHistoryMedicationUpdate } = require('../../../../../services/history/historyService');
 const { getNextScheduleTime } = require('../../../../../utils/date/timeZones');
 const { endMedication } = require('../../../../../services/medications/medicationService');
 const { formatLatestMedication } = require('../../../../../utils/history/formatHistory');
+const NotificationStructure = require('../../../../../services/notifications/notificationStructure');
 
 const handleUpdateHistoryMedication = async (change, io) => {
     const agenda = getAgenda();
@@ -57,15 +57,21 @@ const handleUpdateHistoryMedication = async (change, io) => {
 
             const sockets = io.of("/").adapter.rooms.get(patientId);
             if (sockets && sockets.size > 0) {
+                /*
+                ### Envio dos dados por Socket
+                */
                 console.log(`Paciente ${patientId} está online. Emitindo alerta.`);
                 io.to(patientId).emit('medicationPending', medicationPending);
                 console.log(`Alerta emitido para a sala ${patientId}`);
             }
             else {
-                const notificationData = {
-                    title: 'Hora de tomar seu medicamento',
-                    body: `Olá ${(patient.name).split(' ')[0]}, é hora de tomar seu medicamento: ${medication.name}.`,
-                    data: {
+                /*
+                ### Envio da notificação:
+                */
+                const notification = new NotificationStructure(
+                    'Hora de tomar seu medicamento',
+                    `Olá ${(patient.name).split(' ')[0]}, é hora de tomar seu medicamento: ${medication.name}.`,
+                    {
                         notify_type: 'treatment',
                         notify_function: 'medication_alert',
                         show_modal: false,
@@ -75,10 +81,10 @@ const handleUpdateHistoryMedication = async (change, io) => {
                             page: PageTypes.SAÚDE.MEDICAMENTOS
                         },
                         icon: MessageTypes.INFO
-                    },
-                };
+                    }
+                );
 
-                const notificationSended = await notificationService.sendNotificationToAllDevices(patientId, notificationData);
+                const notificationSended = await notification.sendToPatient(patientId);
 
                 if (notificationSended) {
                     console.log(`Notificação de alerta de medicamento enviada para o paciente ${patientId}`);
@@ -98,10 +104,14 @@ const handleUpdateHistoryMedication = async (change, io) => {
                 return;
             }
 
-            const notificationData = {
-                title: 'Medicação não tomada',
-                body: `Olá ${(patient.name).split(' ')[0]}, você perdeu a dose de ${medication.name}. Por favor, tome suas medicações conforme prescrito.`,
-                data: {
+            /*
+            ### Envio da notificação:
+            */
+
+            const notification = new NotificationStructure(
+                'Medicação não tomada',
+                `Olá ${(patient.name).split(' ')[0]}, você perdeu a dose de ${medication.name}. Por favor, tome suas medicações conforme prescrito.`,
+                {
                     notify_type: 'treatment',
                     notify_function: 'medication_not_taken_alert',
                     show_modal: false,
@@ -111,10 +121,10 @@ const handleUpdateHistoryMedication = async (change, io) => {
                         page: PageTypes.SAÚDE.MEDICAMENTOS
                     },
                     icon: MessageTypes.WARNING
-                },
-            };
+                }
+            );
 
-            const notificationSended = await notificationService.sendNotificationToAllDevices(patientId, notificationData);
+            const notificationSended = await notification.sendToPatient(patientId);
 
             if (notificationSended) {
                 console.log(`Notificação enviada para o paciente ${patientId}`);

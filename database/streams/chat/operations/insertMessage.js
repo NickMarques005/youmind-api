@@ -1,8 +1,8 @@
-const notificationService = require('../../../../services/notifications/notificationService');
 const { findSender, handleSenderIcon } = require('../../../../utils/chat/chat');
 const Treatment = require('../../../../models/treatment');
 const { ScreenTypes, MenuTypes } = require('../../../../utils/app/screenMenuTypes');
 const { getInitialChatData, emitInitialChatUpdate } = require('../../../../services/chat/chatServices');
+const NotificationStructure = require('../../../../services/notifications/notificationStructure');
 
 const handleInsertMessage = async (change, io) => {
     const newMessage = change.fullDocument;
@@ -37,10 +37,10 @@ const handleInsertMessage = async (change, io) => {
             await emitInitialChatUpdate(io, senderId, { chat: updatedInitialChatSender, treatmentId }, "updateInitialChat");
             await emitInitialChatUpdate(io, receiverId, { chat: updatedInitialChatReceiver, treatmentId }, "updateInitialChat");
 
-            const notificationData = {
-                title: `${senderMessage.type === 'doctor' ? 'Dr. ' : ''}${senderMessage.name}`,
-                body: `${newMessage.content}`,
-                data: {
+            const notificationData = new NotificationStructure(
+                `${senderMessage.type === 'doctor' ? 'Dr. ' : ''}${senderMessage.name}`,
+                `${newMessage.content}`,
+                {
                     notify_type: 'chat',
                     notify_function: 'message_alert',
                     sender_params: {
@@ -59,13 +59,11 @@ const handleInsertMessage = async (change, io) => {
                         menu_option: MenuTypes.TRATAMENTO
                     },
                     icon: senderIcon
-                },
-            };
+                }
+            );
 
-            console.log(notificationData);
-
-            const notificationsService = await notificationService.sendNotificationToAllDevices(receiverId, notificationData);
-            console.log("Notificação mandada: ", notificationsService);
+            const notificationSent = await notificationData.sendToUser(receiverId);
+            console.log("Notificação enviada: ", notificationSent);
         }
     }
 }

@@ -1,5 +1,6 @@
 const { PatientUser } = require('../../../../models/users');
 const notificationService = require('../../../../services/notifications/notificationService');
+const NotificationStructure = require('../../../../services/notifications/notificationStructure');
 const { emitNewQuestionnaire } = require('../../../../services/questionnaires/questionnaireService');
 const { ScreenTypes, MenuTypes, PageTypes } = require('../../../../utils/app/screenMenuTypes');
 const MessageTypes = require('../../../../utils/response/typeResponse');
@@ -14,10 +15,11 @@ const handleInsertQuestionnaire = async (change, io) => {
         return;
     }
 
-    const notificationData = {
-        title: 'Novo Questionário Disponível!',
-        body: `Olá ${(patient.name).split(' ')[0]}! Você tem um novo questionário para responder.`,
-        data: {
+    const firstName = patient.name.split(' ')[0];
+    const notificationData = new NotificationStructure(
+        'Novo Questionário Disponível!',
+        `Olá ${firstName}! Você tem um novo questionário para responder.`,
+        {
             notify_type: 'treatment',
             notify_function: 'questionnaire_alert',
             show_modal: false,
@@ -27,8 +29,8 @@ const handleInsertQuestionnaire = async (change, io) => {
                 page: PageTypes.SAÚDE.QUESTIONARIOS
             },
             icon: MessageTypes.QUESTIONNAIRE
-        },
-    };
+        }
+    );
 
     const questionnaireData = {
         currentQuestionnaire: newQuestionnaire
@@ -36,8 +38,10 @@ const handleInsertQuestionnaire = async (change, io) => {
 
     await emitNewQuestionnaire(io, patientId, questionnaireData, "addNewQuestionnaire");
 
-    const notificationSended = await notificationService.sendNotificationToAllDevices(patientId, notificationData);
-    if(!notificationSended) console.log("Notificação do novo questionário não enviada");
+    const notificationSended = await notificationData.sendToPatient(patientId);
+    if (!notificationSended) {
+        console.log("Notificação do novo questionário não enviada");
+    }
 };
 
 module.exports = handleInsertQuestionnaire;
