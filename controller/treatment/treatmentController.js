@@ -82,6 +82,7 @@ exports.initializeTreatment = async (req, res) => {
                     engagedDoctor: {
                         _id: doctor._id,
                         name: doctor.name,
+                        gender: doctor.gender
                     },
                     period: {
                         start: new Date(),
@@ -174,6 +175,19 @@ exports.getTreatment = async (req, res) => {
                 currentPerformance: overallPerformance
             }
 
+            /*
+            ### Busca dos avatares dos doutoras nas sessões do tratamento
+            */
+            const sessionsWithAvatars = await Promise.all(singleTreatment.sessions.map(async (session) => {
+                if (session.engagedDoctor && session.engagedDoctor._id) {
+                    const engagedDoctor = await DoctorUser.findById(session.engagedDoctor._id);
+                    if (engagedDoctor && engagedDoctor.avatar) {
+                        session.engagedDoctor.avatar = engagedDoctor.avatar;
+                    }
+                }
+                return session;
+            }));
+
             const patientTreatment = [{
                 name: doctor.name,
                 email: doctor.email,
@@ -187,7 +201,7 @@ exports.getTreatment = async (req, res) => {
                 chat: chatData || undefined,
                 startedAt: singleTreatment.startedAt,
                 status: statusTreatment,
-                sessions: singleTreatment.sessions || [],
+                sessions: sessionsWithAvatars || [],
                 treatmentStatus: singleTreatment.status,
             }] 
 
@@ -226,6 +240,19 @@ exports.getTreatment = async (req, res) => {
                     currentPerformance: overallPerformance
                 }
 
+                /*
+                ### Busca dos avatares dos doutoras nas sessões do tratamento
+                */
+                const sessionsWithAvatars = await Promise.all(treatment.sessions.map(async (session) => {
+                    if (session.engagedDoctor && session.engagedDoctor._id) {
+                        const engagedDoctor = await DoctorUser.findById(session.engagedDoctor._id);
+                        if (engagedDoctor && engagedDoctor.avatar) {
+                            session.engagedDoctor.avatar = engagedDoctor.avatar;
+                        }
+                    }
+                    return session;
+                }));
+
                 return {
                     name: patient.name,
                     email: patient.email,
@@ -239,7 +266,7 @@ exports.getTreatment = async (req, res) => {
                     chat: chatData,
                     startedAt: treatment.startedAt,
                     status: statusTreatment,
-                    sessions: treatment.sessions || [],
+                    sessions: sessionsWithAvatars || [],
                     treatmentStatus: treatment.status
                 };
             }));
