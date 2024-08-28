@@ -11,7 +11,6 @@ const { createNotice } = require('../../utils/user/notice');
 const { getInitialChatData } = require('../../services/chat/chatServices');
 const TreatmentRequest = require('../../models/solicitation_treatment');
 const Notification = require('../../models/notification');
-const { calculateQuestionnairePerformance } = require('../../utils/questionnaires/performance');
 const { calculateTreatmentOverallPerformance } = require('../../services/treatment/performance/performanceServices');
 
 exports.initializeTreatment = async (req, res) => {
@@ -50,7 +49,7 @@ exports.initializeTreatment = async (req, res) => {
                 //Criar nova sessão
                 const newSession = {
                     engagedDoctor: {
-                        _id: doctor._id,
+                        uid: doctor.uid,
                         name: doctor.name,
                     },
                     period: {
@@ -180,7 +179,7 @@ exports.getTreatment = async (req, res) => {
             ### Busca dos avatares dos doutoras nas sessões do tratamento
             */
             const sessionsWithAvatars = await Promise.all(singleTreatment.sessions.map(async (session) => {
-                const engagedDoctor = await DoctorUser.findById(session.engagedDoctor._id);
+                const engagedDoctor = await DoctorUser.findOne({ uid: session.engagedDoctor.uid});
                 let engagedDoctorAvatar;
                 if (engagedDoctor && engagedDoctor.avatar) {
                     engagedDoctorAvatar = engagedDoctor.avatar;
@@ -188,7 +187,7 @@ exports.getTreatment = async (req, res) => {
 
                 return {
                     engagedDoctor: {
-                        _id: session.engagedDoctor._id,
+                        uid: session.engagedDoctor.uid,
                         name: session.engagedDoctor.name,
                         gender: session.engagedDoctor.gender,
                         avatar: engagedDoctorAvatar
@@ -272,7 +271,7 @@ exports.getTreatment = async (req, res) => {
                 ### Busca dos avatares dos doutoras nas sessões do tratamento
                 */
                 const sessionsWithAvatars = await Promise.all(treatment.sessions.map(async (session) => {
-                    const engagedDoctor = await DoctorUser.findById(session.engagedDoctor._id);
+                    const engagedDoctor = await DoctorUser.findOne({uid: session.engagedDoctor.uid});
                     let engagedDoctorAvatar;
                     if (engagedDoctor && engagedDoctor.avatar) {
                         engagedDoctorAvatar = engagedDoctor.avatar;
@@ -280,7 +279,7 @@ exports.getTreatment = async (req, res) => {
 
                     return {
                         engagedDoctor: {
-                            _id: session.engagedDoctor._id,
+                            uid: session.engagedDoctor.uid,
                             name: session.engagedDoctor.name,
                             gender: session.engagedDoctor.gender,
                             avatar: engagedDoctorAvatar

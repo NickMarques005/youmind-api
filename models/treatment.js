@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 
 const TreatmentSessionSchema = new mongoose.Schema({
     engagedDoctor: {
-        _id: { 
-            type: mongoose.Schema.Types.ObjectId,
+        uid: { 
+            type: String,
             required: true 
         },
         name: { 
