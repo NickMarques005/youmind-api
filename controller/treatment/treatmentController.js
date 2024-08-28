@@ -220,9 +220,24 @@ exports.getTreatment = async (req, res) => {
 
             return HandleSuccess(res, 200, "Tratamento em andamento", patientTreatment);
         } else {
-            if (userTreatments.length === 0) return HandleSuccess(res, 200, "Não há tratamentos em andamento");
+            const doctor = await DoctorUser.findOne({ uid: uid});
+            if(!doctor) return HandleError(res, 404, "Você não foi encontrado nos registros de doutores");
 
-            const treatmentPatients = await Promise.all(userTreatments.map(async (treatment) => {
+            /*
+            ### Buscar tratamentos adicionais usando os IDs do campo `total_treatments` do doutor
+            */
+            const additionalTreatments = await Treatment.find({ 
+                _id: { $in: doctor.total_treatments }, 
+                status: { $in: ["active", "completed"] } 
+            });
+
+            /*
+            ### Combinar tratamentos encontrados em `userTreatments` e `additionalTreatments`
+            */
+            const allTreatments = [...new Map([...userTreatments, ...additionalTreatments].map(treatment => [treatment._id.toString(), treatment])).values()];
+            if (allTreatments.length === 0) return HandleSuccess(res, 200, "Não há tratamentos em andamento");
+
+            const treatmentPatients = await Promise.all(allTreatments.map(async (treatment) => {
                 const patient = await PatientUser.findOne({ uid: treatment.patientId });
                 if (!patient) return null;
 
