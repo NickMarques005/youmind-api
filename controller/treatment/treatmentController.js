@@ -91,20 +91,21 @@ exports.initializeTreatment = async (req, res) => {
             });
 
             await newTreatment.save();
+
+            /*
+            ### Adiciona o novo tratamento na lista de tratamentos executados por esse doutor se não estiver
+            */
+
+            const doctorData = await DoctorUser.findById(doctor._id);
+            if (!doctorData.total_treatments.includes(newTreatment._id.toString())) {
+                await DoctorUser.findByIdAndUpdate(doctor._id, { $addToSet: { total_treatments: newTreatment._id.toString() } });
+            }
         }
 
         /*
         ### Configura "tratamento em andamento" para o usuário
         */
         await PatientUser.findByIdAndUpdate(patient._id, { is_treatment_running: true });
-
-        /*
-        ### Adiciona o paciente na lista de tratamentos executados por esse doutor se não estiver
-        */
-        const doctorData = await DoctorUser.findById(doctor._id);
-        if (!doctorData.total_treatments.includes(patient._id.toString())) {
-            await DoctorUser.findByIdAndUpdate(doctor._id, { $addToSet: { total_treatments: patient._id.toString() } });
-        }
 
         /*
         ### Apaga todas as solicitações entre o paciente e outros doutores:
@@ -178,14 +179,14 @@ exports.getTreatment = async (req, res) => {
             /*
             ### Busca dos avatares dos doutoras nas sessões do tratamento
             */
-            const sessionsWithAvatars = await Promise.all(singleTreatment.sessions.map(async (session) =>{
+            const sessionsWithAvatars = await Promise.all(singleTreatment.sessions.map(async (session) => {
                 const engagedDoctor = await DoctorUser.findById(session.engagedDoctor._id);
                 let engagedDoctorAvatar;
-                if(engagedDoctor && engagedDoctor.avatar) {
+                if (engagedDoctor && engagedDoctor.avatar) {
                     engagedDoctorAvatar = engagedDoctor.avatar;
                 }
 
-                return  {
+                return {
                     engagedDoctor: {
                         _id: session.engagedDoctor._id,
                         name: session.engagedDoctor.name,
@@ -197,7 +198,8 @@ exports.getTreatment = async (req, res) => {
                         start: session.period.start,
                         end: session.period.end
                     }
-            }}));
+                }
+            }));
 
             const patientTreatment = [{
                 name: doctor.name,
@@ -214,7 +216,7 @@ exports.getTreatment = async (req, res) => {
                 status: statusTreatment,
                 sessions: sessionsWithAvatars || [],
                 treatmentStatus: singleTreatment.status,
-            }] 
+            }]
 
             return HandleSuccess(res, 200, "Tratamento em andamento", patientTreatment);
         } else {
@@ -254,14 +256,14 @@ exports.getTreatment = async (req, res) => {
                 /*
                 ### Busca dos avatares dos doutoras nas sessões do tratamento
                 */
-                const sessionsWithAvatars = await Promise.all(treatment.sessions.map(async (session) =>{
+                const sessionsWithAvatars = await Promise.all(treatment.sessions.map(async (session) => {
                     const engagedDoctor = await DoctorUser.findById(session.engagedDoctor._id);
                     let engagedDoctorAvatar;
-                    if(engagedDoctor && engagedDoctor.avatar) {
+                    if (engagedDoctor && engagedDoctor.avatar) {
                         engagedDoctorAvatar = engagedDoctor.avatar;
                     }
 
-                    return  {
+                    return {
                         engagedDoctor: {
                             _id: session.engagedDoctor._id,
                             name: session.engagedDoctor.name,
@@ -273,7 +275,8 @@ exports.getTreatment = async (req, res) => {
                             start: session.period.start,
                             end: session.period.end
                         }
-                }}));
+                    }
+                }));
 
                 return {
                     name: patient.name,
@@ -423,14 +426,12 @@ exports.welcomeTreatment = async (req, res) => {
             if (treatment.wasCompleted) {
                 const doctor = await DoctorUser.findOne({ uid: treatment.doctorId });
                 if (!doctor) return HandleError(res, 404, "Médico não encontrado");
-
                 message = `Parabéns por retomar o tratamento com ${doctor.name}! Gostaria de ver novamente as instruções de como funciona o processo de tratamento no YouMind?`;
             } else {
                 message = `Parabéns por iniciar o tratamento com seu médico! Gostaria de ver instruções de como funciona o processo de tratamento no YouMind?`;
             }
         } else {
             const treatments = await Treatment.find({ doctorId: uid, status: 'active' });
-
             if (treatments.length === 0) return HandleError(res, 404, "Tratamentos não encontrados");
 
             if (treatments.length > 1) {

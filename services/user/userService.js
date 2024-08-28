@@ -15,7 +15,6 @@ const fetchUsers = async (type, searchData) => {
             verified: true
         },
         { _id: 1, uid: 1, name: 1, email: 1, phone: 1, type: 1, avatar: 1, birth: 1, gender: 1, ...searchField }
-
     ).limit(30);
 
     if(type === 'patient'){
@@ -32,9 +31,16 @@ const fetchUsers = async (type, searchData) => {
             };
 
             if (user.total_treatments.length > 0) {
-                const patientIds = user.total_treatments;
+                const treatmentIds = user.total_treatments;
+                const treatments = await Treatment.find({ _id: { $in: treatmentIds } });
+
+                const patientIds = treatments.map(treatment => treatment.patientId);
                 const patients = await PatientUser.find({ _id: { $in: patientIds } }, { name: 1, avatar: 1, email: 1 });
-                newUser.total_treatments = patients.map(patient => ({ name: patient.name, avatar: patient.avatar, email: patient.email }));
+                newUser.total_treatments = patients.map(patient => ({ 
+                    name: patient.name,
+                    avatar: patient.avatar, 
+                    email: patient.email 
+                }));
             }
 
             return newUser;
