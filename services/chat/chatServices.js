@@ -2,7 +2,10 @@ const Message = require("../../models/message");
 
 const getInitialChatData = async (treatmentId, userUid) => {
     try {
-        if(!treatmentId || !userUid) return console.log("Houve um erro ao buscar os dados do chat: Dados de parametros inválidos");
+        if(!treatmentId || !userUid) {
+            console.log("Houve um erro ao buscar os dados do chat: Dados de parametros inválidos");
+            return undefined;
+        }
 
         const lastMessage = await Message.findOne({ conversationId: treatmentId }).sort({ createdAt: -1 });
         const unreadMessagesCount = await Message.countDocuments({

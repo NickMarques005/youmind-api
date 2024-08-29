@@ -5,21 +5,24 @@ const { calculateTreatmentOverallPerformance } = require('./performance/performa
 
 const formatTreatment = async (treatment, userType) => {
     try {
-        const userId = userType === 'patient' ? treatment.patientId : treatment.doctorId;
-        const user = await (userType === 'patient' ? PatientUser.findOne({ uid: userId }) : DoctorUser.findOne({ uid: userId }));
+        const oppositeUserId = userType === 'patient' ? treatment.doctorId : treatment.patientId;
+        const oppositeUser = await (userType === 'patient' ? DoctorUser.findOne({ uid: oppositeUserId }) : PatientUser.findOne({ uid: oppositeUserId }));
 
-        if (!user) throw new Error(`Usuário ${userType} não encontrado`);
+        if (userType !== 'patient' && !oppositeUser) {
+            console.error(`O paciente do ${userType} não foi encontrado`);
+            return undefined;
+        }
 
         /*
         ### Busca dados inicias de chat
         */
-        const chatData = await getInitialChatData(treatment._id, userId);
+        const chatData = await getInitialChatData(treatment._id, oppositeUserId);
 
         /*
         ### Buscar históricos de medicações e questionários para o tratamento
         */
-        const patientMedications = await PatientMedicationHistory.find({ patientId: userId });
-        const patientQuestionnaires = await PatientQuestionnaireHistory.find({ patientId: userId });
+        const patientMedications = await PatientMedicationHistory.find({ patientId: treatment.patientId });
+        const patientQuestionnaires = await PatientQuestionnaireHistory.find({ patientId: treatment.patientId });
 
         /*
         ### Filtragem dos medicamentos tomados e questionários respondidos
@@ -34,7 +37,7 @@ const formatTreatment = async (treatment, userType) => {
         /*
         ### Cálculo do desempenho atual
         */
-        const overallPerformance = await calculateTreatmentOverallPerformance(userId);
+        const overallPerformance = await calculateTreatmentOverallPerformance(treatment.patientId);
 
         const statusTreatment = {
             medications: takenMedications,
@@ -70,14 +73,14 @@ const formatTreatment = async (treatment, userType) => {
         ### Retorno do tratamento formatado
         */
         return {
-            name: user.name,
-            email: user.email,
-            avatar: user.avatar,
-            phone: user.phone,
-            birth: user.birth,
-            gender: user.gender,
-            uid: user.uid,
-            online: user.online,
+            name: oppositeUser.name,
+            email: oppositeUser.email,
+            avatar: oppositeUser.avatar,
+            phone: oppositeUser.phone,
+            birth: oppositeUser.birth,
+            gender: oppositeUser.gender,
+            uid: oppositeUser.uid,
+            online: oppositeUser.online,
             _id: treatment._id,
             chat: chatData || undefined,
             startedAt: treatment.startedAt,
