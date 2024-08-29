@@ -12,6 +12,7 @@ const { getInitialChatData } = require('../../services/chat/chatServices');
 const TreatmentRequest = require('../../models/solicitation_treatment');
 const Notification = require('../../models/notification');
 const { calculateTreatmentOverallPerformance } = require('../../services/treatment/performance/performanceServices');
+const { formatTreatment } = require('../../services/treatment/treatmentFormatting');
 
 exports.initializeTreatment = async (req, res) => {
     try {
@@ -141,93 +142,28 @@ exports.getTreatment = async (req, res) => {
         const userTreatments = await Treatment.find({ [treatmentKey]: uid, status: { $in: ["active", "completed"] } });
 
         if (type === 'patient') {
-            if (userTreatments.length === 0) return HandleSuccess(res, 200, "Não há tratamentos em andamento");
+            if (userTreatments.length === 0) return HandleSuccess(res, 200, "Não há tratamentos registrados");
 
             const singleTreatment = userTreatments[0];
-            const doctor = await DoctorUser.findOne({ uid: singleTreatment.doctorId });
-            if (!doctor) return HandleError(res, 404, "Médico do tratamento não encontrado");
 
-            const chatData = await getInitialChatData(singleTreatment._id, uid);
-            /*
-            ### Buscar históricos de medicações e questionários para o tratamento
-            */
-            const patientMedications = await PatientMedicationHistory.find({ patientId: uid });
-            const patientQuestionnaires = await PatientQuestionnaireHistory.find({ patientId: uid });
+            const formattedTreatment = await formatTreatment(singleTreatment, type);
+            if (!formattedTreatment) return HandleError(res, 404, "Erro ao formatar tratamento");
 
-            /*
-            ### Filtrar medicamentos tomados e questionários respondidos
-            */
-            const takenMedications = patientMedications.filter(history => history.medication.taken === true).length;
-            const answeredQuestionnaires = patientQuestionnaires.filter(history => history.questionnaire.answered === true).length;
+            const treatmentData = [ 
+                formattedTreatment
+            ]
 
-            /*
-            ### Buscar o tempo de uso do T-Watch 
-            */
-
-            /*
-            ### Calcular o desempenho atual
-            */
-            const overallPerformance = await calculateTreatmentOverallPerformance(uid);
-
-            const statusTreatment = {
-                medications: takenMedications,
-                questionnaires: answeredQuestionnaires,
-                currentPerformance: overallPerformance
-            }
-
-            /*
-            ### Busca dos avatares dos doutoras nas sessões do tratamento
-            */
-            const sessionsWithAvatars = await Promise.all(singleTreatment.sessions.map(async (session) => {
-                const engagedDoctor = await DoctorUser.findOne({ uid: session.engagedDoctor.uid});
-                let engagedDoctorAvatar;
-                if (engagedDoctor && engagedDoctor.avatar) {
-                    engagedDoctorAvatar = engagedDoctor.avatar;
-                }
-
-                return {
-                    engagedDoctor: {
-                        uid: session.engagedDoctor.uid,
-                        name: session.engagedDoctor.name,
-                        gender: session.engagedDoctor.gender,
-                        avatar: engagedDoctorAvatar
-                    },
-                    finalPerformance: session.finalPerformance,
-                    period: {
-                        start: session.period.start,
-                        end: session.period.end
-                    }
-                }
-            }));
-
-            const patientTreatment = [{
-                name: doctor.name,
-                email: doctor.email,
-                avatar: doctor.avatar,
-                phone: doctor.phone,
-                birth: doctor.birth,
-                gender: doctor.gender,
-                uid: doctor.uid,
-                online: doctor.online,
-                _id: singleTreatment._id,
-                chat: chatData || undefined,
-                startedAt: singleTreatment.startedAt,
-                status: statusTreatment,
-                sessions: sessionsWithAvatars || [],
-                treatmentStatus: singleTreatment.status,
-            }]
-
-            return HandleSuccess(res, 200, "Tratamento em andamento", patientTreatment);
+            return HandleSuccess(res, 200, "Tratamento em andamento", treatmentData);
         } else {
-            const doctor = await DoctorUser.findOne({ uid: uid});
-            if(!doctor) return HandleError(res, 404, "Você não foi encontrado nos registros de doutores");
+            const doctor = await DoctorUser.findOne({ uid: uid });
+            if (!doctor) return HandleError(res, 404, "Você não foi encontrado nos registros de doutores");
 
             /*
             ### Buscar tratamentos adicionais usando os IDs do campo `total_treatments` do doutor
             */
-            const additionalTreatments = await Treatment.find({ 
-                _id: { $in: doctor.total_treatments }, 
-                status: { $in: ["active", "completed"] } 
+            const additionalTreatments = await Treatment.find({
+                _id: { $in: doctor.total_treatments },
+                status: { $in: ["active", "completed"] }
             });
 
             /*
@@ -236,81 +172,9 @@ exports.getTreatment = async (req, res) => {
             const allTreatments = [...new Map([...userTreatments, ...additionalTreatments].map(treatment => [treatment._id.toString(), treatment])).values()];
             if (allTreatments.length === 0) return HandleSuccess(res, 200, "Não há tratamentos em andamento");
 
-            const treatmentPatients = await Promise.all(allTreatments.map(async (treatment) => {
-                const patient = await PatientUser.findOne({ uid: treatment.patientId });
-                if (!patient) return null;
+            const formattedTreatments = await Promise.all(allTreatments.map(treatment => formatTreatment(treatment, type)));
 
-                const chatData = await getInitialChatData(treatment._id, uid);
-
-                // Buscar históricos de medicações e questionários para o tratamento
-                const patientMedications = await PatientMedicationHistory.find({ patientId: treatment.patientId });
-                const patientQuestionnaires = await PatientQuestionnaireHistory.find({ patientId: treatment.patientId });
-
-                /*
-                ### Filtrar medicamentos tomados e questionários respondidos
-                */
-                const takenMedications = patientMedications.filter(med => med.medication.taken).length;
-                const answeredQuestionnaires = patientQuestionnaires.filter(history => history.questionnaire.answered === true).length;
-
-                /*
-                ### Buscar o tempo de uso do T-Watch 
-                */
-
-                /*
-                ### Calcular o desempenho atual
-                */
-                const overallPerformance = await calculateTreatmentOverallPerformance(patient.uid);
-
-                const statusTreatment = {
-                    medications: takenMedications,
-                    questionnaires: answeredQuestionnaires,
-                    currentPerformance: overallPerformance
-                }
-
-                /*
-                ### Busca dos avatares dos doutoras nas sessões do tratamento
-                */
-                const sessionsWithAvatars = await Promise.all(treatment.sessions.map(async (session) => {
-                    const engagedDoctor = await DoctorUser.findOne({uid: session.engagedDoctor.uid});
-                    let engagedDoctorAvatar;
-                    if (engagedDoctor && engagedDoctor.avatar) {
-                        engagedDoctorAvatar = engagedDoctor.avatar;
-                    }
-
-                    return {
-                        engagedDoctor: {
-                            uid: session.engagedDoctor.uid,
-                            name: session.engagedDoctor.name,
-                            gender: session.engagedDoctor.gender,
-                            avatar: engagedDoctorAvatar
-                        },
-                        finalPerformance: session.finalPerformance,
-                        period: {
-                            start: session.period.start,
-                            end: session.period.end
-                        }
-                    }
-                }));
-
-                return {
-                    name: patient.name,
-                    email: patient.email,
-                    avatar: patient.avatar,
-                    phone: patient.phone,
-                    birth: patient.birth,
-                    gender: patient.gender,
-                    uid: patient.uid,
-                    online: patient.online,
-                    _id: treatment._id,
-                    chat: chatData,
-                    startedAt: treatment.startedAt,
-                    status: statusTreatment,
-                    sessions: sessionsWithAvatars || [],
-                    treatmentStatus: treatment.status
-                };
-            }));
-
-            const filteredPatients = treatmentPatients.filter(patient => patient !== null);
+            const filteredPatients = formattedTreatments.filter(patient => patient !== null);
             return HandleSuccess(res, 200, "Tratamento(s) em andamento", filteredPatients);
         }
     } catch (err) {

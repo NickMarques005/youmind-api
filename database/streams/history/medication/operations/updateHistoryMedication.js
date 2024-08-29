@@ -6,11 +6,11 @@ const { scheduleMedicationNotTakenTask } = require('../../../../../services/medi
 const { getAgenda } = require('../../../../../agenda/agenda_manager');
 const { ScreenTypes, MenuTypes, PageTypes } = require('../../../../../utils/app/screenMenuTypes');
 const MessageTypes = require('../../../../../utils/response/typeResponse');
-const { emitUpdateHistory, emitHistoryMedicationUpdate } = require('../../../../../services/history/historyService');
 const { getNextScheduleTime } = require('../../../../../utils/date/timeZones');
 const { endMedication } = require('../../../../../services/medications/medicationService');
 const { formatLatestMedication } = require('../../../../../utils/history/formatHistory');
 const NotificationStructure = require('../../../../../services/notifications/notificationStructure');
+const { emitUpdateHistory, emitHistoryMedicationUpdate, emitHistoryMedicationDelete } = require('../../../../../socket/events/historyPatientEvents');
 
 const handleUpdateHistoryMedication = async (change, io) => {
     const agenda = getAgenda();
@@ -132,8 +132,8 @@ const handleUpdateHistoryMedication = async (change, io) => {
 
             const latestMedication = await formatLatestMedication(medicationHistory);
 
-            await emitUpdateHistory(io, doctorId, patientId);
-            await emitHistoryMedicationUpdate(io, doctorId, latestMedication, "updateLatestMedication");
+            await emitUpdateHistory({io: io, doctorId: doctorId, patientId: patientId});
+            await emitHistoryMedicationUpdate({ io: io, doctorId: doctorId, latestMedication: latestMedication });
 
             /*
             ### Verificação de último agendamento:
@@ -152,8 +152,8 @@ const handleUpdateHistoryMedication = async (change, io) => {
 
             const latestMedication = await formatLatestMedication(medicationHistory);
 
-            await emitUpdateHistory(io, doctorId, patientId);
-            await emitHistoryMedicationUpdate(io, doctorId, latestMedication, "updateLatestMedication");
+            await emitUpdateHistory({ io: io, doctorId: doctorId, patientId: patientId });
+            await emitHistoryMedicationUpdate({ io: io, doctorId: doctorId, latestMedication: latestMedication });
 
             /*
             ### Verificação de último agendamento:
@@ -166,7 +166,6 @@ const handleUpdateHistoryMedication = async (change, io) => {
             }
         }
         else if (updatedFields['delete'] === true) {
-
             /*
             ### Excluir históricos dessa medicação
             */
@@ -174,8 +173,8 @@ const handleUpdateHistoryMedication = async (change, io) => {
 
             const latestMedication = await formatLatestMedication(medicationHistory);
 
-            await emitUpdateHistory(io, doctorId, patientId);
-            await emitHistoryMedicationUpdate(io, doctorId, latestMedication, "deleteLatestMedication");
+            await emitUpdateHistory({ io: io, doctorId: doctorId, patientId: patientId });
+            await emitHistoryMedicationDelete({ io: io, doctorId: doctorId, latestMedication: latestMedication });
         }
     }
 

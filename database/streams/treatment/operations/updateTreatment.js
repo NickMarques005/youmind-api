@@ -1,7 +1,8 @@
 const Treatment = require('../../../../models/treatment');
 const { PatientUser, DoctorUser } = require('../../../../models/users');
+const { formatTreatment } = require('../../../../services/treatment/treatmentFormatting');
 const { handleStartPatientTreatmentServices } = require('../../../../services/treatment/treatmentServices');
-const { emitEventToUser } = require('../../../../utils/socket/connection');
+const { emitTreatmentInitiate, emitTreatmentComplete } = require('../../../../socket/events/treatmentEvents');
 const { createNotice } = require('../../../../utils/user/notice');
 
 const handleUpdateTreatment = async (change, io) => {
@@ -20,9 +21,9 @@ const handleUpdateTreatment = async (change, io) => {
         const doctorId = updatedTreatment.doctorId;
 
         const currentPatient = await PatientUser.findOne({ uid: patientId });
-        if(!currentPatient) return console.error("Houve um erro: Usuário paciente não encontrado após tratamento ficar ativo!");
+        if (!currentPatient) return console.error("Houve um erro: Usuário paciente não encontrado após tratamento ficar ativo!");
         const currentDoctor = await DoctorUser.findOne({ uid: doctorId });
-        if(!currentDoctor) return console.error("Houve um erro: Usuário médico não encontrado após tratamento ficar ativo!");
+        if (!currentDoctor) return console.error("Houve um erro: Usuário médico não encontrado após tratamento ficar ativo!");
 
         if (currentPatient) {
             currentPatient.welcomeTreatment = true;
@@ -33,31 +34,10 @@ const handleUpdateTreatment = async (change, io) => {
             await currentDoctor.save();
         }
 
-        //Ajustar para que os tratamentos sejam entregues de forma correta ****
-
-        const treatmentPatientInfo = {
-            avatar: currentPatient.avatar,
-            name: currentPatient.name,
-            email: currentPatient.email,
-            uid: currentPatient.uid,
-            phone: currentPatient.phone,
-            birth: currentPatient.birth,
-            gender: currentPatient.gender,
-            online: currentPatient.online,
-            _id: updatedTreatment._id
-        };
-
-        const treatmentDoctorInfo = {
-            avatar: currentDoctor.avatar,
-            name: currentDoctor.name,
-            email: currentDoctor.email,
-            uid: currentDoctor.uid,
-            phone: currentDoctor.phone,
-            birth: currentDoctor.birth,
-            gender: currentDoctor.gender,
-            online: currentDoctor.online,
-            _id: updatedTreatment._id
-        };
+        //Ajuste para que os tratamentos sejam entregues no formato correto ****
+        const treatmentPatientInfo = await formatTreatment(updatedTreatment, currentPatient.type);
+        const treatmentDoctorInfo = await formatTreatment(updatedTreatment, currentDoctor.type);
+        if (!treatmentPatientInfo || !treatmentDoctorInfo) return console.error('Erro ao formatar tratamento.');
 
         await handleStartPatientTreatmentServices(patientId);
 
@@ -70,8 +50,19 @@ const handleUpdateTreatment = async (change, io) => {
         const noticePatient = createNotice({ message: messagePatient, type: "welcome", dontshow: true, acceptText: "Sim", declineText: "Não, Obrigado" });
         const noticeDoctor = createNotice({ message: messageDoctor, type: "welcome", dontshow: true, acceptText: "Sim", declineText: "Não, Obrigado" });
 
-        await emitEventToUser(io, patientId, 'treatmentInitiate', { treatment: treatmentDoctorInfo, notice: noticePatient });
-        await emitEventToUser(io, doctorId, 'treatmentInitiate', { treatment: treatmentPatientInfo, notice: noticeDoctor });
+        const patientInfo = {
+            patientId,
+            treatment: treatmentDoctorInfo,
+            notice: noticePatient
+        }
+
+        const doctorInfo = {
+            doctorId,
+            treatment: treatmentPatientInfo,
+            notice: noticeDoctor
+        }
+
+        await emitTreatmentInitiate({ io, patientInfo, doctorInfo });
 
         console.log("Tratamento e Notice mandado...");
     }
@@ -88,9 +79,9 @@ const handleUpdateTreatment = async (change, io) => {
         const doctorId = updatedTreatment.doctorId;
 
         const currentPatient = await PatientUser.findOne({ uid: patientId });
-        if(!currentPatient) return console.error("Houve um erro: Usuário paciente não encontrado após tratamento ficar ativo!");
+        if (!currentPatient) return console.error("Houve um erro: Usuário paciente não encontrado após tratamento ficar ativo!");
         const currentDoctor = await DoctorUser.findOne({ uid: doctorId });
-        if(!currentDoctor) return console.error("Houve um erro: Usuário médico não encontrado após tratamento ficar ativo!");
+        if (!currentDoctor) return console.error("Houve um erro: Usuário médico não encontrado após tratamento ficar ativo!");
 
 
         if (currentPatient) {
@@ -111,30 +102,11 @@ const handleUpdateTreatment = async (change, io) => {
         /*
         ### Atualização do tratamento para os usuários paciente e doutor:
         */
-    
-        const treatmentPatientInfo = {
-            avatar: currentPatient.avatar,
-            name: currentPatient.name,
-            email: currentPatient.email,
-            uid: currentPatient.uid,
-            phone: currentPatient.phone,
-            birth: currentPatient.birth,
-            gender: currentPatient.gender,
-            online: currentPatient.online,
-            _id: updatedTreatment._id
-        };
 
-        const treatmentDoctorInfo = {
-            avatar: currentDoctor.avatar,
-            name: currentDoctor.name,
-            email: currentDoctor.email,
-            uid: currentDoctor.uid,
-            phone: currentDoctor.phone,
-            birth: currentDoctor.birth,
-            gender: currentDoctor.gender,
-            online: currentDoctor.online,
-            _id: updatedTreatment._id
-        };
+        //Ajuste para que os tratamentos sejam entregues no formato correto ****
+        const treatmentPatientInfo = await formatTreatment(updatedTreatment, currentPatient.type);
+        const treatmentDoctorInfo = await formatTreatment(updatedTreatment, currentDoctor.type);
+        if (!treatmentPatientInfo || !treatmentDoctorInfo) return console.error('Erro ao formatar tratamento.');
 
         const messagePatient = `Parabéns por completar o tratamento com ${treatmentDoctorInfo.name}!`;
         const messageDoctor = `Parabéns por completar o tratamento com ${treatmentPatientInfo.name}!`;
@@ -142,9 +114,19 @@ const handleUpdateTreatment = async (change, io) => {
         const noticePatient = createNotice({ message: messagePatient, type: "treatment_end", dontshow: true, acceptText: "Ok" });
         const noticeDoctor = createNotice({ message: messageDoctor, type: "treatment_end", dontshow: true, acceptText: "Ok" });
 
-        await emitEventToUser(io, patientId, 'treatmentComplete', { treatment: treatmentDoctorInfo, notice: noticePatient });
-        await emitEventToUser(io, doctorId, 'treatmentComplete', { treatment: treatmentPatientInfo, notice: noticeDoctor });
+        const patientInfo = {
+            patientId,
+            treatment: treatmentDoctorInfo,
+            notice: noticePatient
+        }
 
+        const doctorInfo = {
+            doctorId,
+            treatment: treatmentPatientInfo,
+            notice: noticeDoctor
+        }
+
+        await emitTreatmentComplete({ io, patientInfo, doctorInfo });
         console.log("Tratamento concluído e Notice enviado...");
     }
 };

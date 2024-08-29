@@ -2,7 +2,6 @@ const { PatientMedicationHistory, PatientQuestionnaireHistory } = require("../..
 const Treatment = require("../../models/treatment");
 const { PatientUser } = require("../../models/users");
 const { calculateQuestionnairePerformance } = require("../../utils/questionnaires/performance");
-const { emitEventToUser } = require("../../utils/socket/connection");
 
 const getPatientHistoryById = async (patientId) => {
     const treatment = await Treatment.findOne({ patientId: patientId });
@@ -52,37 +51,4 @@ const getPatientHistoryById = async (patientId) => {
     };
 };
 
-const emitUpdateHistory = async (io, doctorId, patientId) => {
-    try {
-        const updateHistory = await getPatientHistoryById(patientId);
-        if (updateHistory) {
-            await emitEventToUser(io, doctorId, "updateHistory", { history: updateHistory });
-        }
-    } catch (error) {
-        console.error('Erro ao emitir histórico:', error);
-    }
-};
-
-const emitHistoryMedicationUpdate = async (io, doctorId, latestMedication, event) => {
-    try {
-        console.log("Latest Medication: ", latestMedication);
-        if (await emitEventToUser(io, doctorId, event, { latestMedication })) {
-            console.log(`Histórico de medicamentos emitido para a sala ${doctorId}`);
-        }
-    } catch (error) {
-        console.error('Erro ao emitir histórico de medicamentos:', error);
-    }
-};
-
-const emitHistoryQuestionnaireUpdate = async (io, doctorId, latestQuestionnaire, event) => {
-    try {
-        console.log(latestQuestionnaire);
-        if (await emitEventToUser(io, doctorId, event, { latestQuestionnaire })) {
-            console.log(`Histórico de questionários emitido para a sala ${doctorId}`);
-        }
-    } catch (error) {
-        console.error('Erro ao emitir histórico de questionários:', error);
-    }
-};
-
-module.exports = { getPatientHistoryById, emitUpdateHistory, emitHistoryMedicationUpdate, emitHistoryQuestionnaireUpdate }
+module.exports = { getPatientHistoryById }

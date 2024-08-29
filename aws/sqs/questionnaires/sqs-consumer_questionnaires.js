@@ -1,7 +1,6 @@
 const { receiveMessages, deleteMessage } = require('../../services/sqs_service');
 const { questionnairesQueueUrl } = require('../sqs_queues');
-const { PatientUser } = require('../../../models/users');
-const { createNewQuestionnaire } = require('../../../services/questionnaires/questionnaireService');
+const { addNewQuestionnaire } = require('../../../services/questionnaires/addNewQuestionnaire');
 
 const processQuestionnaireMessage = async (message) => {
     console.log(message);
@@ -13,17 +12,7 @@ const processQuestionnaireMessage = async (message) => {
     }
 
     try {
-        const patient = await PatientUser.findOne({ uid: patientId });
-        if (!patient) {
-            console.log(`Paciente não encontrado: ${patientId}`);
-            return;
-        }
-
-        const questionnaire = await createNewQuestionnaire(patientId, questionnaireTemplateId, timeSlot);
-
-        if (questionnaire) {
-            console.log(`Questionário criado e notificação enviada para o paciente ${patientId}`);
-        }
+        await addNewQuestionnaire(patientId, questionnaireTemplateId, timeSlot);
     } catch (error) {
         console.error('Erro ao processar mensagem:', error);
     }

@@ -1,12 +1,12 @@
 const { Server } = require('socket.io');
-const { initializeChangeStreams } = require('../database/streams');
 const { verifySocketToken } = require('../middlewares/tokenMiddleware');
 const Message = require('../models/message');
 const { findAndUpdateUserOnlineStatus } = require('../utils/db/db_helpers');
 
+let io; //Instância para o socket server
+
 const initializeSocket = (httpServer, dbURI) => {
-    const io = new Server(httpServer);
-    initializeChangeStreams({ io });
+    io = new Server(httpServer);
 
     io.use(verifySocketToken);
 
@@ -113,4 +113,8 @@ const initializeSocket = (httpServer, dbURI) => {
     });
 };
 
-module.exports = { initializeSocket };
+const getSocketServer = () => {
+    return io || null;
+}
+
+module.exports = { initializeSocket, getSocketServer };

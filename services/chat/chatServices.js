@@ -1,5 +1,4 @@
 const Message = require("../../models/message");
-const { emitEventToUser } = require("../../utils/socket/connection");
 
 const getInitialChatData = async (treatmentId, userUid) => {
     try {
@@ -23,15 +22,4 @@ const getInitialChatData = async (treatmentId, userUid) => {
     }
 }
 
-const emitInitialChatUpdate = async (io, userId, updatedChat, event) => {
-    try {
-        console.log("Chat inicial atualizado: ", updatedChat);
-        if (await emitEventToUser(io, userId, event, { updatedChat })) {
-            console.log(`Chat inicial emitido para a sala ${userId}`);
-        }
-    } catch (error) {
-        console.error('Erro ao emitir chat inicial:', error);
-    }
-}
-
-module.exports = { getInitialChatData, emitInitialChatUpdate };
+module.exports = { getInitialChatData };

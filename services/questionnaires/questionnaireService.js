@@ -1,10 +1,9 @@
 const Questionnaire = require('../../models/questionnaire');
 const QuestionnaireTemplate = require('../../models/questionnaire_template');
-const { getFormattedQuestionnaireName } = require('../../utils/questionnaires/format');
 const { PatientQuestionnaireHistory } = require('../../models/patient_history');
 const Treatment = require('../../models/treatment');
 const { getCurrentDateInBrazilTime, getExpirationDateInUTC } = require('../../utils/date/timeZones');
-const { emitEventToUser } = require('../../utils/socket/connection');
+const { getFormattedQuestionnaireName } = require('../../utils/questionnaires/format');
 
 const validateQuestions = (questions) => {
     if (!Array.isArray(questions)) return false;
@@ -75,7 +74,6 @@ const createNewQuestionnaire = async (patientId, templateId, timeSlot) => {
         });
 
         await newQuestionnaireHistory.save();
-
         return newQuestionnaire;
     } catch (err) {
         console.error(`Erro ao criar novo questionário: ${err.message}`);
@@ -85,7 +83,7 @@ const createNewQuestionnaire = async (patientId, templateId, timeSlot) => {
 
 // Filtra as questões do template com base no período de resposta
 const filterTemplateQuestionsByResponsePeriod = async (template, patient) => {
-    try{
+    try {
         console.log("Filtragem das questões: ");
         let filteredQuestions = [];
 
@@ -93,46 +91,45 @@ const filterTemplateQuestionsByResponsePeriod = async (template, patient) => {
             console.log(`Questão "${question.title}"`)
             if (question.responsePeriod && question.responseTime) {
                 let responsePeriodEnd = new Date();
-    
+
                 if (question.responseTime === "dias") {
                     responsePeriodEnd.setDate(responsePeriodEnd.getDate() - question.responsePeriod);
                 } else if (question.responseTime === "meses") {
                     responsePeriodEnd.setMonth(responsePeriodEnd.getMonth() - question.responsePeriod);
                 }
-    
+
                 console.log(`Periodo da pergunta "${question.title}" (id: ${question._id}): `, responsePeriodEnd);
-                
+
 
                 // Buscar questionários que contenham esta pergunta dentro do período especificado
                 const recentQuestionnaires = await Questionnaire.find({
                     patientId: patient.uid,
                     answers: {
-                        $elemMatch : { 
-                            questionId: question._id 
+                        $elemMatch: {
+                            questionId: question._id
                         }
                     },
                     createdAt: { $gte: responsePeriodEnd }
                 });
-    
+
                 if (recentQuestionnaires.length === 0) {
                     console.log("Nenhum questionário anterior achado, adiciona questão");
                     filteredQuestions.push(question);
                 }
-                else{
+                else {
                     console.log("Há questionários recentes contendo essa questão então não enviar questão");
                 }
             } else {
                 filteredQuestions.push(question);
             }
         }
-    
+
         return {
             ...template,
             questions: filteredQuestions
         };
     }
-    catch (err)
-    {
+    catch (err) {
         console.error(err);
     }
 };
@@ -140,7 +137,7 @@ const filterTemplateQuestionsByResponsePeriod = async (template, patient) => {
 //Filtra as questões de template com base nas respostas feitas no questionário
 const filterTemplateQuestionsByAnswers = (template, answers) => {
     const answerIds = answers.map(answer => answer.questionId);
-    const filteredQuestions = template.questions.filter(question => 
+    const filteredQuestions = template.questions.filter(question =>
         answerIds.includes(question._id.toString())
     );
 
@@ -150,21 +147,9 @@ const filterTemplateQuestionsByAnswers = (template, answers) => {
     };
 };
 
-
-const emitNewQuestionnaire = async (io, patientId, newQuestionnaire, event) => {
-    try {
-        if (await emitEventToUser(io, patientId, event, { questionnaire: newQuestionnaire })) {
-            console.log(`Novo questionário emitido para o paciente ${patientId}`);
-        }
-    } catch (error) {
-        console.error('Erro ao emitir novo questionário:', error);
-    }
-}
-
 module.exports = {
     validateQuestions,
     createNewQuestionnaire,
     filterTemplateQuestionsByResponsePeriod,
-    emitNewQuestionnaire,
     filterTemplateQuestionsByAnswers
 };

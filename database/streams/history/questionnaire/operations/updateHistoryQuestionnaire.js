@@ -1,9 +1,8 @@
 const { PatientUser } = require('../../../../../models/users');
 const Treatment = require('../../../../../models/treatment');
-const { emitUpdateHistory, emitHistoryQuestionnaireUpdate } = require('../../../../../services/history/historyService');
 const { PatientQuestionnaireHistory } = require('../../../../../models/patient_history');
-const QuestionnaireTemplate = require('../../../../../models/questionnaire_template');
 const { formatLatestQuestionnaire } = require('../../../../../utils/history/formatHistory');
+const { emitUpdateHistory, emitHistoryQuestionnaireUpdate, emitHistoryQuestionnaireDelete } = require('../../../../../socket/events/historyPatientEvents');
 
 const handleUpdateHistoryQuestionnaire = async (change, io) => {
     const updatedFields = change.updateDescription.updatedFields;
@@ -41,8 +40,8 @@ const handleUpdateHistoryQuestionnaire = async (change, io) => {
 
             const latestQuestionnaire = await formatLatestQuestionnaire(questionnaireHistory);
 
-            await emitUpdateHistory(io, doctorId, patientId);
-            await emitHistoryQuestionnaireUpdate(io, doctorId, latestQuestionnaire, "updateLatestQuestionnaire");
+            await emitUpdateHistory({ io: io, doctorId: doctorId, patientId: patientId });
+            await emitHistoryQuestionnaireUpdate({ io: io, doctorId: doctorId, latestQuestionnaire: latestQuestionnaire });
         }
         else if (updatedFields['delete'] === true) {
 
@@ -51,8 +50,8 @@ const handleUpdateHistoryQuestionnaire = async (change, io) => {
 
             const latestQuestionnaire = await formatLatestQuestionnaire(questionnaireHistory);
 
-            await emitUpdateHistory(io, doctorId, patientId);
-            await emitHistoryQuestionnaireUpdate(io, doctorId, latestQuestionnaire, "deleteLatestQuestionnaire");
+            await emitUpdateHistory({ io: io, doctorId: doctorId, patientId: patientId });
+            await emitHistoryQuestionnaireDelete({ io: io, doctorId: doctorId, latestQuestionnaire: latestQuestionnaire });
         }
     }
 }

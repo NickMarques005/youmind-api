@@ -1,8 +1,9 @@
 const { findSender, handleSenderIcon } = require('../../../../utils/chat/chat');
 const Treatment = require('../../../../models/treatment');
 const { ScreenTypes, MenuTypes } = require('../../../../utils/app/screenMenuTypes');
-const { getInitialChatData, emitInitialChatUpdate } = require('../../../../services/chat/chatServices');
+const { getInitialChatData } = require('../../../../services/chat/chatServices');
 const NotificationStructure = require('../../../../services/notifications/notificationStructure');
+const { emitInitialChatUpdate } = require('../../../../socket/events/chatEvents');
 
 const handleInsertMessage = async (change, io) => {
     const newMessage = change.fullDocument;
@@ -34,8 +35,8 @@ const handleInsertMessage = async (change, io) => {
             const updatedInitialChatSender = await getInitialChatData(treatmentId, senderId);
             const updatedInitialChatReceiver = await getInitialChatData(treatmentId, receiverId);
 
-            await emitInitialChatUpdate(io, senderId, { chat: updatedInitialChatSender, treatmentId }, "updateInitialChat");
-            await emitInitialChatUpdate(io, receiverId, { chat: updatedInitialChatReceiver, treatmentId }, "updateInitialChat");
+            await emitInitialChatUpdate({ io, userId: senderId, updatedChat: { chat: updatedInitialChatSender, treatmentId } });
+            await emitInitialChatUpdate({ io, userId: receiverId, updatedChat: { chat: updatedInitialChatReceiver, treatmentId } });
 
             const notificationData = new NotificationStructure(
                 `${senderMessage.type === 'doctor' ? 'Dr. ' : ''}${senderMessage.name}`,

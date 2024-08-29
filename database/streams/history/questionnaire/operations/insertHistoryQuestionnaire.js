@@ -1,9 +1,8 @@
 const Treatment = require('../../../../../models/treatment');
-const { emitUpdateHistory, emitHistoryQuestionnaireUpdate } = require('../../../../../services/history/historyService');
 const { PatientQuestionnaireHistory } = require('../../../../../models/patient_history');
 const { PatientUser } = require('../../../../../models/users');
-const QuestionnaireTemplate = require('../../../../../models/questionnaire_template');
 const { formatLatestQuestionnaire } = require('../../../../../utils/history/formatHistory');
+const { emitUpdateHistory, emitHistoryQuestionnaireUpdate } = require('../../../../../socket/events/historyPatientEvents');
 
 const handleInsertHistoryQuestionnaire = async (change, io) => {
     const questionnaireId = change.documentKey._id;
@@ -28,8 +27,8 @@ const handleInsertHistoryQuestionnaire = async (change, io) => {
 
     const latestQuestionnaire = await formatLatestQuestionnaire(questionnaireHistory);
 
-    await emitUpdateHistory(io, doctorId, patientId);
-    await emitHistoryQuestionnaireUpdate(io, doctorId, latestQuestionnaire, "updateLatestQuestionnaire")
+    await emitUpdateHistory({ io: io, doctorId: doctorId, patientId: patientId });
+    await emitHistoryQuestionnaireUpdate({ io: io, doctorId: doctorId, latestQuestionnaire: latestQuestionnaire });
 }
 
 module.exports = handleInsertHistoryQuestionnaire;

@@ -4,7 +4,7 @@ const { checkAndScheduleMedications } = require('../../services/medications/medi
 const QuestionnaireTemplate = require('../../models/questionnaire_template');
 const moment = require('moment-timezone');
 
-const handleAddNewQuestionnaire = async (patientId) => {
+const handleAddNewQuestionnaire = async (patientId, treatmentInitialization) => {
     // Verificar horário atual, se o horário for entre 8 da noite e 2 da manhã então enviará um questionário para o paciente responder
     const now = moment().tz('America/Sao_Paulo');
     const currentHour = now.hour();
@@ -26,8 +26,12 @@ const handleAddNewQuestionnaire = async (patientId) => {
         console.log(`Nenhum template de questionário encontrado para o horário ${timeSlot}.`);
         return;
     }
-    
-    await addNewQuestionnaire(patientId, template._id, timeSlot);
+
+    /*
+    ### Adicionar novo questionário para o paciente
+    */
+    await addNewQuestionnaire(patientId, template._id, timeSlot, treatmentInitialization);
+    console.log("### Serviço de questionário do paciente ativado ###");
 }
 
 const handleCheckAndScheduleMedications = async (patientId) => {
@@ -36,8 +40,12 @@ const handleCheckAndScheduleMedications = async (patientId) => {
 }
 
 const handleStartPatientTreatmentServices = async (patientId) => {
-    await handleAddNewQuestionnaire(patientId);
-    console.log("Serviço de questionário do paciente ativado");
+    /*
+    Início do processo de tratamento
+    */
+    const treatmentStart = true;
+    await handleAddNewQuestionnaire(patientId, treatmentStart);
+
 }
 
 module.exports = {
