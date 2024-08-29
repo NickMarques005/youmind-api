@@ -24,15 +24,11 @@ const handleInsertMedication = async (change, io) => {
     /*
     ### Início do agendamento do medicamento
     */
-    await initializeMedicationScheduleProcess(newMedication, agenda);
-
-    const existingMedication = await Medication.findOne({ _id: newMedication._id });
-    if (!existingMedication) {
-        console.log(`O medicamento para atualização de agendamento não foi encontrado.`);
-        return;
+    const medicationInitialized = await initializeMedicationScheduleProcess(newMedication, agenda);
+    if(medicationInitialized)
+    {
+        console.log("#### Medicamento agendado com sucesso! ###");
     }
-    existingMedication.isScheduled = true;
-    await existingMedication.save();
 };
 
 module.exports = handleInsertMedication;

@@ -81,6 +81,7 @@ exports.createMedication = async (req, res) => {
                 frequency,
                 schedules,
                 start,
+                isScheduled: true,
             };
         }
 
@@ -107,6 +108,9 @@ exports.updateMedication = async (req, res) => {
         if (!uid) return HandleError(res, 401, "Não autorizado");
         if (!id) return HandleError(res, 400, "Medicamento não especificado");
 
+        const medication = await Medication.findById(id);
+        if(!medication) return HandleError(res, 404, "Medicamento não encontrado");
+
         const updateFields = {};
         if (name !== undefined) updateFields.name = name;
         if (dosage !== undefined) updateFields.dosage = dosage;
@@ -125,6 +129,7 @@ exports.updateMedication = async (req, res) => {
             if (frequency !== undefined) updateFields.frequency = frequency;
             if (schedules !== undefined) updateFields.schedules = schedules;
             if (start !== undefined) updateFields.start = start;
+            if(start && frequency && start && expiresAt && !medication.isScheduled) updateFields.isScheduled = true;
         }
         const updatedMedication = await Medication.findOneAndUpdate(
             { _id: id, patientId: uid },
