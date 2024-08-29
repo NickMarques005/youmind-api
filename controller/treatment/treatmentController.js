@@ -372,7 +372,7 @@ exports.endTreatment = async (req, res) => {
         ### Questionários: Atualizar históricos de questionários relacionados a esse paciente para tipo delete
         */
         const questionnaireUpdateResult = await PatientQuestionnaireHistory.updateMany(
-            { _id: { $in: questionnaireIds } },
+            { 'questionnaire.questionnaireId': { $in: questionnaireIds } },
             { $set: { delete: true } }
         );
 
