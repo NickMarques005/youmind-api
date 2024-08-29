@@ -108,19 +108,22 @@ exports.getLatestHistory = async (req, res) => {
 
         const latestQuestionnaires = await Promise.all(latestQuestionnairesHistory.map(async (history) => {
             const questionnaire = await Questionnaire.findById(history.questionnaire.questionnaireId);
-            let template;
-            if (questionnaire && questionnaire.answers && questionnaire.checked) {
-                template = await QuestionnaireTemplate.findById(questionnaire.questionnaireTemplateId);
+            if (questionnaire) {
+                let template;
+                if (questionnaire.answers && questionnaire.checked) {
+                    template = await QuestionnaireTemplate.findById(questionnaire.questionnaireTemplateId);
+                }
+                return {
+                    _id: history._id,
+                    patientId: history.patientId,
+                    currentQuestionnaire: questionnaire,
+                    template,
+                    pending: history.questionnaire.pending,
+                    answered: history.questionnaire.answered,
+                    updatedAt: history.questionnaire.updatedAt
+                };
             }
-            return {
-                _id: history._id,
-                patientId: history.patientId,
-                currentQuestionnaire: questionnaire,
-                template,
-                pending: history.questionnaire.pending,
-                answered: history.questionnaire.answered,
-                updatedAt: history.questionnaire.updatedAt
-            };
+            return null;
         }));
 
         const latestMedications = await Promise.all(latestMedicationsHistory.map(async (history) => {
@@ -140,7 +143,7 @@ exports.getLatestHistory = async (req, res) => {
                 createdAt: medication.createdAt,
                 updatedAt: medication.updatedAt,
             }
-            
+
             return {
                 _id: history._id,
                 patientId: history.patientId,
@@ -154,8 +157,13 @@ exports.getLatestHistory = async (req, res) => {
             };
         }));
 
+        /*
+        ### Filtragem para poder retirar questionários nulos
+        */
+        const filteredLatestQuestionnaires = latestQuestionnaires.filter(q => q !== null);
+
         return HandleSuccess(res, 200, "Últimos históricos dos pacientes", {
-            latestQuestionnaires: latestQuestionnaires || [],
+            latestQuestionnaires: filteredLatestQuestionnaires || [],
             latestMedications: latestMedications || []
         });
     } catch (err) {
