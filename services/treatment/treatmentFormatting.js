@@ -73,6 +73,7 @@ const formatTreatment = async (treatment, userType) => {
         ### Retorno do tratamento formatado
         */
         return {
+            _id: treatment._id,
             name: oppositeUser.name,
             email: oppositeUser.email,
             avatar: oppositeUser.avatar,
@@ -81,7 +82,6 @@ const formatTreatment = async (treatment, userType) => {
             gender: oppositeUser.gender,
             uid: oppositeUser.uid,
             online: oppositeUser.online,
-            _id: treatment._id,
             chat: chatData || undefined,
             startedAt: treatment.startedAt,
             status: statusTreatment,

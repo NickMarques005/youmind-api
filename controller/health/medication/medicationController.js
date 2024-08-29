@@ -4,8 +4,8 @@ const { PatientUser } = require('../../../models/users');
 const { HandleError, HandleSuccess } = require('../../../utils/response/handleResponse');
 const MessageTypes = require('../../../utils/response/typeResponse');
 const Treatment = require('../../../models/treatment');
-const { getNextScheduleTime, getStartOfTheDay, getEndOfTheDay, convertDateToBrazilDate, setDateToSpecificTime } = require('../../../utils/date/timeZones');
-const { scheduleMedicationTask, cancelSpecificMedicationSchedules, cancelSpecificMedicationNotTakenSchedule, initializeMedicationScheduleProcess } = require('../../../services/medications/medicationScheduler');
+const { getStartOfTheDay, getEndOfTheDay, convertDateToBrazilDate, setDateToSpecificTime } = require('../../../utils/date/timeZones');
+const { cancelSpecificMedicationSchedules, cancelSpecificMedicationNotTakenSchedule, initializeMedicationScheduleProcess } = require('../../../services/medications/medicationScheduler');
 const { getAgenda } = require('../../../agenda/agenda_manager');
 
 exports.getMedications = async (req, res) => {

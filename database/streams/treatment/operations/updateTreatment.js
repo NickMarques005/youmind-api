@@ -52,13 +52,13 @@ const handleUpdateTreatment = async (change, io) => {
 
         const patientInfo = {
             patientId,
-            treatment: treatmentDoctorInfo,
+            treatment: treatmentPatientInfo,
             notice: noticePatient
         }
 
         const doctorInfo = {
             doctorId,
-            treatment: treatmentPatientInfo,
+            treatment: treatmentDoctorInfo,
             notice: noticeDoctor
         }
 
@@ -116,13 +116,13 @@ const handleUpdateTreatment = async (change, io) => {
 
         const patientInfo = {
             patientId,
-            treatment: treatmentDoctorInfo,
+            treatment: treatmentPatientInfo,
             notice: noticePatient
         }
 
         const doctorInfo = {
             doctorId,
-            treatment: treatmentPatientInfo,
+            treatment: treatmentDoctorInfo,
             notice: noticeDoctor
         }
 
