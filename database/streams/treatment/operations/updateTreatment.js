@@ -44,8 +44,8 @@ const handleUpdateTreatment = async (change, io) => {
         console.log("Tratamento atualizado para ativo: ", updatedTreatment);
         console.log("Emitir socket...");
 
-        const messagePatient = `Parabéns por iniciar o tratamento com ${treatmentDoctorInfo.name}! Gostaria de ver instruções de como funciona o processo de tratamento no YouMind?`;
-        const messageDoctor = `Parabéns por iniciar o tratamento com ${treatmentPatientInfo.name}! Gostaria de ver instruções de como funciona o processo de tratamento no YouMind?`;
+        const messagePatient = `Parabéns por iniciar o tratamento com ${treatmentPatientInfo.name}! Gostaria de ver instruções de como funciona o processo de tratamento no YouMind?`;
+        const messageDoctor = `Parabéns por iniciar o tratamento com ${treatmentDoctorInfo.name}! Gostaria de ver instruções de como funciona o processo de tratamento no YouMind?`;
 
         const noticePatient = createNotice({ message: messagePatient, type: "welcome", dontshow: true, acceptText: "Sim", declineText: "Não, Obrigado" });
         const noticeDoctor = createNotice({ message: messageDoctor, type: "welcome", dontshow: true, acceptText: "Sim", declineText: "Não, Obrigado" });
@@ -108,8 +108,8 @@ const handleUpdateTreatment = async (change, io) => {
         const treatmentDoctorInfo = await formatTreatment(updatedTreatment, currentDoctor.type);
         if (!treatmentPatientInfo || !treatmentDoctorInfo) return console.error('Erro ao formatar tratamento.');
 
-        const messagePatient = `Parabéns por completar o tratamento com ${treatmentDoctorInfo.name}!`;
-        const messageDoctor = `Parabéns por completar o tratamento com ${treatmentPatientInfo.name}!`;
+        const messagePatient = `Parabéns por completar o tratamento com ${treatmentPatientInfo.name}!`;
+        const messageDoctor = `Parabéns por completar o tratamento com ${treatmentDoctorInfo.name}!`;
 
         const noticePatient = createNotice({ message: messagePatient, type: "treatment_end", dontshow: true, acceptText: "Ok" });
         const noticeDoctor = createNotice({ message: messageDoctor, type: "treatment_end", dontshow: true, acceptText: "Ok" });

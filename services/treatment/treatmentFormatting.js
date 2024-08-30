@@ -8,6 +8,8 @@ const formatTreatment = async (treatment, userType) => {
         const oppositeUserId = userType === 'patient' ? treatment.doctorId : treatment.patientId;
         const oppositeUser = await (userType === 'patient' ? DoctorUser.findOne({ uid: oppositeUserId }) : PatientUser.findOne({ uid: oppositeUserId }));
 
+        console.log(oppositeUser);
+
         if (userType !== 'patient' && !oppositeUser) {
             console.error(`O paciente do ${userType} não foi encontrado`);
             return undefined;
@@ -72,7 +74,7 @@ const formatTreatment = async (treatment, userType) => {
         /*
         ### Retorno do tratamento formatado
         */
-        return {
+        const formattedTreatment = {
             _id: treatment._id,
             name: oppositeUser.name,
             email: oppositeUser.email,
@@ -88,6 +90,9 @@ const formatTreatment = async (treatment, userType) => {
             sessions: sessionsWithAvatars || [],
             treatmentStatus: treatment.status
         };
+
+        console.log("Tratamento a ser enviado: ", formattedTreatment);
+        return formattedTreatment;
     }
     catch (err) {
         console.error("Houve um erro ao formatar tratamento: ", err);
