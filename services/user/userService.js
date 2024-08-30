@@ -58,6 +58,7 @@ const formatUserData = async (type, userId) => {
 
         const userSelected = await modelUser.findById(userId,
             {
+                uid: 1,
                 email: 1,
                 online: 1,
                 birth: 1,
@@ -75,10 +76,24 @@ const formatUserData = async (type, userId) => {
         ### Se for tipo paciente irá buscar dados do paciente
         */
         if (type === 'patient') {
+
+            if (userSelected.is_treatment_running) {
+                const currentTreatment = await Treatment.findOne({ patientId: userSelected.uid, status: "active" });
+                if (currentTreatment) {
+                    const doctor = await DoctorUser.findOne({ uid: currentTreatment.doctorId }, { name: 1, avatar: 1, email: 1, private: 1 });
+                    userSelected.doctor = doctor ? { 
+                        name: doctor.name, 
+                        avatar: doctor.avatar, 
+                        ...(doctor.private ? {} : { email: doctor.email })
+                    } : null;
+                }
+            }
+
             if (userSelected.private) {
                 return {
                     online: userSelected.online,
                     private: userSelected.private,
+                    doctor: userSelected.doctor,
                     ...(userSelected.is_treatment_running && { is_treatment_running: userSelected.is_treatment_running })
                 }
             }
