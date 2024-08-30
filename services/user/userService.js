@@ -23,8 +23,11 @@ const fetchUsers = async (type, searchData) => {
             }
         ).limit(30);
 
-        if (type === 'doctor') {
-            const usersWithTreatments = await Promise.all(users.map(async (user) => {
+        if (type === 'patient') {
+            
+            const usersDoctors = await Promise.all(users.map(async (user) => {
+                let doctorTotalTreatments = [];
+
                 if (user.total_treatments && user.total_treatments.length > 0) {
                     const treatmentIds = user.total_treatments;
                     const treatments = await Treatment.find({ _id: { $in: treatmentIds } });
@@ -32,19 +35,47 @@ const fetchUsers = async (type, searchData) => {
                     const patientIds = treatments.map(treatment => treatment.patientId);
                     const patients = await PatientUser.find({ uid: { $in: patientIds } }, { name: 1, avatar: 1, email: 1 });
 
-                    user.total_treatments = patients.map(patient => ({
+                    doctorTotalTreatments = patients.map(patient => ({
                         name: patient.name,
                         avatar: patient.avatar,
                         private: patient.private,
                         ...(patient.private ? {} : { email: patient.email })
                     }));
                 }
-                return user;
+                return {
+                    ...user.toObject(),
+                    doctorTotalTreatments
+                };
             }));
-            return usersWithTreatments;
-        }
 
-        return users;
+            return usersDoctors;
+        }
+        else {
+            const usersPatients = await Promise.all(users.map(async (user) => {
+                let currentTreatmentDoctor = null;
+
+                if (user.is_treatment_running) {
+                    const currentTreatment = await Treatment.findOne({ patientId: user.uid, status: "active" });
+                    if (currentTreatment) {
+                        const doctor = await DoctorUser.findOne({ uid: currentTreatment.doctorId }, { name: 1, avatar: 1, email: 1, private: 1 });
+                        currentTreatmentDoctor = doctor ? {
+                            name: doctor.name,
+                            avatar: doctor.avatar,
+                            private: doctor.private,
+                            ...(doctor.private ? {} : { email: doctor.email })
+                        } : null;
+                    }
+                }
+
+                return {
+                    ...user.toObject(),
+                    ...(currentTreatmentDoctor && { doctor: currentTreatmentDoctor }),
+                    ...(user.is_treatment_running && { is_treatment_running: user.is_treatment_running })
+                };
+            }));
+
+            return usersPatients;
+        }
     }
     catch (err) {
         console.error("Houve um erro inesperado ao buscar usuários: ", err);
@@ -76,14 +107,16 @@ const formatUserData = async (type, userId) => {
         ### Se for tipo paciente irá buscar dados do paciente
         */
         if (type === 'patient') {
+            let currentTreatmentDoctor;
 
             if (userSelected.is_treatment_running) {
                 const currentTreatment = await Treatment.findOne({ patientId: userSelected.uid, status: "active" });
                 if (currentTreatment) {
                     const doctor = await DoctorUser.findOne({ uid: currentTreatment.doctorId }, { name: 1, avatar: 1, email: 1, private: 1 });
-                    userSelected.doctor = doctor ? { 
+                    currentTreatmentDoctor = doctor ? { 
                         name: doctor.name, 
-                        avatar: doctor.avatar, 
+                        avatar: doctor.avatar,
+                        private: doctor.private,
                         ...(doctor.private ? {} : { email: doctor.email })
                     } : null;
                 }
@@ -93,7 +126,7 @@ const formatUserData = async (type, userId) => {
                 return {
                     online: userSelected.online,
                     private: userSelected.private,
-                    doctor: userSelected.doctor,
+                    ...(currentTreatmentDoctor && { doctor: currentTreatmentDoctor }),
                     ...(userSelected.is_treatment_running && { is_treatment_running: userSelected.is_treatment_running })
                 }
             }
@@ -106,6 +139,7 @@ const formatUserData = async (type, userId) => {
                 online: userSelected.online,
                 phone: userSelected.phone,
                 private: userSelected.private,
+                ...(currentTreatmentDoctor && { doctor: currentTreatmentDoctor }),
                 ...(userSelected.is_treatment_running && { is_treatment_running: userSelected.is_treatment_running })
             }
         }
@@ -113,13 +147,15 @@ const formatUserData = async (type, userId) => {
         ### Se for tipo doutor então buscar dados de doutor
         */
         else {
+            let doctorTotalTreatments;
+
             if (userSelected.total_treatments.length > 0) {
                 const treatmentIds = userSelected.total_treatments;
                 const treatments = await Treatment.find({ _id: { $in: treatmentIds } });
 
                 const patientIds = treatments.map(treatment => treatment.patientId);
                 const patients = await PatientUser.find({ uid: { $in: patientIds } }, { name: 1, avatar: 1, email: 1 });
-                userSelected.total_treatments = patients.map(patient => ({
+                doctorTotalTreatments = patients.map(patient => ({
                     name: patient.name,
                     avatar: patient.avatar,
                     private: patient.private,
@@ -127,11 +163,12 @@ const formatUserData = async (type, userId) => {
                 }));
             }
 
+
             if (userSelected.private) {
                 return {
                     online: userSelected.online,
                     private: userSelected.private,
-                    ...(userSelected.total_treatments && { total_treatments: userSelected.total_treatments }),
+                    ...(doctorTotalTreatments && { total_treatments: doctorTotalTreatments }),
                 }
             }
 
@@ -143,7 +180,7 @@ const formatUserData = async (type, userId) => {
                 online: userSelected.online,
                 phone: userSelected.phone,
                 private: userSelected.private,
-                ...(userSelected.total_treatments && { total_treatments: userSelected.total_treatments }),
+                ...(doctorTotalTreatments && { total_treatments: doctorTotalTreatments }),
             }
         }
     }
