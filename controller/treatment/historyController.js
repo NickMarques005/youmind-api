@@ -6,6 +6,7 @@ const Medication = require('../../models/medication');
 const QuestionnaireTemplate = require('../../models/questionnaire_template');
 const Questionnaire = require('../../models/questionnaire');
 const Treatment = require('../../models/treatment');
+const { filterTemplateQuestionsByAnswers } = require('../../services/questionnaires/questionnaireService');
 
 exports.getAllHistory = async (req, res) => {
     try {
@@ -109,15 +110,16 @@ exports.getLatestHistory = async (req, res) => {
         const latestQuestionnaires = await Promise.all(latestQuestionnairesHistory.map(async (history) => {
             const questionnaire = await Questionnaire.findById(history.questionnaire.questionnaireId);
             if (questionnaire) {
-                let template;
+                let filteredTemplate;
                 if (questionnaire.answers && questionnaire.checked) {
-                    template = await QuestionnaireTemplate.findById(questionnaire.questionnaireTemplateId);
+                    const template = await QuestionnaireTemplate.findById(questionnaire.questionnaireTemplateId);
+                    filteredTemplate = filterTemplateQuestionsByAnswers(template, questionnaire.answers);
                 }
                 return {
                     _id: history._id,
                     patientId: history.patientId,
                     currentQuestionnaire: questionnaire,
-                    template,
+                    template: filteredTemplate,
                     pending: history.questionnaire.pending,
                     answered: history.questionnaire.answered,
                     updatedAt: history.questionnaire.updatedAt

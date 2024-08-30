@@ -7,6 +7,7 @@ const formatTreatment = async (treatment, userType) => {
     try {
         const treatmentId = treatment._id.toString();
 
+        const userId = userType === 'patient' ? treatment.patientId : treatment.doctorId;
         const oppositeUserId = userType === 'patient' ? treatment.doctorId : treatment.patientId;
         const oppositeUser = await (userType === 'patient' ? DoctorUser.findOne({ uid: oppositeUserId }) : PatientUser.findOne({ uid: oppositeUserId }));
 
@@ -18,9 +19,9 @@ const formatTreatment = async (treatment, userType) => {
         }
 
         /*
-        ### Busca dados inicias de chat
+        ### Busca dados iniciais de chat através do userId atual
         */
-        const chatData = await getInitialChatData(treatment._id, oppositeUserId);
+        const chatData = await getInitialChatData(treatment._id, userId);
 
         /*
         ### Buscar históricos de medicações e questionários para o tratamento
