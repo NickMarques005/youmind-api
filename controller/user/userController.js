@@ -1,23 +1,22 @@
 const { PatientUser, DoctorUser } = require('../../models/users');
 const { handleDataText } = require('../../utils/text/textUtils');
-const { fetchUsers } = require('../../services/user/userService');
+const { fetchUsers, formatUserData } = require('../../services/user/userService');
 const { getUserModel } = require("../../utils/db/model");
 const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
 const MessageTypes = require('../../utils/response/typeResponse');
 
 exports.filterUsers = async (req, res) => {
-
     try {
         const { search, type } = req.query;
         const { uid } = req.user;
 
-        if (!uid) return HandleError(res, 401, "Usuário não autorizado");
+        if (!uid) return HandleError(res, 401, "Não autorizado");
 
         let userModel = getUserModel(type);
         if (!userModel) return HandleError(res, 400, "Tipo de usuário não especificado");
 
         const user = userModel.find({ uid: uid });
-        if (!user) return HandleError(res, 404, "Usuário não encontrado");
+        if (!user) return HandleError(res, 404, "Seu perfil não foi encontrado");
 
         if (!search) return HandleSuccess(res, 200, "Busca vazia", []);
 
@@ -35,6 +34,27 @@ exports.filterUsers = async (req, res) => {
     catch (err) {
         console.error(err);
         return HandleError(res, 500, "Erro ao buscar usuários");
+    }
+}
+
+exports.fetchSelectedUserData = async (req, res) =>{
+    try{
+        const { uid } = req.user;
+        if (!uid) return HandleError(res, 401, "Usuário não autorizado");
+        const { selectedUserId, type } = req.query;
+        if(!type || !selectedUserId) return HandleError(res, 400, "Dados de usuário não especificados")
+
+        if (!['doctor', 'patient'].includes(type)) return HandleError(res, 400, "Tipo de usuário inválido");
+
+        const formattedUser = await formatUserData(type, selectedUserId);
+        if (!formattedUser) return HandleError(res, 400, "Houve um erro ao buscar usuário");
+
+        return HandleSuccess(res, 200, "Dados do usuário formatados com sucesso", formattedUser);
+    }   
+    catch (err)
+    {
+        console.error("Erro ao buscar dados do usuário: ", err);
+        return HandleError(res, 500, "Erro ao buscar dados do usuário: ", err.message);
     }
 }
 
@@ -57,6 +77,7 @@ exports.userData = async (req, res) => {
             birth: user.birth ? user.birth : undefined,
             gender: user.gender ? user.gender : undefined,
             avatar: user.avatar,
+            private: user.private,
             ...(user.doctor_crm && { doctor_crm: user.doctor_crm }),
             ...(user.type === 'doctor' && user.total_treatments && { total_treatments: user.total_treatments }),
             ...(user.type === 'patient' && user.is_treatment_running !== undefined && { is_treatment_running: user.is_treatment_running })
@@ -127,5 +148,25 @@ exports.updateUserDetails = async (req, res) => {
     catch (err) {
         console.error("Erro ao atualizar dados do usuário: ", err);
         return HandleError(res, 500, "Erro ao atualizar dados do usuário");
+    }
+}
+
+exports.updateProfileRestrinction = async (req, res) => {
+    try{
+        const { uid } = req.user;
+        if (!uid) return HandleError(res, 401, "Usuário não autorizado");
+        
+        let user = await PatientUser.findOne({ uid: uid }) || await DoctorUser.findOne({ uid: uid });
+        if (!user) return HandleError(res, 404, "Usuário não encontrado");
+
+        user.private = !user.private;
+        await user.save();
+
+        return HandleSuccess(res, 200, "Restrição de perfil atualizada com sucesso", { private: user.private }, MessageTypes.SUCCESS);
+    }
+    catch (err)
+    {
+        console.error("Erro ao atualizar dados do usuário: ", err);
+        return HandleError(res, 500, "Erro ao atualizar restrição de perfil");
     }
 }
