@@ -5,6 +5,8 @@ const { calculateTreatmentOverallPerformance } = require('./performance/performa
 
 const formatTreatment = async (treatment, userType) => {
     try {
+        const treatmentId = treatment._id.toString();
+
         const oppositeUserId = userType === 'patient' ? treatment.doctorId : treatment.patientId;
         const oppositeUser = await (userType === 'patient' ? DoctorUser.findOne({ uid: oppositeUserId }) : PatientUser.findOne({ uid: oppositeUserId }));
 
@@ -75,7 +77,7 @@ const formatTreatment = async (treatment, userType) => {
         ### Retorno do tratamento formatado
         */
         const formattedTreatment = {
-            _id: treatment._id,
+            _id: treatmentId,
             name: oppositeUser.name,
             email: oppositeUser.email,
             avatar: oppositeUser.avatar,
