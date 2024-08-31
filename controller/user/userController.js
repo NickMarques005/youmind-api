@@ -151,7 +151,7 @@ exports.updateUserDetails = async (req, res) => {
     }
 }
 
-exports.updateProfileRestrinction = async (req, res) => {
+exports.updateProfileRestriction = async (req, res) => {
     try{
         const { uid } = req.user;
         if (!uid) return HandleError(res, 401, "Usuário não autorizado");
@@ -162,7 +162,18 @@ exports.updateProfileRestrinction = async (req, res) => {
         user.private = !user.private;
         await user.save();
 
-        return HandleSuccess(res, 200, "Restrição de perfil atualizada com sucesso", { private: user.private }, MessageTypes.SUCCESS);
+        let message;
+        let messageType;
+
+        if (user.private) {
+            message = `Seu perfil foi restrito. Agora, apenas você e ${user.type === 'patient' ? 'seu doutor' : 'seus pacientes'} podem visualizar suas informações pessoais.`;
+            messageType = MessageTypes.SHIELD_LOCK;
+        } else {
+            message = "A restrição do seu perfil foi removida. Agora, seu perfil está visível publicamente.";
+            messageType = MessageTypes.SHIELD_UNLOCK;
+        }
+
+        return HandleSuccess(res, 200, message, { private: user.private }, messageType);
     }
     catch (err)
     {

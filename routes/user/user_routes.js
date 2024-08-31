@@ -9,6 +9,6 @@ router.get('/selected/data', tokenMiddleware.verifyUidToken, userController.fetc
 router.get('/data', tokenMiddleware.verifyUidToken, userController.userData);
 router.post('/update/avatar', tokenMiddleware.verifyUidToken, userController.updateUserAvatar);
 router.post('/update/details', tokenMiddleware.verifyUidToken, userController.updateUserDetails);
-router.post('/update/private', tokenMiddleware.verifyUidToken, userController.updateProfileRestrinction);
+router.post('/update/private', tokenMiddleware.verifyUidToken, userController.updateProfileRestriction);
 
 module.exports = router;
