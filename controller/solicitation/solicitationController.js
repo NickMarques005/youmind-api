@@ -9,7 +9,7 @@ const { handleTreatmentSolicitation } = require('../../services/solicitation/sol
 
 exports.createSolicitation = async (req, res) => {
     const { uid } = req.user;
-    const { receiver_email, type, solicitationType } = req.body;
+    const { receiver_id, type, solicitationType } = req.body;
 
     if (!uid) return HandleError(res, 401, "Usuário não autorizado");
 
@@ -21,7 +21,7 @@ exports.createSolicitation = async (req, res) => {
 
         const [requester, receiver] = await Promise.all([
             ModelRequester.findOne({ uid: uid }),
-            ModelReceiver.findOne({ email: receiver_email })
+            ModelReceiver.findOne({ _id: receiver_id })
         ]);
         if (!requester) return HandleError(res, 404, "Seu usuário não foi encontrado em nosso banco de dados.");
         if (!receiver) return HandleError(res, 404, "Usuário não encontrado. Envie a solicitação novamente");
