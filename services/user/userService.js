@@ -42,9 +42,10 @@ const fetchUsers = async (type, searchData) => {
                         ...(patient.private ? {} : { email: patient.email })
                     }));
                 }
+                
                 return {
                     ...user.toObject(),
-                    doctorTotalTreatments
+                    ...(doctorTotalTreatments && { total_treatments: doctorTotalTreatments }),
                 };
             }));
 
