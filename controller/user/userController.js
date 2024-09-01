@@ -128,12 +128,14 @@ exports.updateUserDetails = async (req, res) => {
         if (gender) user.gender = gender;
         if (birth) {
             const birthDate = new Date(birth);
-            console.log("Data de nascimento atualizado", birthDate);
-            if (!isNaN(birthDate.getTime())) {
-                user.birth = birthDate;
-            } else {
-                return HandleError(res, 400, "Data de nascimento inválida");
-            }
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (isNaN(birthDate.getTime())) return HandleError(res, 400, "Data de nascimento inválida");
+            
+            if (birthDate >= today)return HandleError(res, 400, "Data de nascimento não pode ser maior ou igual à data atual");
+            
+            user.birth = birthDate;
         }
 
         await user.save();
