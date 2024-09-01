@@ -157,6 +157,8 @@ exports.updateProfileRestriction = async (req, res) => {
         if (!uid) return HandleError(res, 401, "Usuário não autorizado");
         const { private_treatment } = req.body;
 
+        let newPrivateTreatment;
+
         let user = await PatientUser.findOne({ uid: uid }) || await DoctorUser.findOne({ uid: uid });
         if (!user) return HandleError(res, 404, "Usuário não encontrado");
 
@@ -177,6 +179,7 @@ exports.updateProfileRestriction = async (req, res) => {
             user.private = !user.private;
             if(user.private_treatment && !user.private) {
                 user.private_treatment = false;
+                newPrivateTreatment = false;
             }
         }
 
@@ -203,7 +206,7 @@ exports.updateProfileRestriction = async (req, res) => {
 
         const response = {
             private: user.private,
-            ...(private_treatment !== undefined && user.type === 'doctor' && { private_treatment: user.private_treatment })
+            ...(private_treatment !== undefined || newPrivateTreatment !== undefined && user.type === 'doctor' && { private_treatment: user.private_treatment })
         }
 
         return HandleSuccess(res, 200, message, response, messageType);
