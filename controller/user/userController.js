@@ -163,6 +163,8 @@ exports.updateProfileRestriction = async (req, res) => {
             return HandleError(res, 400, "Erro inesperado ao restringir perfil para pacientes em tratamento");
         }
 
+        console.log("Restrição de tratamento: ", private_treatment);
+
         if (user.type === 'doctor') {
             
             if (user.private === false) {
@@ -174,6 +176,7 @@ exports.updateProfileRestriction = async (req, res) => {
                 // Restrição desativada
                 user.private = false;
                 user.private_treatment = false;
+                
             }
         }
         else {
@@ -181,7 +184,6 @@ exports.updateProfileRestriction = async (req, res) => {
         }
 
         await user.save();
-
 
         let message;
         let messageType;
