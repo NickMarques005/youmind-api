@@ -37,12 +37,12 @@ exports.filterUsers = async (req, res) => {
     }
 }
 
-exports.fetchSelectedUserData = async (req, res) =>{
-    try{
+exports.fetchSelectedUserData = async (req, res) => {
+    try {
         const { uid } = req.user;
         if (!uid) return HandleError(res, 401, "Usuário não autorizado");
         const { selectedUserId, type } = req.query;
-        if(!type || !selectedUserId) return HandleError(res, 400, "Dados de usuário não especificados")
+        if (!type || !selectedUserId) return HandleError(res, 400, "Dados de usuário não especificados")
 
         if (!['doctor', 'patient'].includes(type)) return HandleError(res, 400, "Tipo de usuário inválido");
 
@@ -50,9 +50,8 @@ exports.fetchSelectedUserData = async (req, res) =>{
         if (!formattedUser) return HandleError(res, 400, "Houve um erro ao buscar usuário");
 
         return HandleSuccess(res, 200, "Dados do usuário formatados com sucesso", formattedUser);
-    }   
-    catch (err)
-    {
+    }
+    catch (err) {
         console.error("Erro ao buscar dados do usuário: ", err);
         return HandleError(res, 500, "Erro ao buscar dados do usuário: ", err.message);
     }
@@ -152,31 +151,65 @@ exports.updateUserDetails = async (req, res) => {
 }
 
 exports.updateProfileRestriction = async (req, res) => {
-    try{
+    try {
         const { uid } = req.user;
         if (!uid) return HandleError(res, 401, "Usuário não autorizado");
-        
+        const { private_treatment } = req.body;
+
         let user = await PatientUser.findOne({ uid: uid }) || await DoctorUser.findOne({ uid: uid });
         if (!user) return HandleError(res, 404, "Usuário não encontrado");
 
-        user.private = !user.private;
+        if (private_treatment !== undefined && typeof private_treatment !== 'boolean') {
+            return HandleError(res, 400, "Erro inesperado ao restringir perfil para pacientes em tratamento");
+        }
+
+        if (user.type === 'doctor') {
+            
+            if (user.private === false) {
+                // Restrição ativada
+                user.private_treatment = private_treatment !== undefined ? private_treatment : user.private_treatment;
+                user.private = true;
+            }
+            else {
+                // Restrição desativada
+                user.private = false;
+                user.private_treatment = false;
+            }
+        }
+        else {
+            user.private = !user.private;
+        }
+
         await user.save();
+
 
         let message;
         let messageType;
 
         if (user.private) {
-            message = `Seu perfil foi restrito. Agora, apenas você e ${user.type === 'patient' ? 'seu doutor' : 'seus pacientes'} podem visualizar suas informações pessoais.`;
+            if (private_treatment) {
+                message = "Seu perfil foi restrito para todos. Agora, apenas você pode visualizar suas informações pessoais.";
+            } 
+            else if (!private_treatment) {
+                message = "A restrição de seus pacientes foi removida. Agora, apenas você e seus pacientes podem visualizar suas informações pessoais.";
+            }
+            else {
+                message = `Seu perfil foi restrito. Agora, apenas você e ${user.type === 'patient' ? 'seu doutor' : 'seus pacientes'} podem visualizar suas informações pessoais.`;
+            }
             messageType = MessageTypes.SHIELD_LOCK;
         } else {
             message = "A restrição do seu perfil foi removida. Agora, seu perfil está visível publicamente.";
             messageType = MessageTypes.SHIELD_UNLOCK;
         }
 
-        return HandleSuccess(res, 200, message, { private: user.private }, messageType);
+        const response = {
+            private: user.private,
+            ...(private_treatment && user.type === 'doctor' && { private_treatment: user.private_treatment })
+        }
+
+        return HandleSuccess(res, 200, message, response, messageType);
     }
-    catch (err)
-    {
+    catch (err) {
         console.error("Erro ao atualizar dados do usuário: ", err);
         return HandleError(res, 500, "Erro ao atualizar restrição de perfil");
     }
