@@ -58,6 +58,11 @@ exports.registerUser = async (req, res) => {
         return HandleSuccess(res, 200, "Sua conta foi criada com sucesso!", registerData, MessageTypes.SUCCESS);
     } catch (err) {
         console.error(`Erro ao criar usuário: ${err}`);
+        
+        if (err.code === 'auth/email-already-exists') {
+            return HandleError(res, 400, "O e-mail já está em uso por outra conta.");
+        }
+
         return HandleError(res, 500, "Erro ao criar usuário");
     }
 }

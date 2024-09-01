@@ -52,6 +52,7 @@ exports.initializeTreatment = async (req, res) => {
                     engagedDoctor: {
                         uid: doctor.uid,
                         name: doctor.name,
+                        ...(doctor.gender && { gender: doctor.gender})
                     },
                     period: {
                         start: new Date(),
@@ -80,9 +81,9 @@ exports.initializeTreatment = async (req, res) => {
                 status: 'active',
                 sessions: [{
                     engagedDoctor: {
-                        _id: doctor._id,
+                        uid: doctor.uid,
                         name: doctor.name,
-                        gender: doctor.gender
+                        ...(doctor.gender && { gender: doctor.gender})
                     },
                     period: {
                         start: new Date(),
