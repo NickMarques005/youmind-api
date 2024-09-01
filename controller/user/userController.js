@@ -206,7 +206,7 @@ exports.updateProfileRestriction = async (req, res) => {
 
         const response = {
             private: user.private,
-            ...(private_treatment !== undefined || newPrivateTreatment !== undefined && user.type === 'doctor' && { private_treatment: user.private_treatment })
+            ...((private_treatment !== undefined || newPrivateTreatment !== undefined) && { private_treatment: user.private_treatment })
         }
 
         return HandleSuccess(res, 200, message, response, messageType);
