@@ -77,6 +77,7 @@ exports.userData = async (req, res) => {
             gender: user.gender ? user.gender : undefined,
             avatar: user.avatar,
             private: user.private,
+            private_treatment: user.private_treatment,
             ...(user.doctor_crm && { doctor_crm: user.doctor_crm }),
             ...(user.type === 'doctor' && user.total_treatments && { total_treatments: user.total_treatments }),
             ...(user.type === 'patient' && user.is_treatment_running !== undefined && { is_treatment_running: user.is_treatment_running })

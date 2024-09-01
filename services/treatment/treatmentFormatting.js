@@ -91,7 +91,8 @@ const formatTreatment = async (treatment, userType) => {
             startedAt: treatment.startedAt,
             status: statusTreatment,
             sessions: sessionsWithAvatars || [],
-            treatmentStatus: treatment.status
+            treatmentStatus: treatment.status,
+            private_treatment: oppositeUser.private_treatment
         };
 
         console.log("Tratamento a ser enviado: ", formattedTreatment);
