@@ -166,22 +166,18 @@ exports.updateProfileRestriction = async (req, res) => {
 
         console.log("Restrição de tratamento: ", private_treatment);
 
-        if (user.type === 'doctor') {
-            
-            if (user.private === false) {
-                // Restrição ativada
-                user.private_treatment = private_treatment !== undefined ? private_treatment : user.private_treatment;
-                user.private = true;
+        if (private_treatment !== undefined) {
+            if(!user.private)
+            {
+                return HandleError(res, 400, "Erro inesperado! Não é permitido alterar a restrição de pacientes enquanto estiver com perfil público.")
             }
-            else {
-                // Restrição desativada
-                user.private = false;
-                user.private_treatment = false;
-                
-            }
+            user.private_treatment = private_treatment;
         }
         else {
             user.private = !user.private;
+            if(user.private_treatment && !user.private) {
+                user.private_treatment = false;
+            }
         }
 
         await user.save();
