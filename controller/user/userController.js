@@ -190,7 +190,7 @@ exports.updateProfileRestriction = async (req, res) => {
             if (private_treatment) {
                 message = "Seu perfil foi restrito para todos. Agora, apenas você pode visualizar suas informações pessoais.";
             } 
-            else if (!private_treatment) {
+            else if (private_treatment !== undefined && !private_treatment) {
                 message = "A restrição de seus pacientes foi removida. Agora, apenas você e seus pacientes podem visualizar suas informações pessoais.";
             }
             else {
