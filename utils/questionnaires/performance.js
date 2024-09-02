@@ -38,13 +38,19 @@ const calculateQuestionnairePerformance = (questionnaireHistories) => {
     let totalPerformance = 0;
     let performanceCount = 0;
 
+    /*
+    ### Fator de atenuação para desempenhos iniciais
+    */
+    const dampingFactor = 0.5;
+
     questionnaireHistories.forEach(history => {
         if (history.questionnaire.answered === true) {
-            const performance = calculatePerformance(history.questionnaire.answers || []);
-            totalPerformance += performance;
+            const effectivePerformance = performance * (1 + dampingFactor * index / questionnaireHistories.length);
+            totalPerformance += effectivePerformance;
             performanceCount += 1;
         } else {
-            totalPerformance -= 2;
+            const penalty = 2 * progressFactor;
+            totalPerformance -= penalty;
         }
     });
 

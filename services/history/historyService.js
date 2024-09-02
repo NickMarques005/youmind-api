@@ -15,9 +15,9 @@ const getPatientHistoryById = async (patientId) => {
 
     const totalMedications = medicationHistory.length;
     const takenMedications = medicationHistory.filter(med => med.medication.taken).length;
-    const medicationPerformance = totalMedications > 0 ? (takenMedications / totalMedications) * 100 : 0;
+    const medicationPerformance = totalMedications > 0 ? (takenMedications / totalMedications) * 100 : 50;
 
-    const questionnairePerformance = calculateQuestionnairePerformance(questionnaireHistory);
+    const questionnairePerformance = calculateQuestionnairePerformance(questionnaireHistory) || 50;
 
     let overallPerformance = (medicationPerformance + questionnairePerformance) / 2;
     overallPerformance = Math.round(Math.min(Math.max(overallPerformance, 0), 100));
