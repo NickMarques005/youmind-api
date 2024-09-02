@@ -13,7 +13,7 @@ const emitTreatmentInitiate = async (emitData) => {
             socketServer = io;
         }
 
-        await emitEventToUser(socketServer, patientInfo.patientId, 'treatmentInitiate', { treatment: patientInfo.treatment, notice: patientInfo.notice });
+        await emitEventToUser(socketServer, patientInfo.patientId, 'treatmentInitiate', { treatment: patientInfo.treatment, notice: patientInfo.notice, is_treatment_running: patientInfo.is_treatment_running });
         await emitEventToUser(socketServer, doctorInfo.doctorId, 'treatmentInitiate', { treatment: doctorInfo.treatment, notice: doctorInfo.notice });
         
         console.log('Emissão de tratamento iniciado completa.');
@@ -34,7 +34,7 @@ const emitTreatmentComplete = async (emitData) => {
             socketServer = io;
         }
 
-        await emitEventToUser(socketServer, patientInfo.patientId, 'treatmentComplete', { treatment: patientInfo.treatment, notice: patientInfo.notice });
+        await emitEventToUser(socketServer, patientInfo.patientId, 'treatmentComplete', { treatment: patientInfo.treatment, notice: patientInfo.notice, is_treatment_running: patientInfo.is_treatment_running });
         await emitEventToUser(socketServer, doctorInfo.doctorId, 'treatmentComplete', { treatment: doctorInfo.treatment, notice: doctorInfo.notice });
         
         console.log('Emissão de tratamento concluído completa.');

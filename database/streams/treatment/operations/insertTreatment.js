@@ -49,7 +49,8 @@ const handleInsertTreatment = async (change, io) => {
     const patientInfo = {
         patientId,
         treatment: treatmentPatientInfo,
-        notice: noticePatient
+        notice: noticePatient,
+        is_treatment_running: true
     };
 
     const doctorInfo = {
