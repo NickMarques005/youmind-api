@@ -31,8 +31,8 @@ const handleInsertTreatment = async (change, io) => {
     /*
     ### Formatação dos dados do tratamento para ambos os usuários
     */
-    const treatmentPatientInfo = await formatTreatment(insertedTreatment, currentPatient.type);
-    const treatmentDoctorInfo = await formatTreatment(insertedTreatment, currentDoctor.type);
+    const treatmentPatientInfo = await formatTreatment(newTreatment, currentPatient.type);
+    const treatmentDoctorInfo = await formatTreatment(newTreatment, currentDoctor.type);
     if (!treatmentPatientInfo || !treatmentDoctorInfo) return console.error('Erro ao formatar tratamento.');
 
     /*
