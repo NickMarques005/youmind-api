@@ -44,8 +44,11 @@ const calculateQuestionnairePerformance = (questionnaireHistories) => {
     const dampingFactor = 0.5;
 
     questionnaireHistories.forEach(history => {
+        const progressFactor = 1 + (dampingFactor * index / questionnaireHistories.length);
+
         if (history.questionnaire.answered === true) {
-            const effectivePerformance = performance * (1 + dampingFactor * index / questionnaireHistories.length);
+            const performance = calculatePerformance(history.questionnaire.answers || []);
+            const effectivePerformance = performance * progressFactor;
             totalPerformance += effectivePerformance;
             performanceCount += 1;
         } else {
