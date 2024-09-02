@@ -7,6 +7,7 @@ const QuestionnaireTemplate = require('../../models/questionnaire_template');
 const Questionnaire = require('../../models/questionnaire');
 const Treatment = require('../../models/treatment');
 const { filterTemplateQuestionsByAnswers } = require('../../services/questionnaires/questionnaireService');
+const { calculateTreatmentOverallPerformance } = require('../../services/treatment/performance/performanceServices');
 
 exports.getAllHistory = async (req, res) => {
     try {
@@ -40,8 +41,7 @@ exports.getAllHistory = async (req, res) => {
 
             const questionnairePerformance = calculateQuestionnairePerformance(patientQuestionnaires);
 
-            let overallPerformance = (medicationPerformance + questionnairePerformance) / 2;
-            overallPerformance = Math.round(Math.min(Math.max(overallPerformance, 0), 100));
+            const overallPerformance = calculateTreatmentOverallPerformance(patientId);
 
             const oneWeekAgo = new Date();
             oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
