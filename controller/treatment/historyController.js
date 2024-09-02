@@ -41,7 +41,7 @@ exports.getAllHistory = async (req, res) => {
 
             const questionnairePerformance = calculateQuestionnairePerformance(patientQuestionnaires);
 
-            const overallPerformance = calculateTreatmentOverallPerformance(patientId);
+            const overallPerformance = await calculateTreatmentOverallPerformance(patientId);
 
             const oneWeekAgo = new Date();
             oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
