@@ -9,11 +9,15 @@ const DailyMotivationalPhraseSchema = new mongoose.Schema({
         type: String,
         required: true 
     },
+    text: {
+        type: String,
+        required: true,
+    },
     viewed: {
         type: Boolean,
         default: false
     },
-    date: { 
+    usedAt: { 
         type: Date,
         default: Date.now()
     }

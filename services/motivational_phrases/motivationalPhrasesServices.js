@@ -3,55 +3,66 @@ const DailyMotivationalPhrase = require("../../models/daily_motivational_phrase"
 const MotivationalPhraseTemplate = require("../../models/motivational_phrase_template");
 const { limitPhrases } = require("../../utils/motivational_phrases/limit");
 
+/*
+### Verificação para saber se há frase hoje
+*/
 const verifyPhraseForToday = async (patientId) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    return await DailyMotivationalPhrase.findOne({ patientId, date: today });
+    return await DailyMotivationalPhrase.findOne({ patientId, usedAt: today });
 };
 
+/*
+### Remove a frase mais antiga do paciente
+*/
 const removeOldestPhrase = async (patientId) => {
     const phraseCount = await DailyMotivationalPhrase.countDocuments({ patientId });
 
     if (phraseCount >= limitPhrases) {
-        const oldestPhrase = await DailyMotivationalPhrase.findOne({ patientId }).sort({ date: 1 });
+        const oldestPhrase = await DailyMotivationalPhrase.findOne({ patientId }).sort({ usedAt: 1 });
         if (oldestPhrase) {
             await DailyMotivationalPhrase.deleteOne({ _id: oldestPhrase._id });
         }
     }
 };
 
+/*
+### Seleciona aleatoriamente uma das frases que estiverem disponíveis
+*/
+const selectRandomPhrase = async (patientId) => {
+    const usedPhraseIds = await DailyMotivationalPhrase.find({ patientId }).distinct('phraseId');
+
+    let availablePhrases = await MotivationalPhraseTemplate.find({ _id: { $nin: usedPhraseIds } });
+
+    //Se não tiver frase disponivel, então resetar o ciclo de frases motivacionais para esse paciente
+    if (availablePhrases.length === 0) {
+        await DailyMotivationalPhrase.deleteMany({ patientId });
+        availablePhrases = await MotivationalPhraseTemplate.find({});
+    }
+
+    //Escolha aleatoria da frase
+    const randomIndex = Math.floor(Math.random() * availablePhrases.length);
+    return availablePhrases[randomIndex];
+};
+
+
 const assignNewPhraseToPatient = async (patientId) => {
+    console.log("Atribuição de nova frase ao paciente: ", patientId);
+
     const existingPhrase = await verifyPhraseForToday(patientId);
     if (existingPhrase) {
         return existingPhrase;
     }
 
     /*
-    ### Obter IDs de frases que já foram usadas pelo paciente
+    ### Selecionar uma frase aleatória usando a nova função
     */
-    const usedPhraseIds = await DailyMotivationalPhrase.find({ patientId }).distinct('phraseId');
-
-    /*
-    ### Selecionar uma frase que ainda não foi usada
-    */ 
-    let availablePhrases = await MotivationalPhraseTemplate.find({ _id: { $nin: usedPhraseIds } });
-
-    /*
-    ### Se todas as frases já foram usadas, reiniciar o ciclo excluindo todas as frases do paciente
-    */
-    if (availablePhrases.length === 0) {
-        await DailyMotivationalPhrase.deleteMany({ patientId });
-        usedPhraseIds.length = 0; // Resetar o array de frases usadas
-        availablePhrases = await MotivationalPhraseTemplate.find({});
-    }
-
-    const randomIndex = Math.floor(Math.random() * availablePhrases.length);
-    const selectedPhrase = availablePhrases[randomIndex];
+    const selectedPhrase = await selectRandomPhrase(patientId);
 
     /*
     ### Remover a frase mais antiga, se necessário
-    */ 
+    */
     await removeOldestPhrase(patientId);
 
     /*
@@ -63,7 +74,8 @@ const assignNewPhraseToPatient = async (patientId) => {
     const dailyPhrase = new DailyMotivationalPhrase({
         patientId,
         phraseId: selectedPhrase._id,
-        date: today
+        text: selectedPhrase.text,
+        usedAt: today
     });
 
     await dailyPhrase.save();

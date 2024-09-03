@@ -12,10 +12,7 @@ exports.getAllMotivationalPhrasesFromPatient = async (req, res) => {
         const patient = await PatientUser.findOne({ uid: uid });
         if (!patient) return HandleError("Paciente não encontrado");
 
-        const patientId = req.params.patientId;
-        if (patientId !== patient._id.toString()) {
-            return HandleError(res, 403, "Acesso não autorizado às frases de outro paciente");
-        }
+        const patientId = patient.uid;
         /*
         ### Busca todas as frases motivacionais do paciente
         */
@@ -53,7 +50,7 @@ exports.verify_Viewing = async (req, res) => {
         /*
         ### Busca a frase específica do paciente
         */
-        const phrase = await DailyMotivationalPhrase.findOne({ _id: phraseId, patientId: patient._id });
+        const phrase = await DailyMotivationalPhrase.findOne({ _id: phraseId, patientId: patient.uid });
         if (!phrase) return HandleError(res, 404, "Frase motivacional não encontrada");
 
         /* 

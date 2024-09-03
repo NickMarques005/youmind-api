@@ -5,6 +5,7 @@ const { emitNewMotivationalPhrase } = require("../../socket/events/motivationalP
 // Função para lidar com a atualização diária das frases motivacionais
 const handleUpdateDailyMotivationalPhrases = async () => {
     try {
+        console.log("\n#### Atualização de nova frase motivacional para os pacientes! ####\n")
         /*
         ### Buscar todos os pacientes que possuem tratamento em andamento
         */
