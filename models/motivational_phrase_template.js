@@ -7,6 +7,6 @@ const MotivationalPhraseTemplateSchema = new mongoose.Schema({
     }
 });
 
-const MotivationalPhraseTemplate = mongoose.model('MotivationalPhraseTemplate', MotivationalPhraseTemplateSchema, 'motivational_phrase_template');
+const MotivationalPhraseTemplate = mongoose.model('MotivationalPhraseTemplate', MotivationalPhraseTemplateSchema, 'motivational_phrase_templates');
 
 module.exports = MotivationalPhraseTemplate;

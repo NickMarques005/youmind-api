@@ -32,9 +32,9 @@ const removeOldestPhrase = async (patientId) => {
 */
 const selectRandomPhrase = async (patientId) => {
     const usedPhraseIds = await DailyMotivationalPhrase.find({ patientId }).distinct('phraseId');
-
+    console.log("Frases já usadas por paciente: ", usedPhraseIds);
     let availablePhrases = await MotivationalPhraseTemplate.find({ _id: { $nin: usedPhraseIds } });
-
+    console.log("Frases template disponíveis: ", availablePhrases.length);
     //Se não tiver frase disponivel, então resetar o ciclo de frases motivacionais para esse paciente
     if (availablePhrases.length === 0) {
         await DailyMotivationalPhrase.deleteMany({ patientId });
