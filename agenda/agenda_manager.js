@@ -16,6 +16,8 @@ const initializeAgenda = async (dbURI) => {
     //Agendamento de questionários noturnos:
     await agenda.every(cronIntervals['diariamente às 8h da noite'], agendaDefines.SEND_DAILY_QUESTIONNAIRES_EVENING, {}, { timezone: 'America/Sao_Paulo' });
     await agenda.every(cronIntervals['diariamente às 2h da manhã'], agendaDefines.UPDATE_QUESTIONNAIRES_EVENING_EXPIRATION, {}, { timezone: 'America/Sao_Paulo' });
+    await agenda.every(cronIntervals['diariamente à meia noite'], agendaDefines.UPDATE_DAILY_MOTIVATIONAL_PHRASES, {}, { timezone: 'America/Sao_Paulo' });
+    
     process.on('SIGTERM', async () => {
         await finishAgenda();
     });

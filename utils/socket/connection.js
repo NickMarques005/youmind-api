@@ -1,9 +1,21 @@
 const isUserConnected = (io, room) => {
-    const sockets = io.of("/").adapter.rooms.get(room);
-    return sockets && sockets.size > 0;
+    // Acesso ao namespace principal do servidor Socket
+    const namespace = io.of("/");
+    
+    // Verifica se a sala está presente no adaptador
+    const roomSockets = namespace.adapter.rooms.get(room);
+
+    // Retorna verdadeiro se a sala existir e tiver pelo menos um socket conectado
+    return roomSockets && roomSockets.size > 0;
 };
 
 const emitEventToUser = async (io, room, socketEvent, data) => {
+    if(!io) {
+        console.error(`Houve um erro ao emitir dados ao usuário no evento ${socketEvent}: servidor Socket não especifido`);
+        return false;
+    }
+    
+    //Emissão dos dados na sala caso usuário esteja conectado
     if (isUserConnected(io, room)) {
         console.log(`Usuário está conectado na sala ${room}. Emitindo evento...`);
         io.to(room).emit(socketEvent, data);

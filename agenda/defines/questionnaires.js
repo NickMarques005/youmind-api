@@ -87,7 +87,6 @@ const handleUpdateQuestionnairesEveningExpiration = async () => {
     else {
         console.log("Nenhum questionário não respondido encontrado");
     }
-    
 }
 
 module.exports = {

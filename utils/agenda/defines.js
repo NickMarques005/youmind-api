@@ -6,7 +6,8 @@ const agendaDefines = {
     SEND_DAILY_QUESTIONNAIRES_EVENING: 'send daily questionnaires evening',
     UPDATE_QUESTIONNAIRES_EVENING_EXPIRATION: 'update questionnaires evening expiration',
     SEND_MESSAGE_REMINDER: 'send message reminder',
-    LAST_DAY_MEDICATION_REMINDER: 'last day medication reminder'
+    LAST_DAY_MEDICATION_REMINDER: 'last day medication reminder',
+    UPDATE_DAILY_MOTIVATIONAL_PHRASES: 'update daily motivational phrases'
 }
 
 module.exports = agendaDefines;
