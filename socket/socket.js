@@ -98,7 +98,7 @@ const initializeSocket = (httpServer, dbURI) => {
         socket.on("deleteMessages", async ({ conversationId, messageIds }) => {
             try {
                 await Message.deleteMany({ _id: { $in: messageIds } });
-                io.to(conversationId).emit("messagesDeleted", { messageIds });
+                io.to(conversationId).emit("messagesDeleted", messageIds);
             } catch (err) {
                 console.error("Erro ao deletar mensagens: ", err);
             }
