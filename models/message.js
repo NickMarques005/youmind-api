@@ -20,6 +20,10 @@ const MessageSchema = new mongoose.Schema(
             type: String,
             required: true
         },
+        isMarked: {
+            type: Boolean,
+            required: false
+        },
         readBy: [{
             type: String
         }]

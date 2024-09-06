@@ -95,6 +95,27 @@ const initializeSocket = (httpServer, dbURI) => {
             }
         });
 
+        socket.on("deleteMessages", async ({ conversationId, messageIds }) => {
+            try {
+                await Message.deleteMany({ _id: { $in: messageIds } });
+                io.to(conversationId).emit("messagesDeleted", { messageIds });
+            } catch (err) {
+                console.error("Erro ao deletar mensagens: ", err);
+            }
+        });
+
+        socket.on("markMessages", async ({ conversationId, messageIds, isMarked }) => {
+            try {
+                await Message.updateMany(
+                    { _id: { $in: messageIds } },
+                    { $set: { isMarked: isMarked } }
+                );
+                io.to(conversationId).emit("messagesMarked", { messageIds, isMarked });
+            } catch (err) {
+                console.error("Erro ao marcar mensagens: ", err);
+            }
+        });
+
         socket.on('disconnect', async () => {
             console.log("Usuário desconectado: ", socket.id);
 
