@@ -116,6 +116,31 @@ const initializeSocket = (httpServer, dbURI) => {
             }
         });
 
+        socket.on('getMarkedMessages', async ({ conversationId }) => {
+            try {
+                const markedMessages = await Message.find({ conversationId, isMarked: true });
+                socket.emit('markedMessagesLoaded', markedMessages);
+            } catch (error) {
+                console.error('Erro ao buscar mensagens marcadas:', error);
+            }
+        });
+
+        socket.on('unmarkAllMessages', async ({ conversationId }) => {
+            try {
+                const markedMessages = await Message.find({ conversationId, isMarked: true }, '_id');
+                if (markedMessages.length > 0) {
+                    await Message.updateMany({ conversationId, isMarked: true }, { isMarked: false });
+                    
+                    socket.emit('allMessagesUnmarked', { 
+                        messageIds: markedMessages.map(msg => msg._id), 
+                        isMarked: false 
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao desmarcar todas as mensagens:', error);
+            }
+        });
+
         socket.on('disconnect', async () => {
             console.log("Usuário desconectado: ", socket.id);
 
