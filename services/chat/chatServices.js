@@ -44,12 +44,17 @@ const getSenderName = async (senderUid, senderType) => {
 
 const formatMessagesContainingMentionedMessages = async (messages) => {
     try {
-        const messagesWithMentioned = messages.filter(message => message.mentionedMessageId);
+        const messagesWithMentioned = messages.filter((message, index) => {
+            console.log(`Mensagem ${index + 1} - ${message}`);
+            return message.mentionedMessageId
+        });
         
         if (messagesWithMentioned.length === 0) return messages;
 
         const mentionedMessageIds = messagesWithMentioned.map(msg => msg.mentionedMessageId);
         const mentionedMessages = await Message.find({ _id: { $in: mentionedMessageIds } });
+
+        console.log("Mensagens mencionadas: ", mentionedMessages);
 
         // Mapeamento das mensagens mencionadas por ID para facilitar o acesso
         const mentionedMessagesMap = mentionedMessages.reduce((map, msg) => {
@@ -76,6 +81,8 @@ const formatMessagesContainingMentionedMessages = async (messages) => {
                 return message;
             })
         );
+
+        console.log("###### Mensagens formatadas: ", formattedMessages);
 
         return formattedMessages;
     } catch (error) {
