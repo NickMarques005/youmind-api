@@ -44,10 +44,11 @@ const getSenderName = async (senderUid, senderType) => {
 
 const formatMessagesContainingMentionedMessages = async (messages) => {
     try {
-        const messagesWithMentioned = messages.filter((message, index) => {
-            console.log(`Mensagem ${index + 1} - ${message}`);
+        const messagesWithMentioned = messages.filter((message) => {
             return message.mentionedMessageId
         });
+
+        console.log(messagesWithMentioned.length);
         
         if (messagesWithMentioned.length === 0) return messages;
 
