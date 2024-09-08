@@ -50,7 +50,8 @@ const initializeSocket = (httpServer, dbURI) => {
                 const messages = await Message.find({ conversationId: conversationId })
                     .sort({ createdAt: -1 })
                     .skip(skip)
-                    .limit(limit);
+                    .limit(limit)
+                    .lean();
 
                 // Formatar mensagens mencionadas
                 const formattedMessages = await formatMessagesContainingMentionedMessages(messages);
@@ -129,7 +130,7 @@ const initializeSocket = (httpServer, dbURI) => {
 
         socket.on('getMarkedMessages', async ({ conversationId }) => {
             try {
-                const markedMessages = await Message.find({ conversationId, isMarked: true });
+                const markedMessages = await Message.find({ conversationId, isMarked: true }).lean();
 
                 // Formatar mensagens mencionadas
                 const formattedMarkedMessages = await formatMessagesContainingMentionedMessages(markedMessages);
