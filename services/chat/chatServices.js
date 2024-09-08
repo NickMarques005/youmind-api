@@ -82,7 +82,7 @@ const formatMessagesContainingMentionedMessages = async (messages) => {
             })
         );
 
-        console.log("###### Mensagens formatadas: ", formattedMessages);
+        console.log("###### Mensagens formatadas ####### ");
 
         return formattedMessages;
     } catch (error) {

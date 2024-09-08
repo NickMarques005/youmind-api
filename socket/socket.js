@@ -55,8 +55,6 @@ const initializeSocket = (httpServer, dbURI) => {
                 // Formatar mensagens mencionadas
                 const formattedMessages = await formatMessagesContainingMentionedMessages(messages);
 
-                console.log("Mensagens formatadas: ", formattedMessages);
-
                 io.to(conversationId).emit("messagesLoaded", formattedMessages);
             } catch (err) {
                 console.error("Erro ao carregar mensagens: ", err);
