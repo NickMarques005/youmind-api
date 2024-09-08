@@ -36,6 +36,7 @@ const userStandardFields = {
     },
     type: {
         type: String,
+        enum: ["patient", "doctor"],
         required: true
     },
     verified: {

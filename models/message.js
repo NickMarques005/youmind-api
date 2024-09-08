@@ -10,6 +10,11 @@ const MessageSchema = new mongoose.Schema(
             type: String,
             required: true
         },
+        senderType: {
+            type: String,
+            enum: ["patient", "doctor"],
+            required: true
+        },
         audioUrl: {
             type: String
         },
@@ -26,7 +31,11 @@ const MessageSchema = new mongoose.Schema(
         },
         readBy: [{
             type: String
-        }]
+        }],
+        mentionedMessageId: {
+            type: String,
+            required: false
+        }
     },
     { timestamps: true }
 );

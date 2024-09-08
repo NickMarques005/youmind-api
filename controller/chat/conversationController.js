@@ -1,5 +1,5 @@
 const treatment = require('../../models/treatment');
-const message = require('../../models/message');
+const Message = require('../../models/message');
 const { PatientUser, DoctorUser } = require('../../models/users');
 const mongoose = require('mongoose');
 const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
@@ -53,26 +53,25 @@ exports.getConversationTreatment = async (req, res) => {
 
 exports.saveNewMessage = async (req, res) => {
     try {
-        const { conversationId, content, audioUrl, duration } = req.body;
+        const { conversationId, content, audioUrl, duration, senderType } = req.body;
         const { uid } = req.user;
 
         if (!uid) return HandleError(res, 401, "Usuário não autorizado");
         if (!conversationId || !content) return HandleError(res, 400, 'Houve um erro ao postar mensagem');
 
-        const conversationObjectId = new mongoose.Types.ObjectId(conversationId);
-
-        const id_verification = await treatment.findById(conversationObjectId);
+        const id_verification = await treatment.findById(conversationId);
         if (!id_verification) return HandleError(res, 400, 'A conversa de tratamento não existe');
 
         const new_message = {
             conversationId: conversationId,
             content: content,
             sender: uid,
+            senderType: senderType, 
             ...(audioUrl && { audioUrl }),
             ...(duration && { duration })
         }
 
-        const newMessage = new message(new_message);
+        const newMessage = new Message(new_message);
         const savedMessage = await newMessage.save();
 
         return HandleSuccess(res, 200, "Mensagem salva", savedMessage);
@@ -93,12 +92,10 @@ exports.getMessages = async (req, res) => {
 
         if (!conversationId) return HandleError(res, 400, 'Você não está registrado na conversa do tratamento');
 
-        const conversationObjectId = new mongoose.Types.ObjectId(conversationId);
-
-        const id_verification = await treatment.findById(conversationObjectId);
+        const id_verification = await treatment.findById(conversationId);
         if (!id_verification) return HandleError(res, 404, 'A conversa de tratamento não existe');
 
-        const messages = await message.find({
+        const messages = await Message.find({
             conversationId: conversationId,
         });
 

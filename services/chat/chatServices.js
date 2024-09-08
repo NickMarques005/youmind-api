@@ -1,4 +1,5 @@
 const Message = require("../../models/message");
+const { PatientUser, DoctorUser } = require("../../models/users");
 
 const getInitialChatData = async (treatmentId, userUid) => {
     try {
@@ -25,4 +26,64 @@ const getInitialChatData = async (treatmentId, userUid) => {
     }
 }
 
-module.exports = { getInitialChatData };
+const getSenderName = async (senderUid, senderType) => {
+    try {
+        let user = null;
+        if (senderType === "patient") {
+            user = await PatientUser.findOne({ _id: senderUid });
+        } else if (senderType === "doctor") {
+            user = await DoctorUser.findOne({ _id: senderUid });
+        }
+
+        return user ? user.name : senderType === "doctor" ? "Doutor" : "Paciente";
+    } catch (error) {
+        console.error(`Erro ao buscar o sender (${senderUid}):`, error);
+        return senderType === "doctor" ? "Doutor" : "Paciente";
+    }
+};
+
+const formatMessagesContainingMentionedMessages = async (messages) => {
+    try {
+        const messagesWithMentioned = messages.filter(message => message.mentionedMessageId);
+        
+        if (messagesWithMentioned.length === 0) return messages;
+
+        const mentionedMessageIds = messagesWithMentioned.map(msg => msg.mentionedMessageId);
+        const mentionedMessages = await Message.find({ _id: { $in: mentionedMessageIds } });
+
+        // Mapeamento das mensagens mencionadas por ID para facilitar o acesso
+        const mentionedMessagesMap = mentionedMessages.reduce((map, msg) => {
+            map[msg._id] = msg;
+            return map;
+        }, {});
+
+        const formattedMessages = await Promise.all(
+            messages.map(async message => {
+                if (message.mentionedMessageId && mentionedMessagesMap[message.mentionedMessageId]) {
+                    const mentionedMsg = mentionedMessagesMap[message.mentionedMessageId];
+
+                    const senderName = await getSenderName(mentionedMsg.sender, mentionedMsg.senderType);
+
+                    message.mentionedMessage = {
+                        _id: mentionedMsg._id,
+                        senderName,
+                        senderType: mentionedMsg.senderType,
+                        content: mentionedMsg.content,
+                        hasAudio: !!mentionedMsg.audioUrl && mentionedMsg.audioUrl !== ""
+                    };
+                }
+                return message;
+            })
+        );
+
+        return formattedMessages;
+    } catch (error) {
+        console.error("Erro ao formatar mensagens mencionadas: ", error);
+        return messages;
+    }
+};
+
+module.exports = { 
+    getInitialChatData, 
+    formatMessagesContainingMentionedMessages 
+};

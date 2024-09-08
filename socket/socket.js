@@ -2,6 +2,7 @@ const { Server } = require('socket.io');
 const { verifySocketToken } = require('../middlewares/tokenMiddleware');
 const Message = require('../models/message');
 const { findAndUpdateUserOnlineStatus } = require('../utils/db/db_helpers');
+const { formatMessagesContainingMentionedMessages } = require('../services/chat/chatServices');
 
 let io; //Instância para o socket server
 
@@ -40,20 +41,23 @@ const initializeSocket = (httpServer, dbURI) => {
         });
 
         socket.on("getMessages", async ({ conversationId, page }) => {
-            const limit = 20;
-            const skip = page * limit;
-            console.log("**Get Messages...");
-            console.log(page);
-
             try {
+                const limit = 40;
+                const skip = page * limit;
+                console.log("**Get Messages...");
+                console.log(page);
+
                 const messages = await Message.find({ conversationId: conversationId })
                     .sort({ createdAt: -1 })
                     .skip(skip)
                     .limit(limit);
 
-                console.log("Mensagens: ", messages);
+                // Formatar mensagens mencionadas
+                const formattedMessages = await formatMessagesContainingMentionedMessages(messages);
 
-                io.to(conversationId).emit("messagesLoaded", messages);
+                console.log("Mensagens formatadas: ", formattedMessages);
+
+                io.to(conversationId).emit("messagesLoaded", formattedMessages);
             } catch (err) {
                 console.error("Erro ao carregar mensagens: ", err);
                 socket.emit("errorLoadingMessages", "Não foi possível carregar mensagens.");
@@ -62,11 +66,12 @@ const initializeSocket = (httpServer, dbURI) => {
 
         socket.on("sendMessage", async (newMessage) => {
             console.log(`Mensagem ${newMessage.content} mandada por ${newMessage.sender} para a sala ${newMessage.conversationId} `)
-            
-            try{
+
+            try {
                 const savedMessage = await Message.create({
                     conversationId: newMessage.conversationId,
                     sender: newMessage.sender,
+                    senderType: newMessage.senderType,
                     content: newMessage.content,
                     audioUrl: newMessage.audioUrl,
                     duration: newMessage.duration,
@@ -78,8 +83,7 @@ const initializeSocket = (httpServer, dbURI) => {
                 const updatedMessage = { ...newMessage, _id: savedMessage._id, sending: false };
                 io.to(newMessage.conversationId).emit('receiveMessage', { newMessage: updatedMessage, tempId: newMessage._id });
             }
-            catch (err)
-            {
+            catch (err) {
                 console.error("Erro ao salvar mensagem: ", err);
             }
         });
@@ -110,6 +114,8 @@ const initializeSocket = (httpServer, dbURI) => {
                     { _id: { $in: messageIds } },
                     { $set: { isMarked: isMarked } }
                 );
+
+
                 io.to(conversationId).emit("messagesMarked", { messageIds, isMarked });
             } catch (err) {
                 console.error("Erro ao marcar mensagens: ", err);
@@ -119,7 +125,11 @@ const initializeSocket = (httpServer, dbURI) => {
         socket.on('getMarkedMessages', async ({ conversationId }) => {
             try {
                 const markedMessages = await Message.find({ conversationId, isMarked: true });
-                socket.emit('markedMessagesLoaded', markedMessages);
+
+                // Formatar mensagens mencionadas
+                const formattedMarkedMessages = await formatMessagesContainingMentionedMessages(markedMessages);
+
+                socket.emit('markedMessagesLoaded', formattedMarkedMessages);
             } catch (error) {
                 console.error('Erro ao buscar mensagens marcadas:', error);
             }
@@ -130,10 +140,10 @@ const initializeSocket = (httpServer, dbURI) => {
                 const markedMessages = await Message.find({ conversationId, isMarked: true }, '_id');
                 if (markedMessages.length > 0) {
                     await Message.updateMany({ conversationId, isMarked: true }, { isMarked: false });
-                    
-                    socket.emit('allMessagesUnmarked', { 
-                        messageIds: markedMessages.map(msg => msg._id), 
-                        isMarked: false 
+
+                    socket.emit('allMessagesUnmarked', {
+                        messageIds: markedMessages.map(msg => msg._id),
+                        isMarked: false
                     });
                 }
             } catch (error) {
