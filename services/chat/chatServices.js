@@ -30,9 +30,9 @@ const getSenderName = async (senderUid, senderType) => {
     try {
         let user = null;
         if (senderType === "patient") {
-            user = await PatientUser.findOne({ _id: senderUid });
+            user = await PatientUser.findOne({ uid: senderUid });
         } else if (senderType === "doctor") {
-            user = await DoctorUser.findOne({ _id: senderUid });
+            user = await DoctorUser.findOne({ uid: senderUid });
         }
 
         return user ? user.name : senderType === "doctor" ? "Doutor" : "Paciente";
