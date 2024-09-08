@@ -78,9 +78,16 @@ const initializeSocket = (httpServer, dbURI) => {
                     readBy: [],
                     createdAt: newMessage.createdAt,
                     updatedAt: newMessage.updatedAt,
+                    ...(newMessage.mentionedMessageId && { mentionedMessageId: newMessage.mentionedMessageId })
                 });
 
-                const updatedMessage = { ...newMessage, _id: savedMessage._id, sending: false };
+                let updatedMessage = { ...newMessage, _id: savedMessage._id, sending: false };
+
+                if (newMessage.mentionedMessageId) {
+                    const formattedMessage = await formatMessagesContainingMentionedMessages([updatedMessage]);
+                    updatedMessage = formattedMessage[0];
+                }
+
                 io.to(newMessage.conversationId).emit('receiveMessage', { newMessage: updatedMessage, tempId: newMessage._id });
             }
             catch (err) {
