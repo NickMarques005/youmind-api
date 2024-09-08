@@ -67,6 +67,7 @@ const formatMessagesContainingMentionedMessages = async (messages) => {
                     message.mentionedMessage = {
                         _id: mentionedMsg._id,
                         senderName,
+                        senderId: mentionedMsg.sender,
                         senderType: mentionedMsg.senderType,
                         content: mentionedMsg.content,
                         hasAudio: !!mentionedMsg.audioUrl && mentionedMsg.audioUrl !== ""
