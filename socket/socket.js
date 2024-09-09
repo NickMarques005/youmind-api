@@ -188,12 +188,12 @@ const initializeSocket = (httpServer, dbURI) => {
 
                     // Verificação se é a mensagem escolhida
                     const messageFound = messages.find(msg => msg._id.toString() === messageId);
-
+                    
+                    currentPage++;
                     if (messageFound) {
                         found = true;
                         foundMessageId = messageFound._id.toString();
                     } else {
-                        currentPage++;
                         skip = currentPage * limit;
                     }
                 }
