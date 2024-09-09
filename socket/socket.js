@@ -121,8 +121,10 @@ const initializeSocket = (httpServer, dbURI) => {
                     { $set: { isMarked: isMarked } }
                 );
 
+                const updatedMessages = await Message.find({ _id: { $in: messageIds } }).lean();
+                const formattedMessages = await formatMessagesContainingMentionedMessages(updatedMessages);
 
-                io.to(conversationId).emit("messagesMarked", { messageIds, isMarked });
+                io.to(conversationId).emit("messagesMarked", { messages: formattedMessages, isMarked });
             } catch (err) {
                 console.error("Erro ao marcar mensagens: ", err);
             }
