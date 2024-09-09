@@ -166,9 +166,10 @@ const initializeSocket = (httpServer, dbURI) => {
                 let found = false;
                 let currentPage = page;
                 let foundMessages = [];
-        
+                let foundMessageId;
+
                 console.log(`Buscando a mensagem com ID: ${messageId} na conversa: ${conversationId} a partir da página: ${page}`);
-        
+
                 while (!found) {
                     // Buscar as mensagens na página atual
                     const messages = await Message.find({ conversationId })
@@ -176,38 +177,40 @@ const initializeSocket = (httpServer, dbURI) => {
                         .skip(skip)
                         .limit(limit)
                         .lean();
-                    
+
                     //Não havendo mais mensagens, finalizar o loop
                     if (messages.length === 0) {
                         break;
                     }
-        
+
                     // Adicionar as mensagens buscadas à lista de mensagens encontradas
                     foundMessages = [...foundMessages, ...messages];
-        
+
                     // Verificação se é a mensagem escolhida
                     const messageFound = messages.find(msg => msg._id.toString() === messageId);
-        
+
                     if (messageFound) {
                         found = true;
+                        foundMessageId = messageFound._id.toString();
                     } else {
                         currentPage++;
                         skip = currentPage * limit;
                     }
                 }
-        
+
                 if (found) {
                     // Formatação das mensagens mencionadas
                     const formattedMessages = await formatMessagesContainingMentionedMessages(foundMessages);
-        
+
                     socket.emit("messageFound", {
                         messages: formattedMessages,
+                        foundMessageId,
                         page: currentPage
                     });
                 } else {
                     return console.error("Mensagem selecionada não encontrada");
                 }
-        
+
             } catch (err) {
                 console.error("Erro ao buscar a mensagem: ", err);
             }
