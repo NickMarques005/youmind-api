@@ -1,7 +1,6 @@
 const { PatientMedicationHistory, PatientQuestionnaireHistory } = require("../../../models/patient_history");
 const { calculateQuestionnairePerformance } = require("../../../utils/questionnaires/performance");
 
-
 // Função para calcular o desempenho do tratamento
 const calculateTreatmentOverallPerformance = async (patientId) => {
     // Buscar históricos de medicações e questionários para o paciente

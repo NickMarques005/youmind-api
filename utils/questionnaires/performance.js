@@ -37,27 +37,27 @@ const calculatePerformance = (answers) => {
 const calculateQuestionnairePerformance = (questionnaireHistories) => {
     let totalPerformance = 0;
     let performanceCount = 0;
+    let unansweredCount = 0;
 
-    /*
-    ### Fator de atenuação para desempenhos iniciais
-    */
-    const dampingFactor = 0.5;
-
-    questionnaireHistories.forEach((history, index) => {
-        const progressFactor = 1 + (dampingFactor * index / questionnaireHistories.length);
-
+    questionnaireHistories.forEach((history) => {
         if (history.questionnaire.answered === true) {
             const performance = calculatePerformance(history.questionnaire.answers || []);
-            const effectivePerformance = performance * progressFactor;
-            totalPerformance += effectivePerformance;
+            totalPerformance += performance;
             performanceCount += 1;
         } else {
-            const penalty = 2 * progressFactor;
-            totalPerformance -= penalty;
+            unansweredCount += 1;
         }
     });
 
-    return performanceCount > 0 ? totalPerformance / performanceCount : 0;
+    // Cálculo da penalidade com base na proporção de questionários não respondidos
+    const totalQuestionnaires = questionnaireHistories.length;
+    const penaltyFactor = (unansweredCount / totalQuestionnaires) * 100;
+
+    // Média do desempenho
+    const averagePerformance = performanceCount > 0 ? totalPerformance / performanceCount : 0;
+
+    // Ajusta o desempenho final pela penalidade
+    return Math.max(0, Math.min(100, averagePerformance - penaltyFactor));
 }
 
 module.exports = { calculatePerformance, calculateQuestionnairePerformance }

@@ -189,14 +189,12 @@ exports.getQuestionPerformance = async (req, res) => {
         const questionnaireHistories = await PatientQuestionnaireHistory.find({ patientId: uid });
 
         let totalPerformance = 0;
-        let questionnaireCount = questionnaireHistories.length;
         let performanceCount = 0;
 
         questionnaireHistories.forEach(history => {
             if (history.questionnaire.answered === undefined) {
                 totalPerformance -= 2;
             } else if (history.questionnaire.answered === true) {
-
                 totalPerformance += 2;
                 const performance = calculatePerformance(history.questionnaire.answers || []);
                 performanceCount += 1;
@@ -247,15 +245,16 @@ exports.getHistoryQuestionnairesForCurrentPatient = async (req, res) => {
 
         const questionnaires = await Promise.all(questionnaireHistories.map(async (history) => {
             const questionnaire = await Questionnaire.findById(history.questionnaire.questionnaireId);
-            let template;
-            if (questionnaire && questionnaire.answers && questionnaire.checked) {
-                template = await QuestionnaireTemplate.findById(questionnaire.questionnaireTemplateId);
+            let filteredTemplate;
+            if (questionnaire.answers && questionnaire.checked) {
+                const template = await QuestionnaireTemplate.findById(questionnaire.questionnaireTemplateId);
+                filteredTemplate = filterTemplateQuestionsByAnswers(template, questionnaire.answers);
             }
             return {
                 _id: history._id,
                 patientId: history.patientId,
                 currentQuestionnaire: questionnaire,
-                template,
+                template: filteredTemplate,
                 pending: history.questionnaire.pending,
                 answered: history.questionnaire.answered,
                 updatedAt: history.questionnaire.updatedAt
