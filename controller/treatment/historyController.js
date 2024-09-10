@@ -187,28 +187,7 @@ exports.getQuestionPerformance = async (req, res) => {
         if (!treatment) return HandleSuccess(res, 200, "Nenhum tratamento sendo feito");
 
         const questionnaireHistories = await PatientQuestionnaireHistory.find({ patientId: uid });
-
-        let totalPerformance = 0;
-        let performanceCount = 0;
-
-        questionnaireHistories.forEach(history => {
-            if (history.questionnaire.answered === undefined) {
-                totalPerformance -= 2;
-            } else if (history.questionnaire.answered === true) {
-                totalPerformance += 2;
-                const performance = calculatePerformance(history.questionnaire.answers || []);
-                performanceCount += 1;
-                totalPerformance += performance;
-            } else {
-                totalPerformance -= 2;
-            }
-        });
-
-        if (performanceCount > 0) {
-            totalPerformance = totalPerformance / performanceCount;
-        }
-
-        const finalPerformance = Math.min(Math.max(totalPerformance, 0), 100);
+        const finalPerformance = calculateQuestionnairePerformance(questionnaireHistories);
 
         return HandleSuccess(res, 200, "Desempenho dos questionários calculado com sucesso", { performance: finalPerformance });
     } catch (err) {

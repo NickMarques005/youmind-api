@@ -51,17 +51,14 @@ const calculateQuestionnairePerformance = (questionnaireHistories) => {
 
     const totalQuestionnaires = questionnaireHistories.length;
     const penaltyFactor = (unansweredCount / totalQuestionnaires) * 100;
-
-    // Média do desempenho
+    
+    //Média do desempenho
     const averagePerformance = performanceCount > 0 ? totalPerformance / performanceCount : 0;
-
-    // Ajusta o desempenho final pela penalidade, garantindo que o resultado esteja entre 0 e 100
-    const performanceAfterPenalty = Math.max(0, averagePerformance - penaltyFactor);
-
-    const maxPerformance = 100;
-    const normalizedPerformance = Math.min(maxPerformance, performanceAfterPenalty);
-
-    return normalizedPerformance;
+    // Ajusta o desempenho final pela penalidade
+    const performanceAfterPenalty = averagePerformance * (1 - (penaltyFactor / 100));
+    
+    // Garante que o desempenho esteja entre 0 e 100
+    return Math.min(100, Math.max(0, performanceAfterPenalty));
 }
 
 module.exports = { calculatePerformance, calculateQuestionnairePerformance }
