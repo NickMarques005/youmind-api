@@ -49,15 +49,19 @@ const calculateQuestionnairePerformance = (questionnaireHistories) => {
         }
     });
 
-    // Cálculo da penalidade com base na proporção de questionários não respondidos
     const totalQuestionnaires = questionnaireHistories.length;
     const penaltyFactor = (unansweredCount / totalQuestionnaires) * 100;
 
     // Média do desempenho
     const averagePerformance = performanceCount > 0 ? totalPerformance / performanceCount : 0;
 
-    // Ajusta o desempenho final pela penalidade
-    return Math.max(0, Math.min(100, averagePerformance - penaltyFactor));
+    // Ajusta o desempenho final pela penalidade, garantindo que o resultado esteja entre 0 e 100
+    const performanceAfterPenalty = Math.max(0, averagePerformance - penaltyFactor);
+
+    const maxPerformance = 100;
+    const normalizedPerformance = Math.min(maxPerformance, performanceAfterPenalty);
+
+    return normalizedPerformance;
 }
 
 module.exports = { calculatePerformance, calculateQuestionnairePerformance }
