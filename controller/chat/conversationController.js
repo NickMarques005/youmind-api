@@ -1,9 +1,8 @@
 const treatment = require('../../models/treatment');
 const Message = require('../../models/message');
-const { PatientUser, DoctorUser } = require('../../models/users');
-const mongoose = require('mongoose');
 const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
 const { findUserByEmail } = require('../../utils/db/model');
+const Note = require('../../models/note');
 
 exports.getConversationTreatment = async (req, res) => {
     try {
@@ -104,5 +103,30 @@ exports.getMessages = async (req, res) => {
     catch (err) {
         console.error("Erro ao buscar mensagens: ", err);
         return HandleError(res, 500, "Erro ao buscar mensagens");
+    }
+};
+
+exports.addMessagesToNote = async (req, res) => {
+    try {
+        const { noteId, messages } = req.body;
+        const { uid } = req.user;
+
+        if (!uid) return HandleError(res, 401, 'Usuário não autorizado');
+        if (!noteId || !messages || !Array.isArray(messages)) return HandleError(res, 400, 'Dados inválidos');
+
+        // Verificação se a anotação existe
+        const note = await Note.findById(noteId);
+        if (!note) return HandleError(res, 404, 'Anotação não encontrada');
+
+        // Adicionar as mensagens ao conteúdo da anotação
+        note.content.push(...messages);
+
+        // Salvando as alterações
+        const updatedNote = await note.save();
+
+        return HandleSuccess(res, 200, 'Mensagens adicionadas à anotação', updatedNote);
+    } catch (err) {
+        console.error('Erro ao adicionar mensagens à anotação: ', err);
+        return HandleError(res, 500, `Erro ao adicionar mensagens à anotação: ${err.message}`);
     }
 };
