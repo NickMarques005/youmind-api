@@ -1,7 +1,7 @@
 const { PatientMedicationHistory, PatientQuestionnaireHistory } = require('../../models/patient_history');
 const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
 const { PatientUser, DoctorUser } = require('../../models/users');
-const { calculatePerformance, calculateQuestionnairePerformance } = require('../../utils/questionnaires/performance');
+const { calculateQuestionnairePerformance } = require('../../utils/questionnaires/performance');
 const Medication = require('../../models/medication');
 const QuestionnaireTemplate = require('../../models/questionnaire_template');
 const Questionnaire = require('../../models/questionnaire');

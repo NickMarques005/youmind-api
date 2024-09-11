@@ -7,6 +7,7 @@ const Treatment = require('../../../models/treatment');
 const { getStartOfTheDay, getEndOfTheDay, convertDateToBrazilDate, setDateToSpecificTime } = require('../../../utils/date/timeZones');
 const { cancelSpecificMedicationSchedules, cancelSpecificMedicationNotTakenSchedule, initializeMedicationScheduleProcess } = require('../../../services/medications/medicationScheduler');
 const { getAgenda } = require('../../../agenda/agenda_manager');
+const { isValidObjectId } = require('mongoose');
 
 exports.getMedications = async (req, res) => {
     try {
@@ -253,10 +254,15 @@ exports.confirmMedicationAlert = async (req, res) => {
     try {
         const { uid } = req.user;
         const { medicationHistoryId } = req.body;
+
         const agenda = getAgenda();
 
         const patient = await PatientUser.findOne({ uid: uid });
         if (!patient) return HandleError(res, 404, "Paciente não encontrado");
+
+        if (!isValidObjectId(medicationHistoryId)) {
+            return HandleError(res, 400, "Medicação inválida");
+        }
 
         const medicationHistory = await PatientMedicationHistory.findById(medicationHistoryId)
 
