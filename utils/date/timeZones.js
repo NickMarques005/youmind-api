@@ -130,6 +130,18 @@ const getNextScheduleTime = (schedules, startDate, frequency) => {
     return nextSchedule;
 };
 
+const getTimeLeftOfDate = (date) => {
+    const now = DateTime.now(); 
+    const scheduled = DateTime.fromJSDate(date);
+    const duration = scheduled.diff(now).milliseconds;
+    
+    if (duration < 0) {
+        return 0;
+    }
+    
+    return duration;
+};
+
 const setDateToSpecificTime = (date, timeString) => {
     if (!date || !timeString) {
         console.error("Data ou horário não fornecido");
@@ -157,14 +169,16 @@ const subtractDaysFromDate = (date, days) => {
     .toJSDate();
 }
 
+
 module.exports = {
     getCurrentDateInBrazilTime,
-    convertDateToBrazilDate,
-    convertToUTC,
     getExpirationDateInUTC,
     getNextScheduleTime,
     getStartOfTheDay,
     getEndOfTheDay,
+    getTimeLeftOfDate,
+    convertDateToBrazilDate,
+    convertToUTC,
     setDateToSpecificTime,
-    subtractDaysFromDate
+    subtractDaysFromDate,
 };

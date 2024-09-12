@@ -5,6 +5,7 @@ const { PageTypes, MenuTypes, ScreenTypes } = require("../../utils/app/screenMen
 const NotificationStructure = require("../notifications/notificationStructure");
 const { PatientUser } = require("../../models/users");
 const Medication = require("../../models/medication");
+const { getTimeLeftOfDate } = require("../../utils/date/timeZones");
 
 
 const sendMedicationReminderToPatient = async (sendMedicationReminderData) => {
@@ -27,11 +28,13 @@ const sendMedicationReminderToPatient = async (sendMedicationReminderData) => {
             return;
         }
 
-        const now = DateTime.now();
-        const scheduled = DateTime.fromISO(scheduleTime);
-        const duration = scheduled.diff(now).milliseconds;
+        const scheduleTimeLeft = getTimeLeftOfDate(scheduleTime);
+        if (scheduleTimeLeft === 0) {
+            console.error("O horário de tomar o medicamento já passou.");
+            return;
+        }
 
-        const formattedPeriodRemaining = formatTimeLeft(duration);
+        const formattedPeriodRemaining = formatTimeLeft(scheduleTimeLeft);
 
         const notification = new NotificationStructure(
             'Hora de tomar seu medicamento',
