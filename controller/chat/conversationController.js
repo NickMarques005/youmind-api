@@ -3,6 +3,7 @@ const Message = require('../../models/message');
 const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
 const { findUserByEmail } = require('../../utils/db/model');
 const Note = require('../../models/note');
+const MessageTypes = require('../../utils/response/typeResponse');
 
 exports.getConversationTreatment = async (req, res) => {
     try {
@@ -124,7 +125,7 @@ exports.addMessagesToNote = async (req, res) => {
         // Salvando as alterações
         const updatedNote = await note.save();
 
-        return HandleSuccess(res, 200, 'Mensagens adicionadas à anotação', updatedNote);
+        return HandleSuccess(res, 200, 'Mensagens adicionadas à anotação', updatedNote, MessageTypes.NOTEBOOK_CHECK);
     } catch (err) {
         console.error('Erro ao adicionar mensagens à anotação: ', err);
         return HandleError(res, 500, `Erro ao adicionar mensagens à anotação: ${err.message}`);

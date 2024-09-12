@@ -13,6 +13,8 @@ const MessageTypes = {
     MOOD: 'mood',
     SHIELD_LOCK: 'shield_lock',
     SHIELD_UNLOCK: 'shield_unlock',
+    NOTEBOOK: 'notebook',
+    NOTEBOOK_CHECK: 'notebook_check'
 }
 
 module.exports = MessageTypes;
