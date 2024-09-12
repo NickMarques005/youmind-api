@@ -7,6 +7,11 @@ const calculateTreatmentOverallPerformance = async (patientId) => {
     const patientMedications = await PatientMedicationHistory.find({ patientId });
     const patientQuestionnaires = await PatientQuestionnaireHistory.find({ patientId });
 
+    // Verificar se ambos os históricos são nulos
+    if (patientMedications.length === 0 && patientQuestionnaires.length === 0) {
+        return 0;
+    }
+
     // Filtrar e calcular o desempenho
     const totalMedications = patientMedications.length;
     const takenMedications = patientMedications.filter(history => history.medication.taken === true).length;
@@ -26,7 +31,7 @@ const calculateTreatmentOverallPerformance = async (patientId) => {
     const overallPerformance = Math.round(((clampedMedicationPerformance + clampedQuestionnairePerformance) / 2) * dampingFactor);
 
     // Garantir que o desempenho geral não exceda 100
-    return Math.min(overallPerformance, 100);
+    return isNaN(overallPerformance) ? 0 : Math.min(Math.round(overallPerformance), 100);
 };
 
 module.exports = {
