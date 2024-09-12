@@ -1,6 +1,7 @@
 
 const DailyMotivationalPhrase = require("../../models/daily_motivational_phrase");
 const MotivationalPhraseTemplate = require("../../models/motivational_phrase_template");
+const { getStartOfTheDay } = require("../../utils/date/timeZones");
 const { limitPhrases } = require("../../utils/motivational_phrases/limit");
 
 /*
@@ -68,8 +69,8 @@ const assignNewPhraseToPatient = async (patientId) => {
     /*
     ### Salvar a nova frase do dia para o paciente
     */
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const today = getStartOfTheDay(now);
 
     const dailyPhrase = new DailyMotivationalPhrase({
         patientId,

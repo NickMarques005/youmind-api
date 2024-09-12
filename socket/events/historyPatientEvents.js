@@ -16,6 +16,8 @@ const emitUpdateHistory = async (emitData) => {
             socketServer = io;
         }
 
+        console.log(socketServer);
+
         const updateHistory = await getPatientHistoryById(patientId);
         if (updateHistory) {
             await emitEventToUser(socketServer, doctorId, "updateHistory", { history: updateHistory });
@@ -25,7 +27,9 @@ const emitUpdateHistory = async (emitData) => {
     }
 };
 
-const emitHistoryMedicationUpdate = async (io, doctorId, latestMedication) => {
+const emitHistoryMedicationUpdate = async (emitData) => {
+    const {io, doctorId, latestMedication} = emitData;
+
     try {
         let socketServer;
         if(!io)

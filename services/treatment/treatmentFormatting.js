@@ -63,7 +63,7 @@ const formatTreatment = async (treatment, userType) => {
                 engagedDoctor: {
                     uid: session.engagedDoctor.uid,
                     name: session.engagedDoctor.name,
-                    gender: session.engagedDoctor.gender,
+                    gender: session.engagedDoctor.gender || engagedDoctor.gender,
                     avatar: engagedDoctorAvatar
                 },
                 finalPerformance: session.finalPerformance,

@@ -1,3 +1,5 @@
+const { getSocketServer } = require("../../socket/socket");
+
 const isUserConnected = (io, room) => {
     // Acesso ao namespace principal do servidor Socket
     const namespace = io.of("/");
@@ -10,6 +12,9 @@ const isUserConnected = (io, room) => {
 };
 
 const emitEventToUser = async (io, room, socketEvent, data) => {
+    const testIo = getSocketServer();
+    console.log("Socket Teste: ", testIo);
+    
     if(!io) {
         console.error(`Houve um erro ao emitir dados ao usuário no evento ${socketEvent}: servidor Socket não especifido`);
         return false;
