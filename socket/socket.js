@@ -231,6 +231,8 @@ const initializeSocket = (httpServer, dbURI) => {
                 await findAndUpdateUserOnlineStatus(socket.userId, false);
             }
         });
+
+        //
     });
 };
 

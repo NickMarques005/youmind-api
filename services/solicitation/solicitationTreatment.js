@@ -23,16 +23,32 @@ const handleTreatmentSolicitation = async ({
         return HandleError(res, 400, `A solicitação já foi mandada para ${receiver.gender === 'Feminino' ? 'a' : 'o'} ${receiver.name}!`);
     }
 
-    const existingTreatment = await Treatment.findOne({
-        [fieldRequesterId]: requester.uid,
-        doctorId: { $ne: undefined }
-    });
+    if (requester.type === 'doctor') {
+        const existingPatientTreatment = await Treatment.findOne({
+            patientId: receiver.uid,
+            doctorId: { $ne: undefined }
+        });
 
-    if (existingTreatment) {
-        if (existingTreatment.doctorId !== receiver.uid) {
-            return HandleError(res, 400, `O paciente já está em tratamento com outro doutor!`);
-        } else {
-            return HandleError(res, 400, "Já existe um tratamento ativo entre você e este usuário");
+        if (existingPatientTreatment) {
+            if (existingPatientTreatment.doctorId !== requester.uid) {
+                return HandleError(res, 400, `O paciente já está em tratamento com outro doutor!`);
+            } else {
+                return HandleError(res, 400, "Já existe um tratamento ativo entre você e este paciente!");
+            }
+        }
+    }
+    else if (requester.type === 'patient') {
+        const existingTreatment = await Treatment.findOne({
+            patientId: requester.uid,
+            doctorId: { $ne: undefined }
+        });
+
+        if (existingTreatment) {
+            if (existingPatientTreatment.doctorId !== receiver.uid) {
+                return HandleError(res, 400, `O paciente já está em tratamento com outro doutor!`);
+            } else {
+                return HandleError(res, 400, "Já existe um tratamento ativo entre você e este paciente!");
+            }
         }
     }
 
