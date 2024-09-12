@@ -3,7 +3,7 @@ const { handleDataText } = require('../../utils/text/textUtils');
 const { fetchUsers, formatUserData } = require('../../services/user/userService');
 const { getUserModel } = require("../../utils/db/model");
 const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
-const MessageTypes = require('../../utils/response/typeResponse');
+const { MessageTypes } = require('../../utils/response/typeResponse');
 
 exports.filterUsers = async (req, res) => {
     try {

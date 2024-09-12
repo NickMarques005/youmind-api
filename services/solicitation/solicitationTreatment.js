@@ -1,8 +1,7 @@
 const TreatmentRequest = require("../../models/solicitation_treatment");
 const Treatment = require("../../models/treatment");
-const notificationService = require('../../services/notifications/notificationService');
 const { HandleError, HandleSuccess } = require("../../utils/response/handleResponse");
-const MessageTypes = require("../../utils/response/typeResponse");
+const { MessageTypes } = require("../../utils/response/typeResponse");
 const NotificationStructure = require("../notifications/notificationStructure");
 
 const handleTreatmentSolicitation = async ({

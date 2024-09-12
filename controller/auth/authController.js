@@ -1,7 +1,7 @@
 const { getUserModel } = require("../../utils/db/model");
 const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
 const { removeTokenOnFirebase, getTokenFromFirebase } = require("../../firebase/push_notification/push_notification");
-const MessageTypes = require("../../utils/response/typeResponse");
+const { MessageTypes } = require("../../utils/response/typeResponse");
 const { DoctorUser, PatientUser } = require("../../models/users");
 
 exports.authenticateUser = async (req, res) => {

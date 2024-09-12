@@ -3,7 +3,7 @@ const QuestionnaireTemplate = require('../../../models/questionnaire_template');
 const { HandleError, HandleSuccess } = require('../../../utils/response/handleResponse');
 const { PatientUser } = require('../../../models/users');
 const Treatment = require('../../../models/treatment');
-const MessageTypes = require('../../../utils/response/typeResponse');
+const { MessageTypes } = require('../../../utils/response/typeResponse');
 const { PatientQuestionnaireHistory } = require('../../../models/patient_history');
 const { filterTemplateQuestionsByResponsePeriod, filterTemplateQuestionsByAnswers } = require('../../../services/questionnaires/questionnaireService');
 

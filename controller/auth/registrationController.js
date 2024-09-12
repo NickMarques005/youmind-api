@@ -4,7 +4,7 @@ const { HandleError, HandleSuccess } = require("../../utils/response/handleRespo
 const verification_token = require('../../models/verification_token');
 const { isValidObjectId } = require("mongoose");
 const { formatTimeLeft } = require('../../utils/date/formatDate');
-const MessageTypes = require("../../utils/response/typeResponse");
+const { MessageTypes } = require("../../utils/response/typeResponse");
 const firebaseAuthentication = require('../../firebase/auth/authentication');
 const { sendMailService } = require("../../services/mail/mailService");
 

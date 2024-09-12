@@ -1,7 +1,7 @@
 const { PatientUser } = require("../../models/users");
 const { emitNewQuestionnaire } = require("../../socket/events/questionnaireEvents");
 const { ScreenTypes, MenuTypes, PageTypes } = require("../../utils/app/screenMenuTypes");
-const MessageTypes = require("../../utils/response/typeResponse");
+const { MessageTypes } = require("../../utils/response/typeResponse");
 const NotificationStructure = require("../notifications/notificationStructure");
 
 const sendNewQuestionnaireToPatient = async (newQuestionnaire, patientId) => {

@@ -3,7 +3,7 @@ const Message = require('../../models/message');
 const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
 const { findUserByEmail } = require('../../utils/db/model');
 const Note = require('../../models/note');
-const MessageTypes = require('../../utils/response/typeResponse');
+const { MessageTypes } = require('../../utils/response/typeResponse');
 
 exports.getConversationTreatment = async (req, res) => {
     try {

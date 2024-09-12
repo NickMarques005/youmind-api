@@ -1,7 +1,7 @@
 const noteModel = require('../../models/note');
 const { DoctorUser } = require('../../models/users');
 const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
-const MessageTypes = require('../../utils/response/typeResponse');
+const { MessageTypes } = require('../../utils/response/typeResponse');
 
 exports.createNewNote = async (req, res) => {
     try {

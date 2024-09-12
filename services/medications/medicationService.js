@@ -5,7 +5,7 @@ const { PatientUser } = require('../../models/users');
 const { PageTypes, ScreenTypes, MenuTypes } = require('../../utils/app/screenMenuTypes');
 const { formatDateToISO, formatISOToHours } = require('../../utils/date/formatDate');
 const { convertDateToBrazilDate } = require('../../utils/date/timeZones');
-const MessageTypes = require('../../utils/response/typeResponse');
+const { MessageTypes } = require('../../utils/response/typeResponse');
 const NotificationStructure = require('../notifications/notificationStructure');
 
 const createNewMedicationHistory = async (medication, scheduleTime) => {

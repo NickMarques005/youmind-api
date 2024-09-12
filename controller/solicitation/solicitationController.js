@@ -1,8 +1,5 @@
-const Treatment = require('../../models/treatment');
 const { PatientUser, DoctorUser } = require('../../models/users');
-const notificationService = require('../../services/notifications/notificationService');
 const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse');
-const MessageTypes = require('../../utils/response/typeResponse');
 const TreatmentRequest = require('../../models/solicitation_treatment');
 const { solicitationTypes } = require('../../utils/solicitation/solicitation');
 const { handleTreatmentSolicitation } = require('../../services/solicitation/solicitationTreatment');

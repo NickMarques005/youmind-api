@@ -4,7 +4,7 @@ const { sendMailService } = require("../../services/mail/mailService");
 const ResetToken = require('../../models/reset_token');
 const { HandleError, HandleSuccess } = require('../../utils/response/handleResponse.js');
 const { formatDateRelative } = require('../../utils/date/formatDate.js');
-const MessageTypes = require("../../utils/response/typeResponse.js");
+const { MessageTypes } = require("../../utils/response/typeResponse.js");
 const { changeUserPassword } = require('../../firebase/auth/authentication.js');
 const { generateUserToken } = require('../../utils/user/userToken.js');
 

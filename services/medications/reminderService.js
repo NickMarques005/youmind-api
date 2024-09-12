@@ -1,6 +1,6 @@
 const { DateTime } = require("luxon");
 const { formatTimeLeft } = require("../../utils/date/formatDate");
-const MessageTypes = require("../../utils/response/typeResponse");
+const { MessageTypes } = require("../../utils/response/typeResponse");
 const { PageTypes, MenuTypes, ScreenTypes } = require("../../utils/app/screenMenuTypes");
 const NotificationStructure = require("../notifications/notificationStructure");
 const { PatientUser } = require("../../models/users");
