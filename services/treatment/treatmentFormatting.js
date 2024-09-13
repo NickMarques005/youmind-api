@@ -9,19 +9,39 @@ const formatTreatment = async (treatment, userType) => {
 
         const userId = userType === 'patient' ? treatment.patientId : treatment.doctorId;
         const oppositeUserId = userType === 'patient' ? treatment.doctorId : treatment.patientId;
-        const oppositeUser = await (userType === 'patient' ? DoctorUser.findOne({ uid: oppositeUserId }) : PatientUser.findOne({ uid: oppositeUserId }));
+        let oppositeUser;
 
-        console.log(oppositeUser);
+        if (!userId) {
+            if (userType === 'patient') {
+                console.log("Você não está nesse tratamento!");
+                return undefined;
+            }
+        }
 
-        if (userType !== 'patient' && !oppositeUser) {
-            console.error(`O paciente do ${userType} não foi encontrado`);
+        if (oppositeUserId) {
+            if (userType === 'patient') {
+                oppositeUser = await DoctorUser.findOne({ uid: oppositeUserId });
+            }
+            else {
+                oppositeUser = await PatientUser.findOne({ uid: oppositeUserId });
+            }
+        }
+
+        console.log("Usuário oposto no tratamento: ", oppositeUser);
+
+        if (userType === 'doctor' && !oppositeUser) {
+            console.error(`O paciente do doutor não foi encontrado`);
             return undefined;
         }
 
         /*
-        ### Busca dados iniciais de chat através do userId atual
+        ### Busca dados iniciais de chat através do userId atual caso o tratamento esteja ativo
         */
-        const chatData = await getInitialChatData(treatment._id, userId);
+        let chatData;
+
+        if (treatment.treatmentStatus === 'active' && oppositeUser) {
+            chatData = await getInitialChatData(treatment._id, userId);
+        }
 
         /*
         ### Buscar históricos de medicações e questionários para o tratamento
@@ -44,7 +64,7 @@ const formatTreatment = async (treatment, userType) => {
         */
         const overallPerformance = await calculateTreatmentOverallPerformance(treatment.patientId);
 
-        const statusTreatment = {
+        const statusPerformance = {
             medications: takenMedications,
             questionnaires: answeredQuestionnaires,
             currentPerformance: overallPerformance
@@ -62,7 +82,7 @@ const formatTreatment = async (treatment, userType) => {
             return {
                 engagedDoctor: {
                     uid: session.engagedDoctor.uid,
-                    name: session.engagedDoctor.name,
+                    name: session.engagedDoctor.name || engagedDoctor.name,
                     gender: session.engagedDoctor.gender || engagedDoctor.gender,
                     avatar: engagedDoctorAvatar
                 },
@@ -79,20 +99,20 @@ const formatTreatment = async (treatment, userType) => {
         */
         const formattedTreatment = {
             _id: treatmentId,
-            name: oppositeUser.name,
-            email: oppositeUser.email,
-            avatar: oppositeUser.avatar,
-            phone: oppositeUser.phone,
-            birth: oppositeUser.birth,
-            gender: oppositeUser.gender,
-            uid: oppositeUser.uid,
-            online: oppositeUser.online,
+            name: oppositeUser ? oppositeUser.name : undefined,
+            email: oppositeUser ? oppositeUser.email : undefined,
+            avatar: oppositeUser ? oppositeUser.avatar : undefined,
+            phone: oppositeUser ? oppositeUser.phone : undefined,
+            birth: oppositeUser ? oppositeUser.birth : undefined,
+            gender: oppositeUser ? oppositeUser.gender : undefined,
+            uid: oppositeUser ? oppositeUser.uid : undefined,
+            online: oppositeUser ? oppositeUser.online : undefined,
             chat: chatData || undefined,
             startedAt: treatment.startedAt,
-            status: statusTreatment,
+            status: statusPerformance,
             sessions: sessionsWithAvatars || [],
             treatmentStatus: treatment.status,
-            private_treatment: oppositeUser.private_treatment
+            private_treatment: oppositeUser ? oppositeUser.private_treatment : undefined
         };
 
         console.log("Tratamento a ser enviado: ", formattedTreatment);
