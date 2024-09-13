@@ -35,8 +35,8 @@ const handleUpdateTreatment = async (change, io) => {
         }
 
         //Ajuste para que os tratamentos sejam entregues no formato correto ****
-        const treatmentPatientInfo = await formatTreatment(updatedTreatment, currentPatient.type);
-        const treatmentDoctorInfo = await formatTreatment(updatedTreatment, currentDoctor.type);
+        const treatmentPatientInfo = await formatTreatment(updatedTreatment, currentPatient.type, patientId);
+        const treatmentDoctorInfo = await formatTreatment(updatedTreatment, currentDoctor.type, doctorId);
         if (!treatmentPatientInfo || !treatmentDoctorInfo) return console.error('Erro ao formatar tratamento.');
 
         await handleStartPatientTreatmentServices(patientId);
@@ -105,8 +105,8 @@ const handleUpdateTreatment = async (change, io) => {
         */
 
         //Ajuste para que os tratamentos sejam entregues no formato correto ****
-        const treatmentPatientInfo = await formatTreatment(updatedTreatment, currentPatient.type);
-        const treatmentDoctorInfo = await formatTreatment(updatedTreatment, currentDoctor.type);
+        const treatmentPatientInfo = await formatTreatment(updatedTreatment, currentPatient.type, patientId);
+        const treatmentDoctorInfo = await formatTreatment(updatedTreatment, currentDoctor.type, doctorId);
         if (!treatmentPatientInfo || !treatmentDoctorInfo) return console.error('Erro ao formatar tratamento.');
 
         const messagePatient = `Parabéns por completar o tratamento com ${treatmentPatientInfo.name}!`;

@@ -3,12 +3,15 @@ const { PatientUser, DoctorUser } = require('../../models/users');
 const { getInitialChatData } = require('../chat/chatServices');
 const { calculateTreatmentOverallPerformance } = require('./performance/performanceServices');
 
-const formatTreatment = async (treatment, userType) => {
+const formatTreatment = async (treatment, userType, currentUserId) => {
     try {
         const treatmentId = treatment._id.toString();
 
         const userId = userType === 'patient' ? treatment.patientId : treatment.doctorId;
         const oppositeUserId = userType === 'patient' ? treatment.doctorId : treatment.patientId;
+
+        const isCurrentUserInTreatment = userId === currentUserId;
+
         let oppositeUser;
 
         if (!userId) {
@@ -44,15 +47,15 @@ const formatTreatment = async (treatment, userType) => {
         let treatmentStatus;
 
         if (treatment.status === 'active' && oppositeUser) {
-            if (userType === 'doctor' && userId === treatment.doctorId) {
-                chatData = await getInitialChatData(treatment._id, userId);
-                treatmentStatus = treatment.status;
+            if (userType === 'doctor' && !isCurrentUserInTreatment) {
+                treatmentStatus = 'completed';
             }
             else {
-            /*
-            ### Validando treatment Status para doutores que forem o doctorId atual ou não
-            */
-                treatmentStatus = 'completed';
+                /*
+                ### Validando treatment Status para doutores que forem o doctorId atual e para pacientes em tratamento
+                */
+                chatData = await getInitialChatData(treatment._id, userId);
+                treatmentStatus = treatment.status;
             }
         }
 
@@ -80,7 +83,7 @@ const formatTreatment = async (treatment, userType) => {
         const statusPerformance = {
             medications: takenMedications,
             questionnaires: answeredQuestionnaires,
-            currentPerformance: overallPerformance
+            currentPerformance: overallPerformance || 0
         };
 
         /*
@@ -99,7 +102,7 @@ const formatTreatment = async (treatment, userType) => {
                     gender: session.engagedDoctor.gender || engagedDoctor.gender,
                     avatar: engagedDoctorAvatar
                 },
-                finalPerformance: session.finalPerformance,
+                finalPerformance:  isCurrentUserInTreatment ? session.finalPerformance : statusPerformance.currentPerformance,
                 period: {
                     start: session.period.start,
                     end: session.period.end

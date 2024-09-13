@@ -142,11 +142,14 @@ exports.getTreatment = async (req, res) => {
         const userTreatments = await Treatment.find({ [treatmentKey]: uid, status: { $in: ["active", "completed"] } });
 
         if (type === 'patient') {
+            const patient = await PatientUser.findOne({ uid: uid });
+            if (!patient) return HandleError(res, 404, "Você não foi encontrado nos registros de pacientes");
+
             if (userTreatments.length === 0) return HandleSuccess(res, 200, "Não há tratamentos registrados");
 
             const singleTreatment = userTreatments[0];
 
-            const formattedTreatment = await formatTreatment(singleTreatment, type);
+            const formattedTreatment = await formatTreatment(singleTreatment, type, uid);
             if (!formattedTreatment) return HandleError(res, 404, "Erro ao formatar tratamento");
 
             const treatmentData = [ 
@@ -172,10 +175,10 @@ exports.getTreatment = async (req, res) => {
             const allTreatments = [...new Map([...userTreatments, ...additionalTreatments].map(treatment => [treatment._id.toString(), treatment])).values()];
             if (allTreatments.length === 0) return HandleSuccess(res, 200, "Não há tratamentos em andamento");
 
-            const formattedTreatments = await Promise.all(allTreatments.map(treatment => formatTreatment(treatment, type)));
+            const formattedTreatments = await Promise.all(allTreatments.map(treatment => formatTreatment(treatment, type, uid)));
 
             const filteredPatients = formattedTreatments.filter(patient => patient !== null);
-            return HandleSuccess(res, 200, "Tratamento(s) em andamento", filteredPatients);
+            return HandleSuccess(res, 200, "Tratamento(s) encontrado(s)", filteredPatients);
         }
     } catch (err) {
         console.error('Erro ao verificar o tratamento:', err);
