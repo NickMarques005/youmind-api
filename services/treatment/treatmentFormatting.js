@@ -38,9 +38,22 @@ const formatTreatment = async (treatment, userType) => {
         ### Busca dados iniciais de chat através do userId atual caso o tratamento esteja ativo
         */
         let chatData;
+        /*
+        ### Validando treatment Status para doutores que forem o doctorId atual ou não
+        */
+        let treatmentStatus;
 
         if (treatment.status === 'active' && oppositeUser) {
-            chatData = await getInitialChatData(treatment._id, userId);
+            if (userType === 'doctor' && userId === treatment.doctorId) {
+                chatData = await getInitialChatData(treatment._id, userId);
+                treatmentStatus = treatment.status;
+            }
+            else {
+            /*
+            ### Validando treatment Status para doutores que forem o doctorId atual ou não
+            */
+                treatmentStatus = 'completed';
+            }
         }
 
         /*
@@ -111,7 +124,7 @@ const formatTreatment = async (treatment, userType) => {
             startedAt: treatment.startedAt,
             status: statusPerformance,
             sessions: sessionsWithAvatars || [],
-            treatmentStatus: treatment.status,
+            treatmentStatus: treatmentStatus || treatment.status,
             private_treatment: oppositeUser ? oppositeUser.private_treatment : undefined
         };
 
