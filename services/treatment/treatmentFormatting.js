@@ -39,7 +39,7 @@ const formatTreatment = async (treatment, userType) => {
         */
         let chatData;
 
-        if (treatment.treatmentStatus === 'active' && oppositeUser) {
+        if (treatment.status === 'active' && oppositeUser) {
             chatData = await getInitialChatData(treatment._id, userId);
         }
 
