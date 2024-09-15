@@ -6,6 +6,7 @@ const Treatment = require('../../../models/treatment');
 const { MessageTypes } = require('../../../utils/response/typeResponse');
 const { PatientQuestionnaireHistory } = require('../../../models/patient_history');
 const { filterTemplateQuestionsByResponsePeriod, filterTemplateQuestionsByAnswers } = require('../../../services/questionnaires/questionnaireService');
+const { verifyUnansweredQuestionnaire } = require('../../../utils/questionnaires/validation');
 
 exports.getQuestionnaires = async (req, res) => {
     try {
@@ -25,25 +26,91 @@ exports.getQuestionnaires = async (req, res) => {
 
         if (!questionnaires || questionnaires.length === 0) return HandleSuccess(res, 200, "Nenhum questionário encontrado");
 
-        const result = await Promise.all(questionnaires.map(async (questionnaire) => {
-            if (questionnaire.answers && questionnaire.checked) {
-                const template = await QuestionnaireTemplate.findOne({ _id: questionnaire.questionnaireTemplateId });
-                const filteredTemplate = filterTemplateQuestionsByAnswers(template, questionnaire.answers);
+        let answerQuestionnaire;
 
+        const result = await Promise.all(questionnaires.map(async (questionnaire) => {
+            const template = await QuestionnaireTemplate.findOne({ _id: questionnaire.questionnaireTemplateId }).lean();
+            
+            if (!template) return { currentQuestionnaire: questionnaire };
+
+            // Verifica se o questionário já foi respondido
+            if (questionnaire.answers && questionnaire.checked) {
+                const filteredTemplate = filterTemplateQuestionsByAnswers(template, questionnaire.answers);
                 return {
                     currentQuestionnaire: questionnaire,
                     template: filteredTemplate
                 };
             }
+            
+            // Verifica se o questionário ainda pode ser respondido
+            if (verifyUnansweredQuestionnaire(questionnaire) && !answerQuestionnaire) {
+                const filteredTemplate = await filterTemplateQuestionsByResponsePeriod(template, patient);
+                console.log("Tem questionário não respondido liberado!");
+                answerQuestionnaire = {
+                    currentQuestionnaire: questionnaire,
+                    template: filteredTemplate
+                };
+            }
+            
             return { currentQuestionnaire: questionnaire };
         }));
 
-        return HandleSuccess(res, 200, "Questionários encontrados", result);
+        const questionnairesResponse = {
+            questionnaires: result,
+            ...(answerQuestionnaire && { answerQuestionnaire })
+        }
+
+        return HandleSuccess(res, 200, "Questionários encontrados", questionnairesResponse);
     } catch (err) {
         console.log("Erro no servidor: ", err.message);
         return HandleError(res, 500, "Erro interno no servidor ao buscar questionários");
     }
 }
+
+exports.getPaginationQuestionnaires = async (req, res) => {
+    try {
+        const { uid } = req.user;
+        const { page = 1 } = req.query;
+        const limit = 14;
+        const skip = (page - 1) * limit;
+
+        if (!uid) return HandleError(res, 400, "Não autorizado");
+
+        const patient = await PatientUser.findOne({ uid });
+        if (!patient) return HandleError(res, 403, "Você não é um paciente registrado");
+
+        const treatment = await Treatment.findOne({ patientId: patient.uid, status: "active" });
+        if (!treatment) return HandleSuccess(res, 200, "Você não está em tratamento no momento", []);
+
+        const questionnaires = await Questionnaire.find({ patientId: treatment.patientId })
+            .sort({ createdAt: -1 })
+            .skip(skip) 
+            .limit(limit);
+
+        if (!questionnaires || questionnaires.length === 0) return HandleSuccess(res, 200, "Nenhum questionário encontrado");
+
+        const pageResult = await Promise.all(questionnaires.map(async (questionnaire) => {
+            const template = await QuestionnaireTemplate.findOne({ _id: questionnaire.questionnaireTemplateId }).lean();
+            if (!template) return { currentQuestionnaire: questionnaire };
+
+            // Verifica se o questionário já foi respondido
+            if (questionnaire.answers && questionnaire.checked) {
+                const filteredTemplate = filterTemplateQuestionsByAnswers(template, questionnaire.answers);
+                return {
+                    currentQuestionnaire: questionnaire,
+                    template: filteredTemplate
+                };
+            }
+
+            return { currentQuestionnaire: questionnaire };
+        }));
+
+        return HandleSuccess(res, 200, "Questionários de paginação", pageResult);
+    } catch (err) {
+        console.log("Erro no servidor: ", err.message);
+        return HandleError(res, 500, "Erro interno no servidor ao buscar questionários");
+    }
+};
 
 exports.getQuestionnaireTemplateById = async (req, res) => {
     try {

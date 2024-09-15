@@ -84,11 +84,10 @@ const createNewQuestionnaire = async (patientId, templateId, timeSlot) => {
 // Filtra as questões do template com base no período de resposta
 const filterTemplateQuestionsByResponsePeriod = async (template, patient) => {
     try {
-        console.log("Filtragem das questões: ");
+        console.log("Filtrando questões por periodo de resposta do paciente");
         let filteredQuestions = [];
 
         for (const question of template.questions) {
-            console.log(`Questão "${question.title}"`)
             if (question.responsePeriod && question.responseTime) {
                 let responsePeriodEnd = new Date();
 
@@ -97,9 +96,6 @@ const filterTemplateQuestionsByResponsePeriod = async (template, patient) => {
                 } else if (question.responseTime === "meses") {
                     responsePeriodEnd.setMonth(responsePeriodEnd.getMonth() - question.responsePeriod);
                 }
-
-                console.log(`Periodo da pergunta "${question.title}" (id: ${question._id}): `, responsePeriodEnd);
-
 
                 // Buscar questionários que contenham esta pergunta dentro do período especificado
                 const recentQuestionnaires = await Questionnaire.find({

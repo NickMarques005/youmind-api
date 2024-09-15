@@ -1,3 +1,3 @@
-const limitPhrases = 15;
+const limitPhrases = 30;
 
 module.exports ={ limitPhrases };
